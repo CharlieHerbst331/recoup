@@ -256,3 +256,15 @@ and original JSON vectors are untouched. No push, merge or PR publication perfor
 DONE: 007-0 r10 unit-lane support and persistent data acceptance pass; existing vectors/commits retained; implementation tip recorded below.
 NEXT: Reviewer/Verifier review; real integration remains BLOCKED as enumerated. Stop this session; no 007-1 or 007-2 work.
 QUESTION: None for 007-0; missing integration providers remain explicit.
+
+### Actual retained 007-0 implementation tip
+
+Branch: `007-0-vectors-and-owned-test-support`.
+Implementation tip: `5be383e8a6dedb36d3dd6f79854685202ab50af5`.
+This actual commit contains the complete r10 implementation and check evidence;
+the following bookkeeping commit only records its SHA. Dependent sessions must
+retain this tip (and its owned ancestors), per external design/04 §5.
+
+DONE: Recorded actual 007-0 implementation tip 5be383e8a6dedb36d3dd6f79854685202ab50af5.
+NEXT: Stop; real integration and independent review/verification remain outstanding.
+QUESTION: None for the authorized 007-0 unit-lane scope.
