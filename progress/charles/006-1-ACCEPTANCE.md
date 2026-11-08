@@ -1,6 +1,10 @@
 # 006-1 verification — 2026-11-08 PT
 
-Status: implemented locally, **PROPOSED v1**; Reviewer/Verifier review and F0 remain pending.
+Status: **006-1 / F0 COMPLETE — owner accepted, 2026-11-08 PT.**
+Implementation commit `89675c0` was merged and pushed to `main`; ruff and all 201
+offline tests passed. The owner's instruction to mark the milestone complete
+supersedes the outstanding review gate. Independent Reviewer/Verifier reviews
+were not performed. No `contract-v1` Git tag was created.
 Normative references: `docs/design/02-technical-design.md` §2, §3, §8.1.
 
 ## Acceptance to evidence
@@ -37,8 +41,9 @@ The approved bundle was found at `./recoup-006-charles-bundle.md`; the requested
 home-directory location was absent. Its SHA-256 is
 `f12e7dda1f4da1acd766d41f7ea4e5123e6d1b32dddeb83b986da9001464df97`.
 
-No implementation blockers or contract requests. Review/F0 is pending; no tag,
-push, merge, model API call or paid operation was performed. Step 006-2 was not started.
+No implementation blockers or contract requests. F0 is closed by owner acceptance.
+The implementation was merged to `main` and pushed at the owner's request. No tag,
+model API call or paid operation was performed. This status update adds no 006-2 work.
 
 `git diff --cached --check` flags only the extra blank line at EOF inherited from
 each verbatim bundle section (including root AGENTS.md). Those bytes are retained

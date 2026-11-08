@@ -1,9 +1,14 @@
 # recoup
 Recoup: AI agents for AR deductions, disputes, and insured-receivable claims (Ramp x BBS hackathon)
 
-Step 006-1 implements **PROPOSED v1** contracts, pure citation resolution and contract
-testing stubs. The design review and F0 freeze are pending. See [docs/INDEX.md](docs/INDEX.md)
-and [technical design §3 and §8.1](docs/design/02-technical-design.md).
+Step **006-1 / F0 is complete**, accepted by the owner on 2026-11-08 after implementation,
+offline verification and merge to `main`. This delivers contracts v1, pure citation
+resolution and contract testing stubs. Owner acceptance closes the review gate;
+independent Reviewer/Verifier reviews were not performed. See the
+[acceptance record](progress/charles/006-1-ACCEPTANCE.md).
+
+The bundled design documents retain their original proposal labels as historical
+source text. Current milestone status is recorded above and in [docs/INDEX.md](docs/INDEX.md).
 
 Use Python 3.11:
 
