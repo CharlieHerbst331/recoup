@@ -1,14 +1,14 @@
-# Sonny pre-F0 rule vectors
+# Sonny rule vectors
 
 SYNTHETIC fixture data for spec 007, step 007-0. References: bundled design/02 §3.7 and §5.3; hero snapshots reference design/01 §10.
 
-These JSON files are authoring fixtures, not serialized contract models. After F0, the engine tests must adapt them to the frozen contracts. No production implementation or contract type is included.
+These JSON files are authoring fixtures, not serialized contract models. The owner-local factories in `tests/engine/fixtures.py` adapt them to the pinned candidate contracts per external r10 design/04 §3. No production implementation or contract type is included.
 
 Each file has a local `fixture_format`, `provenance`, `stage`, and `vectors` list. Each vector has a unique `id` and a source `reference`.
 
-- `input.documents` holds source document IDs, kinds and flat vocabulary fields. Documents without explicit ingestion metadata represent readable, confirmed structured inputs. `readable`, `trust`, and `confirmed` are fixture adapter hints.
+- `input.documents` holds source document IDs, kinds and flat vocabulary fields. Documents without explicit ingestion metadata represent readable structured inputs with source trust. `readable`, `trust`, and `confirmed` are fixture adapter hints.
 - `input.line` holds the rule's target line. Its values correspond to the selected source deduction's `ded.<n>.*` fields; these fixtures do not reproduce an entire intake bundle.
-- `input.ledger` is optional authoring data for the prior-credit scenario. Its `event` label must be mapped to the frozen ledger contract after F0.
+- `input.ledger` is optional authoring data for the prior-credit scenario. Its `event` label maps to `LedgerEntry.kind`.
 - `expected_finding` is a subset assertion. Optional `flags_include`, `cite_documents_include`, `missing`, and `note_contains` constrain the resulting finding without prescribing contract serialization.
 - `expected_route` and `downstream_reference` describe later integration checks, outside the pure rule finding. They are not rule inputs.
 - `intake.json` targets deduction intake separately and asserts only added synthetic lines with `expected_added_lines`; existing deduction lines are not included in that list. Its `input.now` is the simulated date.
@@ -32,4 +32,4 @@ Coverage:
 | hero.json | hero_d1_before_pod_v2, hero_d1_after_pod_v2, hero_d2_before_pod_v2, hero_d2_after_pod_v2 |
 | intake.json | u1_paid_gap, np_zero_paid_no_deductions, np_no_payment_doc, np_due_date_not_overdue, zero_paid_with_deduction_is_u1, zero_paid_fully_explained_no_np, u1_subtracts_prior_credit, u1_at_tolerance, u1_above_tolerance, not_overdue_no_activity |
 
-Execution against the engine is pending 007-1 after F0. The pre-F0 checks reported in progress/sonny/PROGRESS.md validate data integrity only.
+Persistent checks in `tests/engine/test_vectors.py` validate data and typed input construction. Rule execution remains 007-1; actual World/engine replay remains BLOCKED pending providers at G1/G3 (external r10 design/04 §2–5). The negative-claimed expectation is a case escalation expectation, not a RuleFinding verdict; the contract has no needs_human Verdict. No replacement enum is introduced.

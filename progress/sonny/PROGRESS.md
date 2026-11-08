@@ -151,3 +151,108 @@ Final whitespace audit preserved the harness AGENTS.md's existing trailing blank
 DONE: Published PR #1 for 007-0; make check green (201 tests), data acceptance checks passed, and ownership audited.
 NEXT: Reviewer → Verifier; await F0 before starting 007-1. No next-step work started.
 QUESTION: None.
+
+## 007-0 r10 — 2026-11-08 (America/Los_Angeles)
+
+### Repository and retained implementation
+
+Read `~/recoup-007-sonny-bundle-r10.md`, prompt 007-0, external design/04 §1–5,
+spec 007 step 0, design/02 §2, §3.2–3.7, §5.3, and actual candidate interfaces,
+testing stubs, models, money, oracle, dependency configuration and AST DAG test.
+The external r10 test-lane exception authorizes the owner-local unit support here.
+
+Verified origin is `https://github.com/CharlieHerbst331/recoup.git`. Initial branch
+was clean `main`, tip `fc425ce` (owner acceptance documentation), preceded by
+`89675c0` (candidate contracts), then `a60dc8d` (initial commit). `git fetch origin`
+succeeded. Candidate `89675c0b6ac676fa28c3475f58134689b74c274c` exists as a commit.
+No required owned predecessor for 007-0. Discovered and retained prior owned 007-0
+implementation on `origin/007-0-rule-test-vectors`, actual tip
+`54076cb7160274db64f598698b359193bba41e40` (includes `d360422` vectors).
+Created `007-0-vectors-and-owned-test-support` from that tip, without merging,
+resetting or discarding work. Main's later documentation commit is not merged.
+
+Before implementation, both candidate ancestry and retained owned-tip ancestry
+passed `git merge-base --is-ancestor <sha> HEAD` (exit 0). The command
+`git diff --exit-code 89675c0b6ac676fa28c3475f58134689b74c274c HEAD -- recoup/contracts`
+also passed (exit 0). Candidate contracts remain unchanged.
+
+### Scope and acceptance evidence
+
+Preserved all 74 existing JSON vectors across 14 files (64 rule, 10 intake).
+Added contract-model factories and narrow clock/fact-set scripts in owned tests;
+reused shared ScriptedLLM. No production rules, policy, readiness, World, app or
+other later-step implementation was introduced. Engine instructions now match the
+external r10 harness/AGENTS-engine.md exactly (transient byte-equality check PASS).
+
+| 007-0 acceptance | Persistent evidence | Result |
+| --- | --- | --- |
+| JSON envelope, scalar/key shape and integer cents/rates | test_vector_envelope_and_scalar_vocabulary | PASS |
+| All reasons, each with missing facts; unique IDs | test_unique_ids_and_reason_coverage | PASS |
+| Typed DeductionLine/FactSet/LedgerEntry inputs, expected money invariants | test_rule_vector_contract_inputs_and_expected_money | PASS |
+| Every source/revision citation resolves using actual shared resolver | test_every_effective_fact_citation_resolves | PASS |
+| Contradictions, unauthorized amendments, gross prior credit, seven tolerance boundaries and hero D1/D2 snapshots | test_critical_expectations_are_present | PASS |
+| Typed, mutually exclusive U1/NP expectations and collection-only NP route | test_intake_expectations_are_typed_and_mutually_exclusive | PASS |
+| Confirmed OCR/vision facts use human-confirmed revisions and fact locators | test_confirmed_money_is_revision_with_fact_locator | PASS |
+| Independent fixture values and unreadable document without facts | test_factory_results_do_not_share_mutable_fields | PASS |
+| Script argument/order/consumption checks; unexpected methods raise | test_world_script_checks_arguments_order_and_consumption, test_wrong_arguments_and_unconsumed_script_fail | PASS |
+| Offline shared LLM script and exhaustion | test_shared_scripted_llm_stays_offline_and_exhausts | PASS |
+
+The inherited `negative_claimed` expectation is a case escalation, not an instance
+of RuleFinding: actual Verdict has no needs_human member (design/02 §3.2, §5.3).
+The data check preserves it separately without inventing an enum/model. Resolving
+its eventual engine/controller representation belongs to the later consumer step;
+no shared symbol/signature blocks the 007-0 factories.
+
+### Commands and results
+
+Used existing `/tmp/recoup-007-check` Python 3.11.18; installed no dependencies.
+No provider/network calls occur in tests. No paid APIs or external actions used.
+
+- Initial authored-check run: Ruff E731 on a lambda assignment; pytest 1 failed,
+  161 passed, with KeyError: 'expected_route' in the U1 data check. Corrected the
+  checks to use a def and the existing missing-reason expectation. No unrelated
+  baseline error occurred; this was test-support authoring, not a product bug fix.
+- `make check PYTHON=/tmp/recoup-007-check/bin/python`: exit 0, Ruff lint PASS,
+  Ruff format PASS (26 files), pytest **362 passed in 0.45s**.
+- `RECOUP_LLM=fake /tmp/recoup-007-check/bin/python -m pytest tests/engine -q`:
+  exit 0, **161 passed in 0.17s**.
+
+Final make check tail:
+
+```text
+tests/engine/test_vectors.py ........................................... [ 68%]
+........................................................................ [ 88%]
+...........................................                              [100%]
+============================= 362 passed in 0.45s ==============================
+```
+
+### Real integration acceptance (external design/04 §2–5)
+
+| Required eventual real check | Status | Missing provider |
+| --- | --- | --- |
+| Replay U1/NP and fixture fact/history/hash/versioning cases through real loader/app | BLOCKED | Charles SqliteWorld and recoup.app.build at G1 |
+| Replay prior-credit and hero evidence replacement through real persistence/cascade | BLOCKED | Charles real World transaction/cascade implementation at G2; actual engine derivation |
+| Execute the rule vectors through real composed engine | BLOCKED | Sonny rules/engine/factory and Charles composition at G3 |
+
+These are deferred integration requirements, not skipped tests or unit passes.
+No integration test is claimed PASS. Reviewer/Verifier acceptance of actual
+integration remains outstanding. The owner acceptance commit on main is distinct
+from the external bundle's baseline review/verification status.
+
+### Changed paths in this r10 session
+
+- recoup/engine/AGENTS.md
+- tests/engine/__init__.py
+- tests/engine/doubles.py
+- tests/engine/fixtures.py
+- tests/engine/test_doubles.py
+- tests/engine/test_vectors.py
+- tests/engine/vectors/README.md
+- progress/sonny/PROGRESS.md
+
+All changes are owned. Shared contracts, root documentation, build/dependency files
+and original JSON vectors are untouched. No push, merge or PR publication performed.
+
+DONE: 007-0 r10 unit-lane support and persistent data acceptance pass; existing vectors/commits retained; implementation tip recorded below.
+NEXT: Reviewer/Verifier review; real integration remains BLOCKED as enumerated. Stop this session; no 007-1 or 007-2 work.
+QUESTION: None for 007-0; missing integration providers remain explicit.
