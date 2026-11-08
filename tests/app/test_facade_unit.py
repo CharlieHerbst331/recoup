@@ -260,11 +260,11 @@ def test_due_today_runs_callback_without_advancing_clock(service):
     assert len(service.controller.calls) == 1
 
 
-def test_unwired_due_lookup_and_regression_gate_are_explicit(service):
+def test_unwired_due_lookup_and_missing_regression_fixtures_are_explicit(service, tmp_path):
     with pytest.raises(NotImplementedError, match="006-2B"):
         service.advance(to_next_due=True)
-    with pytest.raises(NotImplementedError, match="006-4"):
-        service.check_regression()
+    with pytest.raises(FileNotFoundError, match="Regression directory"):
+        service.check_regression(str(tmp_path / "missing"))
     assert service.controller.calls == []
 
 

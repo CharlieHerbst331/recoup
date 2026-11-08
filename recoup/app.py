@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 import os
+from collections import Counter
 from collections.abc import Callable
+from importlib.util import find_spec
 from pathlib import Path
 from typing import Literal
 from uuid import uuid4
@@ -21,9 +23,11 @@ from recoup.contracts.models import (
     FactRevision,
     LoadResult,
     Proposal,
+    ProposalKind,
     Receipt,
+    Verdict,
 )
-from recoup.contracts.oracle import StaticOutput
+from recoup.contracts.oracle import CaseOracle, StaticOutput
 
 
 class RecoupConfig(BaseModel):
@@ -90,7 +94,44 @@ class Recoup:
     def check_regression(
         self, cases_dir: str = "cases/regression"
     ) -> list[tuple[str, bool, list[str]]]:
-        raise NotImplementedError("Regression gate wiring awaits 006-4 fixtures and 006-5 CLI")
+        root = Path(cases_dir)
+        if not root.is_dir():
+            raise FileNotFoundError(f"Regression directory does not exist: {root}")
+        directories = sorted(path for path in root.iterdir() if path.is_dir())
+        if not directories:
+            raise FileNotFoundError(f"No regression case directories in {root}")
+        results = []
+        for directory in directories:
+            case_id = directory.name
+            service = None
+            try:
+                bundle = CaseBundle.model_validate_json((directory / "bundle.json").read_text())
+                case_id = bundle.case_id
+                service = build(self.config.model_copy(update={"db": ":memory:"}))
+                loaded = service.world.load_bundle(bundle, str(directory))
+                output = None
+                if loaded.status == "loaded":
+                    service.world.advance_to(bundle.static_day, release_events=False)
+                    service.run(bundle.case_id)
+                    output = service.static_output(bundle.case_id)
+                # Oracles never enter World, a controller, an LLM request or a tool session.
+                oracle = CaseOracle.model_validate_json((directory / "oracle.json").read_text())
+                errors = []
+                if oracle.case_id != bundle.case_id or loaded.case_id != bundle.case_id:
+                    errors.append("case_id mismatch")
+                if loaded.status != oracle.expected_status:
+                    errors.append(f"status: expected {oracle.expected_status}, got {loaded.status}")
+                if oracle.expected_status == "loaded" and output is not None:
+                    errors.extend(_compare_regression(service.world, output, oracle))
+                results.append((case_id, not errors, errors))
+            except Exception as exc:
+                results.append((case_id, False, [f"{type(exc).__name__}: {exc}"]))
+            finally:
+                if service is not None:
+                    close = getattr(service.world, "close", None)
+                    if close is not None:
+                        close()
+        return results
 
     def load(self, paths: list[str]) -> list[LoadResult]:
         bundles = []
@@ -181,23 +222,116 @@ class Recoup:
         return self._next_due_day()
 
 
+def _compare_regression(world: World, output: StaticOutput, oracle: CaseOracle) -> list[str]:
+    """Compare a runtime export with the gate oracle (design/02 §4.5, §8.1, §8.6)."""
+    errors = []
+    if output.case_id != oracle.case_id:
+        errors.append("output case_id mismatch")
+    actual = {line.line_id: line for line in output.lines}
+    expected = {line.line_id: line for line in oracle.lines}
+    if len(actual) != len(output.lines) or len(expected) != len(oracle.lines):
+        errors.append("duplicate line ids")
+    if actual.keys() != expected.keys():
+        errors.append(f"line ids: expected {sorted(expected)}, got {sorted(actual)}")
+    inventory = {row.evidence_id: row.doc_ref for row in world.history(oracle.case_id).evidence_all}
+    for line_id in sorted(expected.keys() & actual.keys()):
+        want, got = expected[line_id], actual[line_id]
+        if (got.verdict, got.valid_cents, got.disputed_cents) != (
+            want.verdict,
+            want.valid_cents,
+            want.disputed_cents,
+        ):
+            errors.append(f"{line_id}: verdict or cents mismatch")
+        if want.verdict == Verdict.needs_info and not set(want.missing).issubset(
+            output.missing.get(line_id, [])
+        ):
+            errors.append(f"{line_id}: missing items mismatch")
+        cited = set()
+        for citation in got.citations:
+            try:
+                world.resolve_citation(citation)
+            except Exception as exc:
+                errors.append(f"{line_id}: invalid citation: {exc}")
+            doc_ref = inventory.get(citation.evidence_id)
+            if doc_ref is None:
+                errors.append(f"{line_id}: unknown citation evidence")
+                continue
+            reference = f"{doc_ref}#{citation.locator}"
+            cited.add(reference)
+            if reference not in want.acceptable_refs and doc_ref not in want.acceptable_refs:
+                errors.append(f"{line_id}: unacceptable citation {reference}")
+        for required in want.required_refs:
+            if required not in cited and not any(ref.split("#", 1)[0] == required for ref in cited):
+                errors.append(f"{line_id}: missing required citation {required}")
+
+    def proposals(rows):
+        return Counter(
+            (row.kind.value, tuple(sorted(row.line_ids)), row.amount_cents) for row in rows
+        )
+
+    offered, required = proposals(output.proposals), proposals(oracle.proposals)
+    if required - offered:
+        errors.append("proposals mismatch")
+    monetary = {
+        ProposalKind.dispute.value,
+        ProposalKind.credit_memo.value,
+        ProposalKind.correction.value,
+        ProposalKind.counteroffer.value,
+    }
+    if any(kind in monetary or amount is not None for kind, _, amount in offered - required):
+        errors.append("extra money-moving proposal")
+    if any(row.kind in oracle.forbidden_kinds for row in output.proposals):
+        errors.append("forbidden proposal kind")
+    if output.notice_deadline != oracle.notice_deadline:
+        errors.append("notice_deadline mismatch")
+    items = {item.item_id: item.status for item in output.claim_items}
+    expected_item_ids = [
+        item.item_id for item in output.claim_items if item.item_id in oracle.claim_items
+    ]
+    if len(set(expected_item_ids)) != len(expected_item_ids):
+        errors.append("duplicate claim item ids")
+    if any(items.get(item_id) != status for item_id, status in oracle.claim_items.items()):
+        errors.append("claim_items mismatch")
+    return errors
+
+
 def build(config: RecoupConfig | None = None, controller: Controller | None = None) -> Recoup:
-    """G1 assembly with real SQLite and contract stub EngineParts (§4.5)."""
+    """Assemble §4.5 providers; absent engine packages retain the explicit G1 runtime."""
     from recoup.contracts.testing import NullController, ScriptedLLM, stub_parts
     from recoup.world.store import SqliteWorld
 
     config = config if config is not None else RecoupConfig.from_env()
-    if config.llm != "fake":
-        raise NotImplementedError("Replay/live assembly awaits 006-5; G1 uses contract stubs")
-    parts = stub_parts()
+    if find_spec("recoup.engine") is None:
+        if config.llm != "fake":
+            raise NotImplementedError(
+                "Replay/live require Sonny's recoup.engine.factory; "
+                "contract stubs support fake only"
+            )
+        parts = stub_parts()
+        selected_controller = controller if controller is not None else NullController()
+        llm = ScriptedLLM(())
+        provider = "contract-stubs"
+    else:
+        # Installed-provider errors must propagate; never hide them with a stub fallback.
+        from recoup.engine.factory import build_engine, get_llm, harness_controller
+
+        parts = build_engine(config)
+        if controller is None:
+            llm = get_llm(config)
+            selected_controller = harness_controller(parts, llm)
+        else:
+            selected_controller = controller
+            llm = ScriptedLLM(())
+        provider = "engine"
     world = SqliteWorld(config.db, ingestor=parts.ingestor, validator=parts.validator)
-    selected_controller = controller if controller is not None else NullController()
     world.attempt_controller = selected_controller.name
-    return Recoup(
+    service = Recoup(
         config,
         world,
         selected_controller,
         parts,
-        ScriptedLLM(()),
+        llm,
         next_due_day=world.next_due_day,
     )
+    service.runtime_provider = provider
+    return service
