@@ -141,3 +141,13 @@ The changed-file list is the same 17 files listed in the prior entry. Upstream f
 DONE: 007-0 data, exact engine instructions and acceptance evidence are ready; make check passed, 201 tests.
 NEXT: Publish PR "007-0: rule test vectors", then Reviewer → Verifier. Do not begin 007-1 before F0.
 QUESTION: None; no contract change was needed.
+
+### Publication
+
+PR: https://github.com/CharlieHerbst331/recoup/pull/1 — **007-0: rule test vectors**, targeting main.
+
+Final whitespace audit preserved the harness AGENTS.md's existing trailing blank line intentionally; `git -c core.whitespace=-blank-at-eof diff --check` passed. The exact instruction-copy assertion also passed. All 17 PR files are inside ownership; the original input bundle is untracked and excluded.
+
+DONE: Published PR #1 for 007-0; make check green (201 tests), data acceptance checks passed, and ownership audited.
+NEXT: Reviewer → Verifier; await F0 before starting 007-1. No next-step work started.
+QUESTION: None.
