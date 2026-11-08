@@ -1,0 +1,65 @@
+{
+  "case_id": "r07",
+  "expected_status": "loaded",
+  "lines": [
+    {
+      "line_id": "NP",
+      "verdict": "invalid",
+      "valid_cents": 0,
+      "disputed_cents": 3000000,
+      "required_refs": [
+        "POD#fields.signed"
+      ],
+      "acceptable_refs": [
+        "POD#fields.signed",
+        "INV",
+        "INV#fields.invoice_no",
+        "INV#fields.invoice_date",
+        "INV#fields.due_date",
+        "INV#fields.buyer_id",
+        "INV#fields.total_cents",
+        "INV#fields.line.1.sku",
+        "INV#fields.line.1.qty",
+        "INV#fields.line.1.unit_price_cents",
+        "POD",
+        "POD#fields.pod_no",
+        "POD#fields.delivered_date",
+        "POD#fields.received.SKU-8",
+        "COMPANY",
+        "COMPANY#fields.tolerance_cents",
+        "COMPANY#fields.follow_up_days",
+        "COMPANY#fields.authority_cents",
+        "COMPANY#fields.allowed_authority_roles",
+        "COMPANY#fields.amendment_precedence"
+      ],
+      "missing": []
+    }
+  ],
+  "proposals": [
+    {
+      "kind": "follow_up",
+      "line_ids": [
+        "NP"
+      ],
+      "amount_cents": null
+    }
+  ],
+  "forbidden_kinds": [
+    "dispute",
+    "credit_memo",
+    "claim_package"
+  ],
+  "notice_deadline": "2027-01-13",
+  "claim_items": {
+    "claim.notice_receipt": "missing",
+    "claim.waiting_period": "missing",
+    "claim.doc.1": "present",
+    "claim.doc.2": "present",
+    "claim.doc.3": "present",
+    "claim.doc.4": "present",
+    "claim.collection_history": "present",
+    "claim.disputed_portion": "present",
+    "claim.credit_limit": "restricted"
+  },
+  "oracle_sentinel": "ORACLE-ONLY-SYNTHETIC-r07-DO-NOT-EXPOSE"
+}

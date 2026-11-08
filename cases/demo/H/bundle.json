@@ -1,0 +1,258 @@
+{
+  "case_id": "H",
+  "title": "SYNTHETIC — Shortage and FALL26 promotion",
+  "seller": "Acme Foods Co.",
+  "buyer": "Northwind Grocers",
+  "currency": "USD",
+  "invoice_ref": "INV-1042",
+  "start_date": "2026-10-20",
+  "static_day": 0,
+  "policy_ref": "P-A",
+  "allowed_recipients": {
+    "mock_buyer_portal": [
+      "buyer-portal.invalid"
+    ],
+    "mock_erp": [
+      "erp.invalid"
+    ],
+    "mock_email": [
+      "ar@example.invalid",
+      "shipping@example.invalid",
+      "buyer@example.invalid"
+    ],
+    "mock_insurer": [
+      "insurer@example.invalid"
+    ]
+  },
+  "docs": [
+    {
+      "doc_ref": "INV",
+      "version": 1,
+      "kind": "invoice",
+      "title": "SYNTHETIC — INV-1042",
+      "file": null,
+      "text": "SYNTHETIC fixture; not a real transaction. ",
+      "fields": {
+        "invoice_no": "INV-1042",
+        "invoice_date": "2026-08-03",
+        "due_date": "2026-09-02",
+        "buyer_id": "NORTHWIND",
+        "total_cents": 4800000,
+        "line.1.sku": "SKU-1",
+        "line.1.qty": 400,
+        "line.1.unit_price_cents": 7800,
+        "line.2.sku": "SKU-2",
+        "line.2.qty": 200,
+        "line.2.unit_price_cents": 8400
+      },
+      "available_at_day": 0,
+      "held_by": null
+    },
+    {
+      "doc_ref": "PAY",
+      "version": 1,
+      "kind": "payment",
+      "title": "SYNTHETIC — Payment against INV-1042",
+      "file": null,
+      "text": "SYNTHETIC fixture; not a real transaction. ",
+      "fields": {
+        "invoice_no": "INV-1042",
+        "paid_cents": 4176000,
+        "paid_date": "2026-09-02",
+        "payment_ref": "PAY-INV-1042"
+      },
+      "available_at_day": 0,
+      "held_by": null
+    },
+    {
+      "doc_ref": "REM",
+      "version": 1,
+      "kind": "remittance",
+      "title": "SYNTHETIC — Remittance against INV-1042",
+      "file": null,
+      "text": "SYNTHETIC fixture; not a real transaction. ",
+      "fields": {
+        "invoice_no": "INV-1042",
+        "paid_cents": 4176000,
+        "ded.1.line_id": "D1",
+        "ded.1.reason": "shortage",
+        "ded.1.claimed_cents": 312000,
+        "ded.1.sku": "SKU-1",
+        "ded.1.qty": 40,
+        "ded.2.line_id": "D2",
+        "ded.2.reason": "promo_rebate",
+        "ded.2.claimed_cents": 312000,
+        "ded.2.ref": "FALL26"
+      },
+      "available_at_day": 0,
+      "held_by": null
+    },
+    {
+      "doc_ref": "TERMS",
+      "version": 1,
+      "kind": "contract",
+      "title": "SYNTHETIC — Sales terms",
+      "file": null,
+      "text": "SYNTHETIC fixture; not a real transaction. ",
+      "fields": {
+        "contract_id": "ACME-TERMS",
+        "effective_date": "2026-01-01",
+        "price.SKU-1_cents": 7800,
+        "price.SKU-2_cents": 8400,
+        "promo.FALL26.cap_cents": 180000,
+        "promo.FALL26.earned": true,
+        "damage_window_days": 7
+      },
+      "available_at_day": 0,
+      "held_by": null
+    },
+    {
+      "doc_ref": "BOL",
+      "version": 1,
+      "kind": "bol",
+      "title": "SYNTHETIC — Bill of lading",
+      "file": null,
+      "text": "SYNTHETIC fixture; not a real transaction. ",
+      "fields": {
+        "bol_no": "BOL-1042",
+        "ship_date": "2026-08-03",
+        "shipped.SKU-1": 400,
+        "shipped.SKU-2": 200
+      },
+      "available_at_day": 0,
+      "held_by": null
+    },
+    {
+      "doc_ref": "POD",
+      "version": 1,
+      "kind": "pod",
+      "title": "SYNTHETIC — Proof of delivery v1",
+      "file": null,
+      "text": "SYNTHETIC fixture; not a real transaction. ",
+      "fields": {
+        "pod_no": "POD-SYNTHETIC",
+        "delivered_date": "2026-08-05",
+        "signed": true,
+        "received.SKU-1": 400,
+        "received.SKU-2": 200
+      },
+      "available_at_day": 0,
+      "held_by": null
+    },
+    {
+      "doc_ref": "PROMO-EMAIL",
+      "version": 1,
+      "kind": "email",
+      "title": "SYNTHETIC — FALL26 promotion confirmation",
+      "file": null,
+      "text": "SYNTHETIC fixture; not a real transaction. FALL26 was earned, subject to the 180000-cent cap in the signed sales terms.",
+      "fields": {
+        "from": "buyer@example.invalid",
+        "to": "ar@example.invalid",
+        "sent_date": "2026-08-01"
+      },
+      "available_at_day": 0,
+      "held_by": null
+    },
+    {
+      "doc_ref": "COMPANY",
+      "version": 1,
+      "kind": "company_policy",
+      "title": "SYNTHETIC — Acme collection and authority policy",
+      "file": null,
+      "text": "SYNTHETIC fixture; not a real transaction. ",
+      "fields": {
+        "tolerance_cents": 0,
+        "follow_up_days": 14,
+        "authority_cents": 100000,
+        "allowed_authority_roles": "VP Sales,Finance Director",
+        "amendment_precedence": "latest_effective"
+      },
+      "available_at_day": 0,
+      "held_by": null
+    },
+    {
+      "doc_ref": "P-A",
+      "version": 1,
+      "kind": "insurance_policy",
+      "title": "SYNTHETIC — P-A trade credit policy",
+      "file": null,
+      "text": "SYNTHETIC fixture; not a real transaction. These are synthetic terms. Sending a notice does not establish coverage or claim eligibility.",
+      "fields": {
+        "policy_id": "P-A",
+        "covered_buyer.1": "NORTHWIND",
+        "covered_buyer.2": "REGRESSION-BUYER",
+        "credit_limit_cents": 10000000,
+        "period_start": "2026-01-01",
+        "period_end": "2026-12-31",
+        "mep_days_after_due": 60,
+        "notice_days_after_mep": 30,
+        "waiting_days_after_notice": 60,
+        "claim_doc.1": "invoice",
+        "claim_doc.2": "pod",
+        "claim_doc.3": "contract",
+        "claim_doc.4": "statement",
+        "disputed_debt_clause": "excluded_until_resolved",
+        "stop_shipment_after_mep": true,
+        "clause.applicability": "This synthetic policy applies to listed buyers and invoices within its stated period.",
+        "clause.mep": "The maximum extension period ends 60 days after the invoice due date.",
+        "clause.notice": "Notice must be made within 30 days after the maximum extension period ends.",
+        "clause.waiting_period": "The claim window opens 60 days after the notice receipt.",
+        "clause.claim_documents": "The package requires an invoice, signed POD, contract and statement of account.",
+        "clause.collection_history": "A follow-up receipt or readable collection note is required.",
+        "clause.credit_limit": "A balance above the stated credit limit is restricted in the checklist.",
+        "clause.disputed_debt": "Disputed debt is excluded until resolved.",
+        "clause.stop_shipment": "Stop further shipments after the maximum extension period ends.",
+        "exclusion.1": "disputed_debt"
+      },
+      "available_at_day": 0,
+      "held_by": null
+    }
+  ],
+  "events": [
+    {
+      "at_day": 3,
+      "type": "add_doc",
+      "doc": {
+        "doc_ref": "POD",
+        "version": 2,
+        "kind": "pod",
+        "title": "SYNTHETIC — Proof of delivery v2",
+        "file": null,
+        "text": "SYNTHETIC fixture; not a real transaction. ",
+        "fields": {
+          "pod_no": "POD-SYNTHETIC",
+          "delivered_date": "2026-08-05",
+          "signed": true,
+          "received.SKU-1": 360,
+          "received.SKU-2": 200,
+          "refused.SKU-1": 40,
+          "exception_note": "40 cs crushed, refused at dock"
+        },
+        "available_at_day": 0,
+        "held_by": null
+      }
+    },
+    {
+      "at_day": 3,
+      "type": "add_doc",
+      "doc": {
+        "doc_ref": "INSPECTION",
+        "version": 1,
+        "kind": "inspection",
+        "title": "SYNTHETIC — Dock inspection report",
+        "file": null,
+        "text": "SYNTHETIC fixture; not a real transaction. ",
+        "fields": {
+          "report_date": "2026-08-06",
+          "sku": "SKU-1",
+          "damaged_qty": 40,
+          "cause": "crushed at dock"
+        },
+        "available_at_day": 0,
+        "held_by": null
+      }
+    }
+  ],
+  "provenance": "synthetic"
+}

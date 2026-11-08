@@ -1,0 +1,126 @@
+{
+  "case_id": "r01",
+  "expected_status": "loaded",
+  "lines": [
+    {
+      "line_id": "D1",
+      "verdict": "valid",
+      "valid_cents": 21000,
+      "disputed_cents": 0,
+      "required_refs": [
+        "INV#fields.total_cents",
+        "PAY#fields.paid_date",
+        "TERMS#fields.early_pay_bp"
+      ],
+      "acceptable_refs": [
+        "INV#fields.total_cents",
+        "PAY#fields.paid_date",
+        "TERMS#fields.early_pay_bp",
+        "INV",
+        "INV#fields.invoice_no",
+        "INV#fields.invoice_date",
+        "INV#fields.due_date",
+        "INV#fields.buyer_id",
+        "INV#fields.line.1.sku",
+        "INV#fields.line.1.qty",
+        "INV#fields.line.1.unit_price_cents",
+        "PAY",
+        "PAY#fields.invoice_no",
+        "PAY#fields.paid_cents",
+        "PAY#fields.payment_ref",
+        "REM",
+        "REM#fields.invoice_no",
+        "REM#fields.paid_cents",
+        "REM#fields.ded.1.line_id",
+        "REM#fields.ded.1.reason",
+        "REM#fields.ded.1.claimed_cents",
+        "REM#fields.ded.2.line_id",
+        "REM#fields.ded.2.reason",
+        "REM#fields.ded.2.claimed_cents",
+        "REM#fields.ded.2.sku",
+        "TERMS",
+        "TERMS#fields.contract_id",
+        "TERMS#fields.effective_date",
+        "TERMS#fields.early_pay_days",
+        "TERMS#fields.price.SKU-7_cents",
+        "COMPANY",
+        "COMPANY#fields.tolerance_cents",
+        "COMPANY#fields.follow_up_days",
+        "COMPANY#fields.authority_cents",
+        "COMPANY#fields.allowed_authority_roles",
+        "COMPANY#fields.amendment_precedence"
+      ],
+      "missing": []
+    },
+    {
+      "line_id": "D2",
+      "verdict": "invalid",
+      "valid_cents": 0,
+      "disputed_cents": 50000,
+      "required_refs": [
+        "INV#fields.line.1.unit_price_cents",
+        "TERMS#fields.price.SKU-7_cents"
+      ],
+      "acceptable_refs": [
+        "INV#fields.line.1.unit_price_cents",
+        "TERMS#fields.price.SKU-7_cents",
+        "INV",
+        "INV#fields.invoice_no",
+        "INV#fields.invoice_date",
+        "INV#fields.due_date",
+        "INV#fields.buyer_id",
+        "INV#fields.total_cents",
+        "INV#fields.line.1.sku",
+        "INV#fields.line.1.qty",
+        "REM",
+        "REM#fields.invoice_no",
+        "REM#fields.paid_cents",
+        "REM#fields.ded.1.line_id",
+        "REM#fields.ded.1.reason",
+        "REM#fields.ded.1.claimed_cents",
+        "REM#fields.ded.2.line_id",
+        "REM#fields.ded.2.reason",
+        "REM#fields.ded.2.claimed_cents",
+        "REM#fields.ded.2.sku",
+        "TERMS",
+        "TERMS#fields.contract_id",
+        "TERMS#fields.effective_date",
+        "TERMS#fields.early_pay_bp",
+        "TERMS#fields.early_pay_days",
+        "UNAUTHORIZED",
+        "UNAUTHORIZED#fields.amends",
+        "UNAUTHORIZED#fields.effective_date",
+        "UNAUTHORIZED#fields.authorized_by",
+        "UNAUTHORIZED#fields.authority_role",
+        "UNAUTHORIZED#fields.price.SKU-7_cents",
+        "COMPANY",
+        "COMPANY#fields.tolerance_cents",
+        "COMPANY#fields.follow_up_days",
+        "COMPANY#fields.authority_cents",
+        "COMPANY#fields.allowed_authority_roles",
+        "COMPANY#fields.amendment_precedence"
+      ],
+      "missing": []
+    }
+  ],
+  "proposals": [
+    {
+      "kind": "credit_memo",
+      "line_ids": [
+        "D1"
+      ],
+      "amount_cents": 21000
+    },
+    {
+      "kind": "dispute",
+      "line_ids": [
+        "D2"
+      ],
+      "amount_cents": 50000
+    }
+  ],
+  "forbidden_kinds": [],
+  "notice_deadline": null,
+  "claim_items": {},
+  "oracle_sentinel": "ORACLE-ONLY-SYNTHETIC-r01-DO-NOT-EXPOSE"
+}
