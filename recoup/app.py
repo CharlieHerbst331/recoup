@@ -191,10 +191,12 @@ def build(config: RecoupConfig | None = None, controller: Controller | None = No
         raise NotImplementedError("Replay/live assembly awaits 006-5; G1 uses contract stubs")
     parts = stub_parts()
     world = SqliteWorld(config.db, ingestor=parts.ingestor, validator=parts.validator)
+    selected_controller = controller if controller is not None else NullController()
+    world.attempt_controller = selected_controller.name
     return Recoup(
         config,
         world,
-        controller if controller is not None else NullController(),
+        selected_controller,
         parts,
         ScriptedLLM(()),
         next_due_day=world.next_due_day,

@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import Iterator
 
 from recoup.contracts.bundle import BundleDoc, CaseBundle
-from recoup.contracts.interfaces import GateError, Ingestor, ProposalValidator
+from recoup.contracts.interfaces import GateError, Ingestor, ProposalValidator, TransientError
 from recoup.contracts.models import (
     ActionAttempt,
     Approval,
@@ -48,7 +48,7 @@ from recoup.contracts.resolve import resolve_citation
 from .clock import SimClock
 from .hashing import basis_hash as compute_basis_hash
 from .hashing import content_hash, digest
-from .ids import new_id
+from .ids import evidence_id, new_id
 from .ledger import balance, cents
 from .lines import deduction_lines
 
@@ -207,6 +207,7 @@ class SqliteWorld:
         return Proposal.model_validate_json(row[0])
 
     def _write_proposal(self, p: Proposal) -> None:
+        self._check_owner("proposals", p.proposal_id, p.case_id)
         self.db.execute(
             "INSERT INTO proposals(id,version,case_id,business_key,data) VALUES(?,?,?,?,?) "
             "ON CONFLICT(id,version) DO UPDATE SET data=excluded.data",
@@ -258,7 +259,7 @@ class SqliteWorld:
                 "INSERT INTO cases(id,data,status,insurance) VALUES(?,?,?,?)",
                 (bundle.case_id, bundle.model_dump_json(), CaseStatus.open.value, insurance.value),
             )
-            for doc in bundle.docs:
+            for doc in self._bundle_docs(bundle, bundle_dir):
                 if doc.held_by or doc.available_at_day > self.clock.day():
                     self._hold(bundle.case_id, doc, doc.available_at_day, bundle_dir)
                 else:
@@ -268,6 +269,44 @@ class SqliteWorld:
             self._event(bundle.case_id, "case_loaded", bundle.case_id)
             self.fact_set(bundle.case_id)
             return LoadResult(case_id=bundle.case_id, status="loaded")
+
+    def _bundle_docs(self, bundle: CaseBundle, bundle_dir: str | None) -> list[BundleDoc]:
+        docs = list(bundle.docs)
+        if not bundle.policy_ref or any(
+            doc.kind == "insurance_policy"
+            and (
+                doc.doc_ref == bundle.policy_ref or doc.fields.get("policy_id") == bundle.policy_ref
+            )
+            for doc in docs
+        ):
+            return docs
+        ref = bundle.policy_ref
+        if not ref or any(
+            character not in "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-"
+            for character in ref
+        ):
+            self._error("invalid_policy_ref", "Policy reference must be a simple file name")
+        roots = []
+        if bundle_dir:
+            directory = Path(bundle_dir).resolve()
+            roots = [
+                directory / "policies",
+                directory.parent / "policies",
+                directory.parent.parent / "policies",
+            ]
+        roots.append(Path.cwd() / "cases" / "policies")
+        path = next(
+            (root / f"{ref}.json" for root in roots if (root / f"{ref}.json").is_file()), None
+        )
+        if path is None:
+            self._error("missing_policy", ref)
+        policy = BundleDoc.model_validate_json(path.read_text(encoding="utf-8"))
+        if policy.kind != "insurance_policy" or not (
+            policy.doc_ref == ref or policy.fields.get("policy_id") == ref
+        ):
+            self._error("invalid_policy", ref)
+        docs.append(policy)
+        return docs
 
     def _hold(self, case_id: str, doc: BundleDoc, day: int, bundle_dir: str | None) -> None:
         self.db.execute(
@@ -285,6 +324,9 @@ class SqliteWorld:
             self._case(case_id)
             if doc.version < 1:
                 raise ValueError("Evidence version must be positive")
+            if doc.available_at_day > self.clock.day():
+                self._hold(case_id, doc, doc.available_at_day, bundle_dir)
+                return None
             output = self.ingestor.ingest(doc, bundle_dir)
             sha = content_hash(output.text, output.fields)
             prior = self.db.execute(
@@ -302,13 +344,13 @@ class SqliteWorld:
                 return None
             self.fact_set(case_id)
             row = Evidence(
-                evidence_id=f"EV-{case_id}-{doc.doc_ref}-v{doc.version}",
+                evidence_id=evidence_id(case_id, doc.doc_ref, doc.version),
                 case_id=case_id,
                 doc_ref=doc.doc_ref,
                 version=doc.version,
                 kind=doc.kind,
                 title=doc.title,
-                available_from=self.clock.at_day(doc.available_at_day),
+                available_from=self.clock.at_day(max(doc.available_at_day, self.clock.day())),
                 content_sha256=sha,
                 readable=output.readable,
                 method=output.method,
@@ -327,12 +369,17 @@ class SqliteWorld:
             )
             current = self.evidence(row.evidence_id)
             if current.active:
+                ledger_before = self.ledger_balance(case_id)
                 self._intake_ledger(current)
                 self._event(
                     case_id,
                     "evidence_superseded" if old_active else "evidence_added",
                     row.evidence_id,
                 )
+                ledger_changed = self.ledger_balance(case_id) != ledger_before
+                if ledger_changed:
+                    self._event(case_id, "ledger_changed", row.evidence_id)
+                self._cascade(case_id, ledger_changed=ledger_changed)
             self.fact_set(case_id)
             return current
 
@@ -436,6 +483,8 @@ class SqliteWorld:
             )
             self._save("facts", fact, fact.fact_id, row.case_id)
             self.fact_set(row.case_id)
+            self._event(row.case_id, "evidence_added", fact.fact_id)
+            self._cascade(row.case_id, revision={"kind": "fact", "id": fact.fact_id})
             return fact
 
     def confirm_field(self, evidence_id: str, key: str, approver: str) -> FactRevision:
@@ -487,8 +536,11 @@ class SqliteWorld:
                 citation=citation,
                 at=self.clock.now(),
             )
-            self._save("line_reasons", revision, new_id("R"), case_id)
+            revision_id = new_id("R")
+            self._save("line_reasons", revision, revision_id, case_id)
             self.fact_set(case_id)
+            self._event(case_id, "evidence_added", citation.evidence_id if citation else line_id)
+            self._cascade(case_id, revision={"kind": "line_reason", "id": revision_id})
             return revision
 
     @staticmethod
@@ -618,8 +670,14 @@ class SqliteWorld:
         self._case(case_id)
         return next((d for d in reversed(self._rows("decisions", case_id)) if d.current), None)
 
+    def _check_owner(self, table: str, identity: str, case_id: str) -> None:
+        row = self.db.execute(f"SELECT case_id FROM {table} WHERE id=?", (identity,)).fetchone()
+        if row and row[0] != case_id:
+            self._error("identity_conflict", f"{table} identity belongs to another case")
+
     def save_decision(self, d: Decision) -> Decision:
         with self.transaction():
+            self._check_owner("decisions", d.decision_id, d.case_id)
             if d.evidence_set_hash != self.evidence_set_hash(d.case_id):
                 self._error("stale_decision", "Decision basis is not current")
             previous = self._rows("decisions", d.case_id)
@@ -649,6 +707,7 @@ class SqliteWorld:
         return self._rows("readiness", case_id)
 
     def save_readiness(self, r: Readiness) -> Readiness:
+        self._check_owner("readiness", r.readiness_id, r.case_id)
         if r.evidence_set_hash != self.evidence_set_hash(r.case_id):
             self._error("stale_readiness", "Readiness basis is not current")
         self._save("readiness", r, r.readiness_id, r.case_id, replace=True)
@@ -672,6 +731,7 @@ class SqliteWorld:
     def save_proposal(self, p: Proposal) -> Proposal:
         with self.transaction():
             self._case(p.case_id)
+            self._check_owner("proposals", p.proposal_id, p.case_id)
             if any(r.business_key == p.business_key for r in self._rows("receipts", p.case_id)):
                 self._error("already_submitted", p.business_key)
             previous = [
@@ -694,6 +754,7 @@ class SqliteWorld:
                     old.evidence_set_hash,
                 ) == (sha, p.allocations, p.recipient, p.evidence_set_hash):
                     return old
+            self._current_binding(candidate)
             issues = self.validator.validate(self, candidate, "save")
             if issues:
                 raise GateError(issues)
@@ -769,6 +830,7 @@ class SqliteWorld:
             p = self._proposal(proposal_id, version)
             if p.status != ProposalStatus.proposed:
                 self._error("not_proposed", "Proposal is not awaiting approval")
+            self._current_binding(p)
             issues = self.validator.validate(self, p, "approve")
             if issues:
                 raise GateError(issues)
@@ -874,17 +936,32 @@ class SqliteWorld:
     def advance_to(self, day: int, release_events: bool = True) -> list[DomainEvent]:
         if type(day) is not int or day < self.clock.day():
             raise ValueError("Cannot reverse the simulated clock")
-        if release_events:
-            self._error(
-                "not_implemented", "Event release is implemented in 006-3; use release_events=False"
-            )
+        seq = self.db.execute("SELECT COALESCE(MAX(seq),0) FROM events").fetchone()[0]
         with self.transaction():
-            self.db.execute(
-                "INSERT INTO meta(key,value) VALUES('sim_day',?) "
-                "ON CONFLICT(key) DO UPDATE SET value=excluded.value",
-                (str(day),),
-            )
-        return []
+            # Including today releases pending events after a calendar-only advance.
+            for current_day in range(self.clock.day(), day + 1):
+                self.db.execute(
+                    "INSERT INTO meta(key,value) VALUES('sim_day',?) "
+                    "ON CONFLICT(key) DO UPDATE SET value=excluded.value",
+                    (str(current_day),),
+                )
+                if release_events:
+                    rows = self.db.execute(
+                        "SELECT * FROM held_docs WHERE released=0 AND system IS NULL "
+                        "AND day<=? ORDER BY day,rowid",
+                        (current_day,),
+                    ).fetchall()
+                    for row in rows:
+                        doc = BundleDoc.model_validate_json(row["data"])
+                        doc = doc.model_copy(
+                            update={"available_at_day": max(row["day"], doc.available_at_day)}
+                        )
+                        self.add_evidence(row["case_id"], doc, row["bundle_dir"])
+                        self.db.execute("UPDATE held_docs SET released=1 WHERE id=?", (row["id"],))
+        return [
+            DomainEvent.model_validate_json(row[0])
+            for row in self.db.execute("SELECT data FROM events WHERE seq>? ORDER BY seq", (seq,))
+        ]
 
     def pending_events(self) -> list[DomainEvent]:
         return [event for event in self._rows("events") if not event.processed]
@@ -956,11 +1033,364 @@ class SqliteWorld:
         self._case(a.case_id)
         self._save("attempts", a, a.attempt_id, a.case_id)
 
-    def attach_held(self, case_id: str, system: str, query: str) -> list[Evidence]:
-        self._error("not_implemented", "Held-document release is implemented in 006-3")
+    def _cascade(
+        self, case_id: str, *, ledger_changed: bool = False, revision: dict | None = None
+    ) -> None:
+        basis = self.evidence_set_hash(case_id)
+        balance_now = self.ledger_balance(case_id)
+        affected: dict[str, list[str]] = {
+            "decisions": [],
+            "readiness": [],
+            "proposals": [],
+            "approvals": [],
+            "due": [],
+        }
+        stale_bases = set()
+        for decision in self._rows("decisions", case_id):
+            if decision.current and decision.evidence_set_hash != basis:
+                self._save(
+                    "decisions",
+                    decision.model_copy(update={"current": False}),
+                    decision.decision_id,
+                    case_id,
+                    replace=True,
+                )
+                affected["decisions"].append(decision.decision_id)
+        for readiness in self._rows("readiness", case_id):
+            outdated = readiness.evidence_set_hash != basis or (
+                ledger_changed
+                and readiness.kind in {"notice", "claim"}
+                and readiness.balance_basis != balance_now
+            )
+            if outdated and readiness.status != "stale":
+                self._save(
+                    "readiness",
+                    readiness.model_copy(update={"status": "stale"}),
+                    readiness.readiness_id,
+                    case_id,
+                    replace=True,
+                )
+                affected["readiness"].append(readiness.readiness_id)
+                stale_bases.add(readiness.readiness_id)
+        for proposal in self._rows("proposals", case_id):
+            outdated = proposal.evidence_set_hash != basis or (
+                ledger_changed
+                and proposal.kind in {"insurer_notice", "claim_package"}
+                and proposal.balance_basis != balance_now
+            )
+            if outdated and proposal.status in {ProposalStatus.proposed, ProposalStatus.approved}:
+                self._write_proposal(proposal.model_copy(update={"status": ProposalStatus.stale}))
+                affected["proposals"].append(f"{proposal.proposal_id}:{proposal.version}")
+                stale_bases.add(proposal.proposal_id)
+                for approval in self._rows("approvals", case_id):
+                    if (
+                        approval.proposal_id == proposal.proposal_id
+                        and approval.proposal_version == proposal.version
+                        and not approval.void
+                    ):
+                        affected["approvals"].append(approval.approval_id)
+                self._void_approvals(proposal, "evidence changed")
+        for work in self._rows("due_work", case_id):
+            if work.status == "pending" and work.basis in stale_bases:
+                self.mark_due(work.due_id, "cancelled")
+                affected["due"].append(work.due_id)
+        reopened = self._case(case_id)["status"] == CaseStatus.closed.value
+        self.set_status(
+            case_id,
+            status=CaseStatus.investigating,
+            reason="reopened"
+            if reopened
+            else "evidence changed"
+            if not ledger_changed
+            else "ledger changed",
+        )
+        if reopened:
+            self._event(case_id, "reopened", case_id)
+        self.trace(
+            TraceEvent(
+                run_id="world",
+                case_id=case_id,
+                step=0,
+                sim_time=self.clock.now(),
+                kind="stale",
+                result_summary="reopened" if reopened else "basis changed",
+                args={"affected": affected, "revision": revision, "ledger_changed": ledger_changed},
+            )
+        )
 
-    def submit(self, proposal_id: str, version: int) -> Receipt:
-        self._error("not_implemented", "Mock submission is implemented in 006-3")
+    def attach_held(self, case_id: str, system: str, query: str) -> list[Evidence]:
+        self._case(case_id)
+        if self._consume_failure(system):
+            raise TransientError(f"MOCK {system} temporarily unavailable")
+        attached = []
+        with self.transaction():
+            for row in self.db.execute(
+                "SELECT * FROM held_docs WHERE case_id=? AND system=? AND day<=? "
+                "AND released=0 ORDER BY day,rowid",
+                (case_id, system, self.clock.day()),
+            ).fetchall():
+                doc = BundleDoc.model_validate_json(row["data"])
+                if query.casefold() not in f"{doc.title} {doc.doc_ref} {doc.text}".casefold():
+                    continue
+                doc = doc.model_copy(
+                    update={"available_at_day": max(row["day"], doc.available_at_day)}
+                )
+                evidence = self.add_evidence(case_id, doc, row["bundle_dir"])
+                self.db.execute("UPDATE held_docs SET released=1 WHERE id=?", (row["id"],))
+                if evidence is not None:
+                    attached.append(evidence)
+        return attached
+
+    def _consume_failure(self, target: str) -> bool:
+        key = f"fail_next:{target}"
+        exists = self.db.execute("SELECT 1 FROM meta WHERE key=?", (key,)).fetchone() is not None
+        if exists:
+            self.db.execute("DELETE FROM meta WHERE key=?", (key,))
+        return exists
 
     def fail_next(self, target: str) -> None:
-        self._error("not_implemented", "Mock failures are implemented in 006-3")
+        self.db.execute(
+            "INSERT INTO meta(key,value) VALUES(?, '1') ON CONFLICT(key) DO UPDATE SET value='1'",
+            (f"fail_next:{target}",),
+        )
+
+    @staticmethod
+    def _allocations(allocations: list[LineAmount]) -> dict[str, int]:
+        amounts: dict[str, int] = {}
+        for item in allocations:
+            if item.amount.cents < 0:
+                SqliteWorld._error("invalid_allocation", "Allocation must be nonnegative")
+            amounts[item.line_id] = amounts.get(item.line_id, 0) + item.amount.cents
+        return amounts
+
+    def _ledger_guard(self, p: Proposal) -> None:
+        amounts = self._allocations(p.allocations)
+        if p.kind not in {"credit_memo", "correction"}:
+            return
+        if p.amount is None or p.amount.cents != sum(amounts.values()):
+            self._error("amount_mismatch", "Amount must equal allocated cents")
+        if p.kind == "credit_memo":
+            decision = self.current_decision(p.case_id)
+            limits = (
+                {
+                    line.line_id: line.valid.cents
+                    for line in decision.lines
+                    if line.valid is not None
+                }
+                if decision
+                else {}
+            )
+            posted: dict[str, int] = {}
+            for entry in self.ledger(p.case_id):
+                if entry.kind == "credit_posted":
+                    posted[entry.line_id] = posted.get(entry.line_id, 0) + entry.amount.cents
+            for line_id, amount in amounts.items():
+                if line_id not in limits or posted.get(line_id, 0) + amount > limits[line_id]:
+                    self._error(
+                        "credit_exceeds_valid",
+                        f"Credit exceeds remaining valid amount for {line_id}",
+                    )
+            if sum(amounts.values()) > self.ledger_balance(p.case_id).cents:
+                self._error("credit_exceeds_balance", "Credit exceeds open balance")
+            return
+        row = self.db.execute(
+            "SELECT case_id,data FROM receipts WHERE id=?", (p.corrects_receipt_id,)
+        ).fetchone()
+        if row is None or row["case_id"] != p.case_id:
+            self._error(
+                "invalid_correction_receipt", "Correction needs a dispute receipt in the same case"
+            )
+        receipt = Receipt.model_validate_json(row["data"])
+        original = self._proposal(receipt.proposal_id, receipt.proposal_version)
+        if original.kind != "dispute":
+            self._error(
+                "invalid_correction_receipt", "Only a dispute or supplement can be corrected"
+            )
+        remaining = self._allocations(receipt.allocations)
+        for correction in self._rows("receipts", p.case_id):
+            if correction.corrects_receipt_id == receipt.receipt_id:
+                for line_id, amount in self._allocations(correction.allocations).items():
+                    remaining[line_id] = remaining.get(line_id, 0) - amount
+        for line_id, amount in amounts.items():
+            if amount > remaining.get(line_id, 0):
+                self._error(
+                    "correction_exceeds_receipt",
+                    f"Correction exceeds unwithdrawn receipt allocation for {line_id}",
+                )
+
+    def _current_binding(self, p: Proposal) -> None:
+        if p.evidence_set_hash != self.evidence_set_hash(p.case_id):
+            self._error("stale_evidence", "Proposal evidence basis is not current")
+        decision = self.current_decision(p.case_id)
+        if p.decision_id is not None or p.decision_version is not None:
+            if decision is None or (p.decision_id, p.decision_version) != (
+                decision.decision_id,
+                decision.version,
+            ):
+                self._error("stale_decision", "Proposal decision is not current")
+
+    def _receipt(self, p: Proposal, key: str) -> Receipt:
+        prefix = {
+            "dispute": "DISP",
+            "credit_memo": "CM",
+            "info_request": "MSG",
+            "follow_up": "MSG",
+            "insurer_notice": "INS",
+            "claim_package": "CLM",
+            "correction": "CORR",
+            "counteroffer": "DISP",
+        }[p.kind]
+        sequence_key = f"receipt_seq:{prefix}"
+        previous = self.db.execute("SELECT value FROM meta WHERE key=?", (sequence_key,)).fetchone()
+        number = int(previous[0]) + 1 if previous else 1
+        self.db.execute(
+            "INSERT INTO meta(key,value) VALUES(?,?) "
+            "ON CONFLICT(key) DO UPDATE SET value=excluded.value",
+            (sequence_key, str(number)),
+        )
+        receipt = Receipt(
+            receipt_id=f"MOCK-{prefix}-{number:04}",
+            proposal_id=p.proposal_id,
+            proposal_version=p.version,
+            business_key=p.business_key,
+            idempotency_key=key,
+            target=p.target,
+            amount=p.amount,
+            allocations=p.allocations,
+            corrects_receipt_id=p.corrects_receipt_id,
+            at=self.clock.now(),
+        )
+        self.db.execute(
+            "INSERT INTO receipts(id,case_id,business_key,idempotency_key,data) VALUES(?,?,?,?,?)",
+            (receipt.receipt_id, p.case_id, p.business_key, key, receipt.model_dump_json()),
+        )
+        self._write_proposal(p.model_copy(update={"status": ProposalStatus.submitted_mock}))
+        self._event(p.case_id, "receipt_issued", receipt.receipt_id)
+        if p.kind == "credit_memo":
+            for line_id, amount in self._allocations(p.allocations).items():
+                entry = LedgerEntry(
+                    entry_id=new_id("L"),
+                    case_id=p.case_id,
+                    kind="credit_posted",
+                    amount=Money(cents=amount),
+                    line_id=line_id,
+                    source=receipt.receipt_id,
+                    at=self.clock.now(),
+                )
+                self._save("ledger", entry, entry.entry_id, p.case_id)
+            self._event(p.case_id, "ledger_changed", receipt.receipt_id)
+            self._cascade(p.case_id, ledger_changed=True)
+        return receipt
+
+    def submit(self, proposal_id: str, version: int) -> Receipt:
+        p = None
+        key = digest(f"{proposal_id}:{version}:unknown")
+        consumed_failure = False
+        try:
+            with self.transaction():
+                p = self._proposal(proposal_id, version)
+                amount = p.amount.cents if p.amount is not None else None
+                key = digest(
+                    f"{p.business_key}:{p.version}:{p.draft_sha256}:{amount}:{p.recipient}"
+                )
+                replay = self.db.execute(
+                    "SELECT data FROM receipts WHERE idempotency_key=?", (key,)
+                ).fetchone()
+                if replay:
+                    receipt = Receipt.model_validate_json(replay[0])
+                    outcome = "idempotent_return"
+                else:
+                    if self.db.execute(
+                        "SELECT 1 FROM receipts WHERE business_key=?", (p.business_key,)
+                    ).fetchone():
+                        self._error("already_submitted", p.business_key)
+                    if p.status != ProposalStatus.approved:
+                        self._error("not_approved", "Proposal must be approved")
+                    self._current_binding(p)
+                    matching = any(
+                        a.proposal_id == p.proposal_id
+                        and a.proposal_version == p.version
+                        and a.approved
+                        and not a.void
+                        and (
+                            a.recipient,
+                            a.amount,
+                            a.draft_sha256,
+                            a.evidence_set_hash,
+                            a.decision_version,
+                        )
+                        == (
+                            p.recipient,
+                            p.amount,
+                            p.draft_sha256,
+                            p.evidence_set_hash,
+                            p.decision_version,
+                        )
+                        for a in self._rows("approvals", p.case_id)
+                    )
+                    if not matching:
+                        self._error("approval_mismatch", "No matching scoped approval")
+                    issues = self.validator.validate(self, p, "submit")
+                    if issues:
+                        raise GateError(issues)
+                    self._ledger_guard(p)
+                    consumed_failure = self._consume_failure(p.target.value)
+                    if consumed_failure:
+                        raise TransientError(f"MOCK {p.target.value} temporarily unavailable")
+                    receipt = self._receipt(p, key)
+                    outcome = "receipt"
+                self._submit_attempt(p, proposal_id, version, key, outcome, receipt.receipt_id, [])
+                return receipt
+        except (GateError, TransientError) as exc:
+            with self.transaction():
+                if consumed_failure:
+                    self._consume_failure(p.target.value)
+                self._submit_attempt(
+                    p,
+                    proposal_id,
+                    version,
+                    key,
+                    "gate_rejected" if isinstance(exc, GateError) else "transient_error",
+                    None,
+                    exc.issues if isinstance(exc, GateError) else [],
+                )
+            raise
+        except Exception:
+            with self.transaction():
+                self._submit_attempt(
+                    p,
+                    proposal_id,
+                    version,
+                    key,
+                    "transient_error",
+                    None,
+                    [GateIssue(code="transaction_failed", message="Mock action rolled back")],
+                )
+            raise
+
+    def _submit_attempt(
+        self,
+        p: Proposal | None,
+        proposal_id: str,
+        version: int,
+        key: str,
+        outcome: str,
+        receipt_id: str | None,
+        issues: list[GateIssue],
+    ) -> None:
+        known = self.db.execute(
+            "SELECT case_id FROM proposals WHERE id=? LIMIT 1", (proposal_id,)
+        ).fetchone()
+        attempt = ActionAttempt(
+            attempt_id=new_id("ATT"),
+            case_id=p.case_id if p else known[0] if known else "__unknown__",
+            controller=getattr(self, "attempt_controller", ""),
+            proposal_id=proposal_id,
+            version=version,
+            idempotency_key=key,
+            outcome=outcome,
+            receipt_id=receipt_id,
+            issues=issues,
+            at=self.clock.now(),
+        )
+        self._save("attempts", attempt, attempt.attempt_id, attempt.case_id)

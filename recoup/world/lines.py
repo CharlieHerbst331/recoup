@@ -54,14 +54,26 @@ def deduction_lines(
             result[line_id] = line
     paid = sum(e.amount.cents for e in ledger if e.kind == "payment")
     has_payment = any(e.kind == "payment" for e in ledger)
-    gap = balance(ledger).cents - sum(line.claimed.cents for line in result.values())
+    prior_sources = {doc.doc_ref for doc in evidence if doc.kind == "credit_memo"}
+    intake_balance = sum(
+        entry.amount.cents * (1 if entry.kind == "invoice" else -1)
+        for entry in ledger
+        if entry.kind != "credit_posted" or entry.source in prior_sources
+    )
+    gap = intake_balance - sum(line.claimed.cents for line in result.values())
     if (has_payment or result) and gap > tolerance:
         result["U1"] = DeductionLine(
             line_id="U1", reason=DeductionReason.unexplained_short_pay, claimed=Money(cents=gap)
         )
-    elif paid == 0 and not result and due_date is not None and now > due_date and gap > 0:
+    elif (
+        paid == 0
+        and not result
+        and due_date is not None
+        and now > due_date
+        and balance(ledger).cents > 0
+    ):
         result["NP"] = DeductionLine(
-            line_id="NP", reason=DeductionReason.nonpayment, claimed=Money(cents=gap)
+            line_id="NP", reason=DeductionReason.nonpayment, claimed=balance(ledger)
         )
     for revision in reasons:
         if revision.line_id in result:
