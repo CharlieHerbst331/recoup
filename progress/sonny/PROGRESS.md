@@ -355,3 +355,22 @@ remains outstanding. The actual World/app files are absent in this checkout.
 DONE: 007-1 independent rules and tests implemented; make check green; 007-0 preserved.
 NEXT: Resolve documented consumer seams and run real G1/G2/G3 integration when providers exist; stop this session, no 007-2.
 QUESTION: Charles to resolve the escalation/legal/email-classification consumer seams in CONTRACT_REQUEST.md; no shared changes made.
+
+### Actual 007-1 implementation tip and final verification
+
+Branch: `007-1-rules`.
+Implementation tip: `d8d9e83b7c00433209574094af7317916c5b6904`.
+The next bookkeeping commit records this actual SHA without changing implementation.
+
+Final `make check PYTHON=/tmp/recoup-007-check/bin/python`: exit 0, Ruff lint and
+format PASS, **439 passed in 0.51s**. Final owned command
+`RECOUP_LLM=fake /tmp/recoup-007-check/bin/python -m pytest tests/engine -q`:
+exit 0, **238 passed in 0.17s** (77 rule tests, 161 retained 007-0 tests).
+`git diff --check`: PASS. Final byte-preservation diffs for all 007-0 fixtures,
+test support and tests, and candidate shared contracts: exit 0. Changed paths are
+exactly the four listed above. No failing tests remain; integration is BLOCKED,
+not passed or silently skipped.
+
+DONE: Committed 007-1 implementation d8d9e83b7c00433209574094af7317916c5b6904; checks pass and all required predecessor commits remain ancestors.
+NEXT: Stop; no 007-2, push, merge, PR publication or external action performed.
+QUESTION: Remaining real providers and candidate consumer seams are documented above and in CONTRACT_REQUEST.md.
