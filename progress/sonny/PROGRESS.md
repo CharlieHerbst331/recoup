@@ -268,3 +268,90 @@ retain this tip (and its owned ancestors), per external design/04 §5.
 DONE: Recorded actual 007-0 implementation tip 5be383e8a6dedb36d3dd6f79854685202ab50af5.
 NEXT: Stop; real integration and independent review/verification remain outstanding.
 QUESTION: None for the authorized 007-0 unit-lane scope.
+
+## 007-1 r10 — 2026-11-08 (America/Los_Angeles)
+
+Read the external r10 handoff prompt 007-1, design/04 §1–5, spec 007 step 1,
+design/02 §2, §3.7, §5.3, repo root/engine instructions, docs index, actual
+candidate models/money/resolver and retained 007-0 support. Applied the explicit
+external r10 unit-lane exception without modifying root/docs instructions.
+
+### Predecessor preservation
+
+Initial clean branch: `007-0-vectors-and-owned-test-support`, HEAD
+`e9fa60b` (007-0 tip-record bookkeeping), following implementation
+`5be383e8a6dedb36d3dd6f79854685202ab50af5`, bookkeeping `54076cb`, vectors
+`d360422`, candidate `89675c0b6ac676fa28c3475f58134689b74c274c`.
+Resolved the required 007-0 implementation SHA from this progress file, not from
+an assumed main tip. Before implementation these commands all exited 0:
+
+- `git merge-base --is-ancestor 89675c0b6ac676fa28c3475f58134689b74c274c HEAD`
+- `git merge-base --is-ancestor 5be383e8a6dedb36d3dd6f79854685202ab50af5 HEAD`
+- `git merge-base --is-ancestor 54076cb7160274db64f598698b359193bba41e40 HEAD`
+- `git diff --exit-code 5be383e HEAD -- tests/engine`
+- `git diff --exit-code 89675c0 HEAD -- recoup/contracts`
+
+Created `007-1-rules` from that intact descendant (`git switch -c`), then normal
+`git fetch origin` succeeded. No reset, rebase, merge, push or work loss. All
+14 original JSON files, 74 vectors (64 rules / 10 intake), and 007-0 support
+remain unchanged. Intake execution belongs to Charles's loader, not this step.
+
+### Implementation and acceptance
+
+Added pure `run_rules` for all nine reasons, using shared types and Money helpers.
+No World/app dependency, network, paid API, new dependencies or external action.
+References for business semantics remain design/02 §3.7 and §5.3.
+
+| Acceptance | Persistent test | Result |
+| --- | --- | --- |
+| Every 007-0 rule vector, boundaries, amendments, damage windows, returns inventory, hero snapshots, flags, money/verdict invariants | test_every_rule_vector (64 vectors) | PASS |
+| Confirmed origin=fact money, exact supplied citation, shared resolver | test_confirmed_fact_only_money_and_citation (OCR/vision) | PASS |
+| Legal readable vs absent/unreadable inventory | test_legal_authority_inventory | PASS for explicit pure guard; automatic consumer routing unresolved |
+| Gross valid/disputed independent of prior credit | test_prior_credits_never_reduce_gross_rule_amounts | PASS |
+| Duplicate ref, remittance mismatch, claimed exceeds total flags | test_duplicate_and_math_flags, test_claim_exceeds_line_total_flag | PASS |
+| No case-ID branching | test_case_identity_does_not_affect_rules | PASS |
+| Zero without facts, U1 missing reason without invoice | test_zero_claim_needs_no_facts, test_u1_sku_does_not_require_invoice_to_request_reason | PASS |
+| Authorized email override, order-independent result | test_authorized_email_amendment_and_order_independence | PASS |
+| NP invalid and collection-only action family | test_every_rule_vector[np_balance_owed] | PASS for pure rule/action selector; actual proposal later |
+| NP with classified buyer dispute | test_nonpayment_with_classified_buyer_dispute_requires_info | PASS for supplied classification; consumer encoding unresolved |
+
+`NeedsHumanError` is a local exception, not a copied/new contract model. Negative
+claims abort evaluation before any findings are returned. Legal guard is explicit;
+no undocumented legal trigger is guessed. See CONTRACT_REQUEST.md for exact
+consumer seams requiring Charles's decision. No 007-2 implementation was started.
+
+### Commands/results and failures resolved
+
+- First rule-test run: 70 passed / 2 failed, both test-authoring errors calling
+  the shared resolver with wrong argument order and expecting a nonexistent
+  `.valid` result. Read actual resolver; corrected to its scalar-returning API.
+- Added edge regression tests: 74 passed / 3 failed (zero claim with no facts,
+  U1 SKU without invoice, input-order-dependent citations). Fixed rule evaluation
+  ordering and deterministic fact ordering; repeated run: **77 passed**.
+- Initial Ruff authoring errors were line length/import formatting; corrected
+  using existing Ruff. No baseline failures or hidden skips.
+- `make check PYTHON=/tmp/recoup-007-check/bin/python`: exit 0; Ruff lint PASS,
+  Ruff format PASS (28 files), pytest **439 passed in 0.46s**.
+- Final owned tests/checks are recorded with the implementation-tip entry below.
+
+### Real integration acceptance
+
+| Required actual integration | Status | Missing provider |
+| --- | --- | --- |
+| Replay rule vectors/returns document status/confirmed revisions against actual loaded FactSets | BLOCKED | Charles real SqliteWorld and recoup.app.build at G1 |
+| Gross prior-credit basis and hero evidence replacement preserve receipts and ledger | BLOCKED | Charles transaction/cascade World at G2, later actual derivation |
+| NP produces approved collection-only proposal and escalations become actual case status | BLOCKED | Actual engine/derivation/factory at G3 plus Charles composition; candidate questions above |
+
+No unit double is integration proof. Reviewer/Verifier real integration acceptance
+remains outstanding. The actual World/app files are absent in this checkout.
+
+### Changed files (007-1 only)
+
+- recoup/engine/rules.py
+- tests/engine/test_rules.py
+- progress/sonny/CONTRACT_REQUEST.md
+- progress/sonny/PROGRESS.md
+
+DONE: 007-1 independent rules and tests implemented; make check green; 007-0 preserved.
+NEXT: Resolve documented consumer seams and run real G1/G2/G3 integration when providers exist; stop this session, no 007-2.
+QUESTION: Charles to resolve the escalation/legal/email-classification consumer seams in CONTRACT_REQUEST.md; no shared changes made.
