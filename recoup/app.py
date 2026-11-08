@@ -182,11 +182,7 @@ class Recoup:
 
 
 def build(config: RecoupConfig | None = None, controller: Controller | None = None) -> Recoup:
-    """G1 stub assembly; importing this module does not require a production World.
-
-    The real provider belongs to 006-2B. A missing/broken provider propagates its
-    import error; no substitute World or engine factory is installed here.
-    """
+    """G1 assembly with real SQLite and contract stub EngineParts (§4.5)."""
     from recoup.contracts.testing import NullController, ScriptedLLM, stub_parts
     from recoup.world.store import SqliteWorld
 
@@ -201,4 +197,5 @@ def build(config: RecoupConfig | None = None, controller: Controller | None = No
         controller if controller is not None else NullController(),
         parts,
         ScriptedLLM(()),
+        next_due_day=world.next_due_day,
     )
