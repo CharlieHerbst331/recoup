@@ -504,3 +504,129 @@ The working tree was clean after the implementation commit. Required candidate,
 DONE: Committed 007-2 implementation b47813d6e4370abe0c907fd2606471ba85e5afee; make check and all engine tests pass.
 NEXT: Stop this session; real integration and raw-citation boundary acceptance remain BLOCKED as recorded above.
 QUESTION: Request #4 and prior consumer questions await Charles; no further independent 007-2 work identified without that resolution.
+
+## 007-3 r10 — 2026-11-08 (America/Los_Angeles)
+
+Read root/engine instructions, docs index, spec 007 step 3, design/02 §3.4–3.8,
+§5.4–5.6 and §8.1, the referenced design/01 §10 hero example, and the downloaded
+r10 handoff/design/04 §1–5. Applied its explicit owned unit-lane exception.
+No other owner paths, dependencies, shared models or prior implementations changed.
+
+Started from clean `007-2-policy-and-readiness`, HEAD `36b9d74`.
+The candidate `89675c0b6ac676fa28c3475f58134689b74c274c`, actual 007-1 tip
+`d8d9e83b7c00433209574094af7317916c5b6904`, and actual 007-2 tip
+`b47813d6e4370abe0c907fd2606471ba85e5afee` all passed
+`git merge-base --is-ancestor <SHA> HEAD` (exit 0). Created
+`007-3-tools-gates-derivation` on that intact descendant. No reset, rebase,
+merge, push, PR publication, network/model call or external action occurred.
+
+### Independent implementation and acceptance
+
+Added `tools.py` with the case-bound ToolSessionFactory/ToolSession over the
+actual shared registry, validated quoted fact extraction, code-owned decisions,
+policy/readiness adapters, drafting, scheduling, approval requests, completion
+checks and full tool-envelope traces. Product schemas exclude bench tools.
+Added `derive.py` and `gates.py`; their semantics refer to design/02 §3.8,
+§5.4–5.6. Static export uses §8.1 and current-clock claim readiness.
+
+| 007-3 acceptance | Independent test evidence | Result |
+| --- | --- | --- |
+| Quoted fact accepted; fabrication, wrong key/evidence and empty/invalid quote rejected | test_propose_fact_quote_validation_and_schema, test_fact_rejects_invalid_key_or_quote | PASS |
+| Dollar/cents extraction and OCR/vision trust | test_money_fact_dollars_or_cents, test_fact_preserves_extraction_trust, test_quote_sign_does_not_fabricate_positive_money | PASS |
+| Superseded citation rejected and case scoping | test_superseded_fact_and_cross_case_citations_rejected | PASS |
+| Excessive edited credit and unsupported edited dispute at save/approve/submit; lower edit permitted | test_edited_credit_and_dispute_rechecked_at_all_stages | PASS |
+| Assertion fail / caveat / cited quote / factual cash statement | test_assertion_check_rejects_affirmative_outcomes, test_assertion_check_passes_caveats_cited_quotes_and_ledger | PASS |
+| Assertion scope and neutral review requests | test_assertion_negation_scope_regressions, test_assertion_neutral_requests_and_post_target_negation, test_uncited_policy_quote_does_not_bypass_assertions | PASS |
+| Hero correction + incremental credit; no repost; approved-unsent variant | test_hero_correction_incremental_credit_and_no_repost, test_hero_approved_unsent_needs_no_correction | PASS |
+| Receipt allocation and correction/supplement sequence keys | test_receipt_level_corrections_newest_first_and_sequences | PASS |
+| Per-line readiness isolation | test_per_line_readiness_does_not_block_other_line | PASS |
+| Exact readiness tool errors | test_readiness_argument_errors (4 cases) | PASS |
+| Static claim checklist export, no policy → empty | test_static_output_claim_items_at_evaluation_clock | PASS |
+| Proven verdict/money cannot be supplied by model | test_tool_decision_never_accepts_model_verdict_or_money, test_gate_independently_rejects_forged_decision_money | PASS |
+| Gate raw-resolution and trust boundary | test_gate_resolves_rule_citations_even_when_draft_omits_them, test_unconfirmed_money_cannot_enter_credit_gate | PASS with actual shared resolver and owned raw fixtures |
+| Notice balance and claim save/approve vs submit gates | test_notice_and_claim_gate_lifecycle_and_no_loss_amount | PASS |
+| Other tool routing, policy answers, no automatic approval, scope/limits, schedule/end gates | test_unknown_and_bench_tools_rejected_and_no_automatic_approval, test_read_search_list_scope_and_limits, test_exclusion_tool_preserves_distinct_answers, test_schedule_and_end_gate, test_missing_plan_and_product_end_after_proposals, test_followup_completion_is_bound_to_latest_outbound_receipt | PASS |
+| Target/recipient/hash/duplicate/amount and stale/overcredit checks | test_gate_target_recipient_hash_duplicates_and_amounts, test_derivation_overcredit_and_stale_decision_fail_closed | PASS |
+
+`ToolWorld` is narrow owned unit support using actual contract records and the
+shared resolver. Its `record` installs explicit receipt fixtures; it is not a
+submit implementation, transaction system, or persistence proof. No tests claim
+otherwise. The validator re-resolves backing citations through the World port;
+request #4's real FactSet producer/pure-function boundary remains awaiting Charles
+and real-provider verification. Earlier legal/email consumer questions remain
+unchanged. The assertion check is deterministic and phrase-based; the listed
+language cases are verified, not arbitrary natural-language classification.
+
+### Commands, failures and regressions
+
+Used existing `/tmp/recoup-007-check` Python 3.11.18; installed nothing.
+Initial authoring run: 33 passed / 10 failed. Seven failures came from test
+fixtures bypassing enum validation and incorrect expected receipt ordering or
+waiting-period status; corrected typed inputs/expectations. A real assertion-scope
+failure allowed unrelated negation to mask an affirmative outcome; fixed it.
+The signed-price regression initially accepted positive cents from `-$78.00`;
+fixed value matching. Follow-on assertion regressions had 5 failures / 50 passes:
+`not only`, unrelated `no delay`, `claim is approved`, and neutral review wording.
+All now pass after scoping negation and neutral requests. No baseline failure
+was hidden. Existing Ruff fixed authored formatting/import issues.
+
+Final commands (all exit 0):
+
+- `make check PYTHON=/tmp/recoup-007-check/bin/python`: Ruff lint PASS;
+  Ruff format PASS (37 files); **527 passed, 12 skipped in 1.05s**.
+- `RECOUP_LLM=fake /tmp/recoup-007-check/bin/python -m pytest tests/engine -q -rs`:
+  **326 passed, 12 skipped in 0.66s** (57 new unit checks; 269 predecessors).
+- New unit module separately: **57 passed in 0.23s**.
+- `git diff --check`: PASS.
+- `git diff --exit-code 36b9d74 --` all contracts, prior engine files, previous
+  fixtures/doubles/tests/vectors: PASS; predecessors preserved byte-for-byte.
+
+Final make check tail:
+
+```text
+tests/engine/test_vectors.py ........................................... [ 78%]
+........................................................................ [ 92%]
+...........................................                              [100%]
+======================= 527 passed, 12 skipped in 1.05s ========================
+```
+
+### Real integration acceptance — all BLOCKED, none PASS
+
+Separate `test_007_3_integration.py` defers the allowed `recoup.app` import to its
+fixture, obtains `build(RecoupConfig(db=":memory:"), controller=NullController()).world`,
+and uses actual World reads/writes/approvals/receipts when available. Only absence
+of `recoup.app` causes explicit per-case skips; installed-provider errors will fail.
+Each skipped case states `BLOCKED G1/G2: recoup.app.build and real SqliteWorld are absent`.
+
+| Real integration test | Cases | Status / missing provider |
+| --- | --- | --- |
+| test_real_propose_fact_and_fabrication | 1 | BLOCKED G1 app-built SqliteWorld/loader/facts |
+| test_real_superseded_citation | 1 | BLOCKED G1/G2 actual evidence supersession |
+| test_real_edited_allocations_rejected | 2 | BLOCKED G1/G2 real reads and engine validator port |
+| test_real_assertion_gate | 4 | BLOCKED G1 real World inputs |
+| test_real_hero_credit_correction_no_repost | 1 | BLOCKED G2 actual approval/submit/ledger/cascade |
+| test_real_receipt_correction_allocation | 1 | BLOCKED G2 actual receipt accounting and versions |
+| test_real_readiness_errors_and_isolation | 1 | BLOCKED G1/G2 loaded facts and supersession |
+| test_real_static_claim_items | 1 | BLOCKED G1 actual loader and current-clock FactSet |
+
+The integration module calls the engine validator explicitly against the real
+World at each stage. Automatic World invocation of the actual Sonny validator
+also requires Charles's composition with EngineParts at G3 (007-4 factory is the
+next owned step); stub PassValidator is not finance-safety proof. Real transaction,
+restart, concurrent-submit, and staleness enforcement cannot be certified here.
+Reviewer/Verifier real integration acceptance remains outstanding. Green with
+these twelve skips is independent completion only, not integrated acceptance.
+
+### Changed files (007-3 only)
+
+- recoup/engine/derive.py
+- recoup/engine/gates.py
+- recoup/engine/tools.py
+- tests/engine/tool_support.py
+- tests/engine/test_tools_gates_derive.py
+- tests/engine/test_007_3_integration.py
+- progress/sonny/PROGRESS.md
+
+DONE: Implemented independent 007-3 tools/gates/derivation; 57 new checks pass and make check is green with twelve explicitly BLOCKED integration cases.
+NEXT: Run real integration when G1/G2 providers exist, then actual validator composition at G3; stop this session without starting 007-4.
+QUESTION: No new contract request; prior consumer questions and real-provider acceptance remain outstanding.
