@@ -1,0 +1,438 @@
+{
+  "fixture_format": "sonny-rule-vectors-v1",
+  "provenance": "SYNTHETIC",
+  "stage": "run_rules",
+  "vectors": [
+    {
+      "id": "late_after_grace",
+      "reference": "design/02 \u00a73.7; \u00a75.3",
+      "input": {
+        "line": {
+          "line_id": "D1",
+          "reason": "late_delivery",
+          "claimed_cents": 10000
+        },
+        "documents": [
+          {
+            "id": "invoice",
+            "kind": "invoice",
+            "fields": {
+              "invoice_no": "INV-SYNTHETIC",
+              "invoice_date": "2026-08-03",
+              "due_date": "2026-09-02",
+              "total_cents": 100000,
+              "line.1.sku": "SKU-1",
+              "line.1.qty": 10,
+              "line.1.unit_price_cents": 1000,
+              "line.2.sku": "SKU-2",
+              "line.2.qty": 90,
+              "line.2.unit_price_cents": 1000
+            }
+          },
+          {
+            "id": "company_policy",
+            "kind": "company_policy",
+            "fields": {
+              "tolerance_cents": 0,
+              "allowed_authority_roles": "VP Sales",
+              "amendment_precedence": "latest_effective"
+            }
+          },
+          {
+            "id": "contract",
+            "kind": "contract",
+            "fields": {
+              "required_delivery_date": "2026-08-10",
+              "late_penalty_bp": 1000,
+              "late_grace_days": 2
+            }
+          },
+          {
+            "id": "pod",
+            "kind": "pod",
+            "fields": {
+              "delivered_date": "2026-08-13"
+            }
+          }
+        ]
+      },
+      "expected_finding": {
+        "verdict": "valid",
+        "basis": "proven",
+        "valid_cents": 10000,
+        "disputed_cents": 0
+      }
+    },
+    {
+      "id": "late_grace_boundary",
+      "reference": "design/02 \u00a73.7; \u00a75.3",
+      "input": {
+        "line": {
+          "line_id": "D1",
+          "reason": "late_delivery",
+          "claimed_cents": 10000
+        },
+        "documents": [
+          {
+            "id": "invoice",
+            "kind": "invoice",
+            "fields": {
+              "invoice_no": "INV-SYNTHETIC",
+              "invoice_date": "2026-08-03",
+              "due_date": "2026-09-02",
+              "total_cents": 100000,
+              "line.1.sku": "SKU-1",
+              "line.1.qty": 10,
+              "line.1.unit_price_cents": 1000,
+              "line.2.sku": "SKU-2",
+              "line.2.qty": 90,
+              "line.2.unit_price_cents": 1000
+            }
+          },
+          {
+            "id": "company_policy",
+            "kind": "company_policy",
+            "fields": {
+              "tolerance_cents": 0,
+              "allowed_authority_roles": "VP Sales",
+              "amendment_precedence": "latest_effective"
+            }
+          },
+          {
+            "id": "contract",
+            "kind": "contract",
+            "fields": {
+              "required_delivery_date": "2026-08-10",
+              "late_penalty_bp": 1000,
+              "late_grace_days": 2
+            }
+          },
+          {
+            "id": "pod",
+            "kind": "pod",
+            "fields": {
+              "delivered_date": "2026-08-12"
+            }
+          }
+        ]
+      },
+      "expected_finding": {
+        "verdict": "invalid",
+        "basis": "proven",
+        "valid_cents": 0,
+        "disputed_cents": 10000
+      }
+    },
+    {
+      "id": "late_on_time",
+      "reference": "design/02 \u00a73.7; \u00a75.3",
+      "input": {
+        "line": {
+          "line_id": "D1",
+          "reason": "late_delivery",
+          "claimed_cents": 10000
+        },
+        "documents": [
+          {
+            "id": "invoice",
+            "kind": "invoice",
+            "fields": {
+              "invoice_no": "INV-SYNTHETIC",
+              "invoice_date": "2026-08-03",
+              "due_date": "2026-09-02",
+              "total_cents": 100000,
+              "line.1.sku": "SKU-1",
+              "line.1.qty": 10,
+              "line.1.unit_price_cents": 1000,
+              "line.2.sku": "SKU-2",
+              "line.2.qty": 90,
+              "line.2.unit_price_cents": 1000
+            }
+          },
+          {
+            "id": "company_policy",
+            "kind": "company_policy",
+            "fields": {
+              "tolerance_cents": 0,
+              "allowed_authority_roles": "VP Sales",
+              "amendment_precedence": "latest_effective"
+            }
+          },
+          {
+            "id": "contract",
+            "kind": "contract",
+            "fields": {
+              "required_delivery_date": "2026-08-10",
+              "late_penalty_bp": 1000,
+              "late_grace_days": 2
+            }
+          },
+          {
+            "id": "pod",
+            "kind": "pod",
+            "fields": {
+              "delivered_date": "2026-08-10"
+            }
+          }
+        ]
+      },
+      "expected_finding": {
+        "verdict": "invalid",
+        "basis": "proven",
+        "valid_cents": 0,
+        "disputed_cents": 10000
+      }
+    },
+    {
+      "id": "late_missing_delivery",
+      "reference": "design/02 \u00a73.7; \u00a75.3",
+      "input": {
+        "line": {
+          "line_id": "D1",
+          "reason": "late_delivery",
+          "claimed_cents": 10000
+        },
+        "documents": [
+          {
+            "id": "invoice",
+            "kind": "invoice",
+            "fields": {
+              "invoice_no": "INV-SYNTHETIC",
+              "invoice_date": "2026-08-03",
+              "due_date": "2026-09-02",
+              "total_cents": 100000,
+              "line.1.sku": "SKU-1",
+              "line.1.qty": 10,
+              "line.1.unit_price_cents": 1000,
+              "line.2.sku": "SKU-2",
+              "line.2.qty": 90,
+              "line.2.unit_price_cents": 1000
+            }
+          },
+          {
+            "id": "company_policy",
+            "kind": "company_policy",
+            "fields": {
+              "tolerance_cents": 0,
+              "allowed_authority_roles": "VP Sales",
+              "amendment_precedence": "latest_effective"
+            }
+          },
+          {
+            "id": "contract",
+            "kind": "contract",
+            "fields": {
+              "required_delivery_date": "2026-08-10",
+              "late_penalty_bp": 1000,
+              "late_grace_days": 2
+            }
+          }
+        ]
+      },
+      "expected_finding": {
+        "verdict": "needs_info",
+        "basis": "missing_evidence",
+        "valid_cents": null,
+        "disputed_cents": null
+      }
+    },
+    {
+      "id": "late_pod_tracking_conflict",
+      "reference": "design/02 \u00a73.7; \u00a75.3",
+      "input": {
+        "line": {
+          "line_id": "D1",
+          "reason": "late_delivery",
+          "claimed_cents": 10000
+        },
+        "documents": [
+          {
+            "id": "invoice",
+            "kind": "invoice",
+            "fields": {
+              "invoice_no": "INV-SYNTHETIC",
+              "invoice_date": "2026-08-03",
+              "due_date": "2026-09-02",
+              "total_cents": 100000,
+              "line.1.sku": "SKU-1",
+              "line.1.qty": 10,
+              "line.1.unit_price_cents": 1000,
+              "line.2.sku": "SKU-2",
+              "line.2.qty": 90,
+              "line.2.unit_price_cents": 1000
+            }
+          },
+          {
+            "id": "company_policy",
+            "kind": "company_policy",
+            "fields": {
+              "tolerance_cents": 0,
+              "allowed_authority_roles": "VP Sales",
+              "amendment_precedence": "latest_effective"
+            }
+          },
+          {
+            "id": "contract",
+            "kind": "contract",
+            "fields": {
+              "required_delivery_date": "2026-08-10",
+              "late_penalty_bp": 1000,
+              "late_grace_days": 2
+            }
+          },
+          {
+            "id": "pod",
+            "kind": "pod",
+            "fields": {
+              "delivered_date": "2026-08-13"
+            }
+          },
+          {
+            "id": "tracking",
+            "kind": "tracking",
+            "fields": {
+              "delivered_date": "2026-08-12"
+            }
+          }
+        ]
+      },
+      "expected_finding": {
+        "verdict": "needs_info",
+        "basis": "contradiction",
+        "valid_cents": null,
+        "disputed_cents": null,
+        "cite_documents_include": [
+          "pod",
+          "tracking"
+        ]
+      }
+    },
+    {
+      "id": "late_po_precedes_contract",
+      "reference": "design/02 \u00a73.7; \u00a75.3",
+      "input": {
+        "line": {
+          "line_id": "D1",
+          "reason": "late_delivery",
+          "claimed_cents": 10000
+        },
+        "documents": [
+          {
+            "id": "invoice",
+            "kind": "invoice",
+            "fields": {
+              "invoice_no": "INV-SYNTHETIC",
+              "invoice_date": "2026-08-03",
+              "due_date": "2026-09-02",
+              "total_cents": 100000,
+              "line.1.sku": "SKU-1",
+              "line.1.qty": 10,
+              "line.1.unit_price_cents": 1000,
+              "line.2.sku": "SKU-2",
+              "line.2.qty": 90,
+              "line.2.unit_price_cents": 1000
+            }
+          },
+          {
+            "id": "company_policy",
+            "kind": "company_policy",
+            "fields": {
+              "tolerance_cents": 0,
+              "allowed_authority_roles": "VP Sales",
+              "amendment_precedence": "latest_effective"
+            }
+          },
+          {
+            "id": "contract",
+            "kind": "contract",
+            "fields": {
+              "required_delivery_date": "2026-08-10",
+              "late_penalty_bp": 1000,
+              "late_grace_days": 2
+            }
+          },
+          {
+            "id": "pod",
+            "kind": "pod",
+            "fields": {
+              "delivered_date": "2026-08-13"
+            }
+          },
+          {
+            "id": "po",
+            "kind": "po",
+            "fields": {
+              "required_delivery_date": "2026-08-15"
+            }
+          }
+        ]
+      },
+      "expected_finding": {
+        "verdict": "invalid",
+        "basis": "proven",
+        "valid_cents": 0,
+        "disputed_cents": 10000
+      }
+    },
+    {
+      "id": "late_tracking_fallback",
+      "reference": "design/02 \u00a73.7; \u00a75.3",
+      "input": {
+        "line": {
+          "line_id": "D1",
+          "reason": "late_delivery",
+          "claimed_cents": 10000
+        },
+        "documents": [
+          {
+            "id": "invoice",
+            "kind": "invoice",
+            "fields": {
+              "invoice_no": "INV-SYNTHETIC",
+              "invoice_date": "2026-08-03",
+              "due_date": "2026-09-02",
+              "total_cents": 100000,
+              "line.1.sku": "SKU-1",
+              "line.1.qty": 10,
+              "line.1.unit_price_cents": 1000,
+              "line.2.sku": "SKU-2",
+              "line.2.qty": 90,
+              "line.2.unit_price_cents": 1000
+            }
+          },
+          {
+            "id": "company_policy",
+            "kind": "company_policy",
+            "fields": {
+              "tolerance_cents": 0,
+              "allowed_authority_roles": "VP Sales",
+              "amendment_precedence": "latest_effective"
+            }
+          },
+          {
+            "id": "contract",
+            "kind": "contract",
+            "fields": {
+              "required_delivery_date": "2026-08-10",
+              "late_penalty_bp": 1000,
+              "late_grace_days": 2
+            }
+          },
+          {
+            "id": "tracking",
+            "kind": "tracking",
+            "fields": {
+              "delivered_date": "2026-08-13"
+            }
+          }
+        ]
+      },
+      "expected_finding": {
+        "verdict": "valid",
+        "basis": "proven",
+        "valid_cents": 10000,
+        "disputed_cents": 0
+      }
+    }
+  ]
+}

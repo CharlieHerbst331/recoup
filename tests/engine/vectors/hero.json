@@ -1,0 +1,289 @@
+{
+  "fixture_format": "sonny-rule-vectors-v1",
+  "provenance": "SYNTHETIC",
+  "stage": "run_rules",
+  "vectors": [
+    {
+      "id": "hero_d1_before_pod_v2",
+      "reference": "design/02 \u00a73.7; \u00a75.3",
+      "input": {
+        "line": {
+          "line_id": "D1",
+          "reason": "shortage",
+          "claimed_cents": 312000,
+          "sku": "SKU-1",
+          "qty": 40
+        },
+        "documents": [
+          {
+            "id": "invoice",
+            "kind": "invoice",
+            "fields": {
+              "invoice_no": "INV-1042",
+              "invoice_date": "2026-08-03",
+              "due_date": "2026-09-02",
+              "total_cents": 4800000,
+              "line.1.sku": "SKU-1",
+              "line.1.qty": 400,
+              "line.1.unit_price_cents": 7800,
+              "line.2.sku": "SKU-2",
+              "line.2.qty": 200,
+              "line.2.unit_price_cents": 8400
+            }
+          },
+          {
+            "id": "company_policy",
+            "kind": "company_policy",
+            "fields": {
+              "tolerance_cents": 0,
+              "allowed_authority_roles": "VP Sales",
+              "amendment_precedence": "latest_effective"
+            }
+          },
+          {
+            "id": "payment",
+            "kind": "payment",
+            "fields": {
+              "paid_cents": 4176000,
+              "paid_date": "2026-10-20"
+            }
+          },
+          {
+            "id": "contract",
+            "kind": "contract",
+            "fields": {
+              "promo.FALL26.earned": true,
+              "promo.FALL26.cap_cents": 180000
+            }
+          },
+          {
+            "id": "pod-v1",
+            "kind": "pod",
+            "fields": {
+              "signed": true,
+              "received.SKU-1": 400
+            }
+          }
+        ]
+      },
+      "expected_finding": {
+        "verdict": "invalid",
+        "basis": "proven",
+        "valid_cents": 0,
+        "disputed_cents": 312000
+      }
+    },
+    {
+      "id": "hero_d1_after_pod_v2",
+      "reference": "design/02 \u00a73.7; \u00a75.3",
+      "input": {
+        "line": {
+          "line_id": "D1",
+          "reason": "shortage",
+          "claimed_cents": 312000,
+          "sku": "SKU-1",
+          "qty": 40
+        },
+        "documents": [
+          {
+            "id": "invoice",
+            "kind": "invoice",
+            "fields": {
+              "invoice_no": "INV-1042",
+              "invoice_date": "2026-08-03",
+              "due_date": "2026-09-02",
+              "total_cents": 4800000,
+              "line.1.sku": "SKU-1",
+              "line.1.qty": 400,
+              "line.1.unit_price_cents": 7800,
+              "line.2.sku": "SKU-2",
+              "line.2.qty": 200,
+              "line.2.unit_price_cents": 8400
+            }
+          },
+          {
+            "id": "company_policy",
+            "kind": "company_policy",
+            "fields": {
+              "tolerance_cents": 0,
+              "allowed_authority_roles": "VP Sales",
+              "amendment_precedence": "latest_effective"
+            }
+          },
+          {
+            "id": "payment",
+            "kind": "payment",
+            "fields": {
+              "paid_cents": 4176000,
+              "paid_date": "2026-10-20"
+            }
+          },
+          {
+            "id": "contract",
+            "kind": "contract",
+            "fields": {
+              "promo.FALL26.earned": true,
+              "promo.FALL26.cap_cents": 180000
+            }
+          },
+          {
+            "id": "pod-v2",
+            "kind": "pod",
+            "fields": {
+              "signed": true,
+              "received.SKU-1": 360,
+              "refused.SKU-1": 40,
+              "exception_note": "40 cs crushed, refused at dock"
+            }
+          }
+        ]
+      },
+      "expected_finding": {
+        "verdict": "valid",
+        "basis": "proven",
+        "valid_cents": 312000,
+        "disputed_cents": 0
+      }
+    },
+    {
+      "id": "hero_d2_before_pod_v2",
+      "reference": "design/02 \u00a73.7; \u00a75.3",
+      "input": {
+        "line": {
+          "line_id": "D2",
+          "reason": "promo_rebate",
+          "claimed_cents": 312000,
+          "ref": "FALL26"
+        },
+        "documents": [
+          {
+            "id": "invoice",
+            "kind": "invoice",
+            "fields": {
+              "invoice_no": "INV-1042",
+              "invoice_date": "2026-08-03",
+              "due_date": "2026-09-02",
+              "total_cents": 4800000,
+              "line.1.sku": "SKU-1",
+              "line.1.qty": 400,
+              "line.1.unit_price_cents": 7800,
+              "line.2.sku": "SKU-2",
+              "line.2.qty": 200,
+              "line.2.unit_price_cents": 8400
+            }
+          },
+          {
+            "id": "company_policy",
+            "kind": "company_policy",
+            "fields": {
+              "tolerance_cents": 0,
+              "allowed_authority_roles": "VP Sales",
+              "amendment_precedence": "latest_effective"
+            }
+          },
+          {
+            "id": "payment",
+            "kind": "payment",
+            "fields": {
+              "paid_cents": 4176000,
+              "paid_date": "2026-10-20"
+            }
+          },
+          {
+            "id": "contract",
+            "kind": "contract",
+            "fields": {
+              "promo.FALL26.earned": true,
+              "promo.FALL26.cap_cents": 180000
+            }
+          },
+          {
+            "id": "pod-v1",
+            "kind": "pod",
+            "fields": {
+              "signed": true,
+              "received.SKU-1": 400
+            }
+          }
+        ]
+      },
+      "expected_finding": {
+        "verdict": "partial",
+        "basis": "proven",
+        "valid_cents": 180000,
+        "disputed_cents": 132000
+      }
+    },
+    {
+      "id": "hero_d2_after_pod_v2",
+      "reference": "design/02 \u00a73.7; \u00a75.3",
+      "input": {
+        "line": {
+          "line_id": "D2",
+          "reason": "promo_rebate",
+          "claimed_cents": 312000,
+          "ref": "FALL26"
+        },
+        "documents": [
+          {
+            "id": "invoice",
+            "kind": "invoice",
+            "fields": {
+              "invoice_no": "INV-1042",
+              "invoice_date": "2026-08-03",
+              "due_date": "2026-09-02",
+              "total_cents": 4800000,
+              "line.1.sku": "SKU-1",
+              "line.1.qty": 400,
+              "line.1.unit_price_cents": 7800,
+              "line.2.sku": "SKU-2",
+              "line.2.qty": 200,
+              "line.2.unit_price_cents": 8400
+            }
+          },
+          {
+            "id": "company_policy",
+            "kind": "company_policy",
+            "fields": {
+              "tolerance_cents": 0,
+              "allowed_authority_roles": "VP Sales",
+              "amendment_precedence": "latest_effective"
+            }
+          },
+          {
+            "id": "payment",
+            "kind": "payment",
+            "fields": {
+              "paid_cents": 4176000,
+              "paid_date": "2026-10-20"
+            }
+          },
+          {
+            "id": "contract",
+            "kind": "contract",
+            "fields": {
+              "promo.FALL26.earned": true,
+              "promo.FALL26.cap_cents": 180000
+            }
+          },
+          {
+            "id": "pod-v2",
+            "kind": "pod",
+            "fields": {
+              "signed": true,
+              "received.SKU-1": 360,
+              "refused.SKU-1": 40,
+              "exception_note": "40 cs crushed, refused at dock"
+            }
+          }
+        ]
+      },
+      "expected_finding": {
+        "verdict": "partial",
+        "basis": "proven",
+        "valid_cents": 180000,
+        "disputed_cents": 132000
+      }
+    }
+  ]
+}

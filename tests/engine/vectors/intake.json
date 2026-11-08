@@ -1,0 +1,406 @@
+{
+  "fixture_format": "sonny-rule-vectors-v1",
+  "provenance": "SYNTHETIC",
+  "stage": "deduction_intake",
+  "vectors": [
+    {
+      "id": "u1_paid_gap",
+      "reference": "design/02 \u00a73.7 Deduction lines",
+      "input": {
+        "documents": [
+          {
+            "id": "invoice",
+            "kind": "invoice",
+            "fields": {
+              "invoice_no": "INTAKE",
+              "total_cents": 2000000,
+              "due_date": "2026-09-02"
+            }
+          },
+          {
+            "id": "company_policy",
+            "kind": "company_policy",
+            "fields": {
+              "tolerance_cents": 0
+            }
+          },
+          {
+            "id": "payment",
+            "kind": "payment",
+            "fields": {
+              "invoice_no": "INTAKE",
+              "paid_cents": 1785000,
+              "paid_date": "2026-09-01"
+            }
+          }
+        ],
+        "now": "2026-10-20"
+      },
+      "expected_added_lines": [
+        {
+          "line_id": "U1",
+          "reason": "unexplained_short_pay",
+          "claimed_cents": 215000
+        }
+      ]
+    },
+    {
+      "id": "np_zero_paid_no_deductions",
+      "reference": "design/02 \u00a73.7 Deduction lines",
+      "input": {
+        "documents": [
+          {
+            "id": "invoice",
+            "kind": "invoice",
+            "fields": {
+              "invoice_no": "INTAKE",
+              "total_cents": 10000,
+              "due_date": "2026-09-02"
+            }
+          },
+          {
+            "id": "company_policy",
+            "kind": "company_policy",
+            "fields": {
+              "tolerance_cents": 0
+            }
+          },
+          {
+            "id": "payment",
+            "kind": "payment",
+            "fields": {
+              "invoice_no": "INTAKE",
+              "paid_cents": 0,
+              "paid_date": "2026-09-01"
+            }
+          }
+        ],
+        "now": "2026-10-20"
+      },
+      "expected_added_lines": [
+        {
+          "line_id": "NP",
+          "reason": "nonpayment",
+          "claimed_cents": 10000
+        }
+      ]
+    },
+    {
+      "id": "np_no_payment_doc",
+      "reference": "design/02 \u00a73.7 Deduction lines",
+      "input": {
+        "documents": [
+          {
+            "id": "invoice",
+            "kind": "invoice",
+            "fields": {
+              "invoice_no": "INTAKE",
+              "total_cents": 10000,
+              "due_date": "2026-09-02"
+            }
+          },
+          {
+            "id": "company_policy",
+            "kind": "company_policy",
+            "fields": {
+              "tolerance_cents": 0
+            }
+          }
+        ],
+        "now": "2026-10-20"
+      },
+      "expected_added_lines": [
+        {
+          "line_id": "NP",
+          "reason": "nonpayment",
+          "claimed_cents": 10000
+        }
+      ]
+    },
+    {
+      "id": "np_due_date_not_overdue",
+      "reference": "design/02 \u00a73.7 Deduction lines",
+      "input": {
+        "documents": [
+          {
+            "id": "invoice",
+            "kind": "invoice",
+            "fields": {
+              "invoice_no": "INTAKE",
+              "total_cents": 10000,
+              "due_date": "2026-09-02"
+            }
+          },
+          {
+            "id": "company_policy",
+            "kind": "company_policy",
+            "fields": {
+              "tolerance_cents": 0
+            }
+          }
+        ],
+        "now": "2026-09-02"
+      },
+      "expected_added_lines": []
+    },
+    {
+      "id": "zero_paid_with_deduction_is_u1",
+      "reference": "design/02 \u00a73.7 Deduction lines",
+      "input": {
+        "documents": [
+          {
+            "id": "invoice",
+            "kind": "invoice",
+            "fields": {
+              "invoice_no": "INTAKE",
+              "total_cents": 10000,
+              "due_date": "2026-09-02"
+            }
+          },
+          {
+            "id": "company_policy",
+            "kind": "company_policy",
+            "fields": {
+              "tolerance_cents": 0
+            }
+          },
+          {
+            "id": "payment",
+            "kind": "payment",
+            "fields": {
+              "invoice_no": "INTAKE",
+              "paid_cents": 0,
+              "paid_date": "2026-09-01"
+            }
+          },
+          {
+            "id": "remittance",
+            "kind": "remittance",
+            "fields": {
+              "invoice_no": "INTAKE",
+              "ded.1.line_id": "D1",
+              "ded.1.reason": "pricing",
+              "ded.1.claimed_cents": 4000
+            }
+          }
+        ],
+        "now": "2026-10-20"
+      },
+      "expected_added_lines": [
+        {
+          "line_id": "U1",
+          "reason": "unexplained_short_pay",
+          "claimed_cents": 6000
+        }
+      ]
+    },
+    {
+      "id": "zero_paid_fully_explained_no_np",
+      "reference": "design/02 \u00a73.7 Deduction lines",
+      "input": {
+        "documents": [
+          {
+            "id": "invoice",
+            "kind": "invoice",
+            "fields": {
+              "invoice_no": "INTAKE",
+              "total_cents": 10000,
+              "due_date": "2026-09-02"
+            }
+          },
+          {
+            "id": "company_policy",
+            "kind": "company_policy",
+            "fields": {
+              "tolerance_cents": 0
+            }
+          },
+          {
+            "id": "payment",
+            "kind": "payment",
+            "fields": {
+              "invoice_no": "INTAKE",
+              "paid_cents": 0,
+              "paid_date": "2026-09-01"
+            }
+          },
+          {
+            "id": "remittance",
+            "kind": "remittance",
+            "fields": {
+              "invoice_no": "INTAKE",
+              "ded.1.line_id": "D1",
+              "ded.1.reason": "pricing",
+              "ded.1.claimed_cents": 10000
+            }
+          }
+        ],
+        "now": "2026-10-20"
+      },
+      "expected_added_lines": []
+    },
+    {
+      "id": "u1_subtracts_prior_credit",
+      "reference": "design/02 \u00a73.7 Deduction lines",
+      "input": {
+        "documents": [
+          {
+            "id": "invoice",
+            "kind": "invoice",
+            "fields": {
+              "invoice_no": "INTAKE",
+              "total_cents": 10000,
+              "due_date": "2026-09-02"
+            }
+          },
+          {
+            "id": "company_policy",
+            "kind": "company_policy",
+            "fields": {
+              "tolerance_cents": 0
+            }
+          },
+          {
+            "id": "payment",
+            "kind": "payment",
+            "fields": {
+              "invoice_no": "INTAKE",
+              "paid_cents": 5000,
+              "paid_date": "2026-09-01"
+            }
+          },
+          {
+            "id": "remittance",
+            "kind": "remittance",
+            "fields": {
+              "invoice_no": "INTAKE",
+              "ded.1.line_id": "D1",
+              "ded.1.reason": "pricing",
+              "ded.1.claimed_cents": 2000
+            }
+          },
+          {
+            "id": "credit_memo",
+            "kind": "credit_memo",
+            "fields": {
+              "invoice_no": "INTAKE",
+              "credit_no": "OLD",
+              "amount_cents": 1000,
+              "line_id": "D1"
+            }
+          }
+        ],
+        "now": "2026-10-20"
+      },
+      "expected_added_lines": [
+        {
+          "line_id": "U1",
+          "reason": "unexplained_short_pay",
+          "claimed_cents": 2000
+        }
+      ]
+    },
+    {
+      "id": "u1_at_tolerance",
+      "reference": "design/02 \u00a73.7 Deduction lines",
+      "input": {
+        "documents": [
+          {
+            "id": "invoice",
+            "kind": "invoice",
+            "fields": {
+              "invoice_no": "INTAKE",
+              "total_cents": 10000,
+              "due_date": "2026-09-02"
+            }
+          },
+          {
+            "id": "company_policy",
+            "kind": "company_policy",
+            "fields": {
+              "tolerance_cents": 1
+            }
+          },
+          {
+            "id": "payment",
+            "kind": "payment",
+            "fields": {
+              "invoice_no": "INTAKE",
+              "paid_cents": 9999,
+              "paid_date": "2026-09-01"
+            }
+          }
+        ],
+        "now": "2026-10-20"
+      },
+      "expected_added_lines": []
+    },
+    {
+      "id": "u1_above_tolerance",
+      "reference": "design/02 \u00a73.7 Deduction lines",
+      "input": {
+        "documents": [
+          {
+            "id": "invoice",
+            "kind": "invoice",
+            "fields": {
+              "invoice_no": "INTAKE",
+              "total_cents": 10000,
+              "due_date": "2026-09-02"
+            }
+          },
+          {
+            "id": "company_policy",
+            "kind": "company_policy",
+            "fields": {
+              "tolerance_cents": 1
+            }
+          },
+          {
+            "id": "payment",
+            "kind": "payment",
+            "fields": {
+              "invoice_no": "INTAKE",
+              "paid_cents": 9998,
+              "paid_date": "2026-09-01"
+            }
+          }
+        ],
+        "now": "2026-10-20"
+      },
+      "expected_added_lines": [
+        {
+          "line_id": "U1",
+          "reason": "unexplained_short_pay",
+          "claimed_cents": 2
+        }
+      ]
+    },
+    {
+      "id": "not_overdue_no_activity",
+      "reference": "design/02 \u00a73.7 Deduction lines",
+      "input": {
+        "documents": [
+          {
+            "id": "invoice",
+            "kind": "invoice",
+            "fields": {
+              "invoice_no": "INTAKE",
+              "total_cents": 10000,
+              "due_date": "2026-09-02"
+            }
+          },
+          {
+            "id": "company_policy",
+            "kind": "company_policy",
+            "fields": {
+              "tolerance_cents": 0
+            }
+          }
+        ],
+        "now": "2026-09-01"
+      },
+      "expected_added_lines": []
+    }
+  ]
+}
