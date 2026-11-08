@@ -374,3 +374,120 @@ not passed or silently skipped.
 DONE: Committed 007-1 implementation d8d9e83b7c00433209574094af7317916c5b6904; checks pass and all required predecessor commits remain ancestors.
 NEXT: Stop; no 007-2, push, merge, PR publication or external action performed.
 QUESTION: Remaining real providers and candidate consumer seams are documented above and in CONTRACT_REQUEST.md.
+
+## 007-2 r10 — 2026-11-08 (America/Los_Angeles)
+
+Read only prompt 007-2 in `~/recoup-007-sonny-bundle-r10.md`, its spec step,
+external design/04 §1–5, design/02 §2, §3.7, §3.8, §5.6, root/engine instructions,
+docs index and actual candidate models/interfaces/money/resolver/tools. The
+explicit external r10 unit-lane exception applies. Reviewed all existing
+CONTRACT_REQUEST.md entries; the three earlier consumer questions remain open
+but do not prevent this step's independent policy/readiness implementation.
+
+### Repository and predecessor checks
+
+Initial branch `007-1-rules`, clean working tree, HEAD
+`762c8213a876052b8a019efc0855be50cf7fe37d` (user's latest 007-1 commit).
+History retained 007-1 implementation `d8d9e83b7c00433209574094af7317916c5b6904`,
+007-0 bookkeeping `e9fa60b`, implementation
+`5be383e8a6dedb36d3dd6f79854685202ab50af5`, earlier 007-0 commits, and candidate
+`89675c0b6ac676fa28c3475f58134689b74c274c`. Required 007-0 tip and preserved
+007-1 implementation tip were resolved from the preceding progress entries.
+
+Before implementation, all four `git merge-base --is-ancestor <SHA> HEAD` checks
+for candidate, 5be383e, d8d9e83 and 762c821 exited 0. Full `git diff --exit-code
+762c8213a876052b8a019efc0855be50cf7fe37d HEAD` and candidate contract diff both
+exited 0. Created `007-2-policy-and-readiness` from that exact HEAD using
+`git switch -c`; normal `git fetch origin` succeeded. No main merge, reset,
+rebase, push or loss of earlier work.
+
+### Independent implementation and acceptance evidence
+
+Added pure `policy.answer` and `readiness.dispute/notice/claim` against the
+existing shared models/signatures. Business definitions remain design/02 §3.7,
+§5.6; receipt identification uses §3.8. No World double was necessary for these
+pure functions. Used hand-built actual contract inputs, no other owner fixtures.
+No model/API/network calls, external actions, dependencies or shared changes.
+
+| 007-2 acceptance | Test evidence | Result |
+| --- | --- | --- |
+| Separate lines on one FactSet, confirmed vs unconfirmed facts/conflict, mismatched line | test_two_lines_isolated_confirmed_and_unconfirmed | PASS |
+| Current citation membership and actual shared resolver on supplied raw fixture | test_dispute_citations_current_membership_and_resolver | PASS for each separately; integrated raw resolution BLOCKED below |
+| Receipt-sensitive claim date, no receipt, latest notice and waiting boundary | test_claim_window_uses_receipt_date_and_latest_receipt | PASS |
+| Text-only exclusion absent until extracted effective fact; distinct source/fact citations round-trip | test_exclusions_extracted_fact_citations_survive_json | PASS |
+| One missing exclusion clause does not hide another answer | test_exclusion_failure_does_not_hide_other_exclusions | PASS |
+| Notice a/b/c, missing POD independence, uncertain findings annotation | test_notice_independence (5 cases) | PASS |
+| Unknown applicability/deadline, missing clause, submitted dispute annotation | test_notice_submitted_unknown_clause_and_applicability | PASS |
+| POD absent/unreadable/unsigned/signed, fixed claim item ids, no eligibility field | test_claim_pod_inventory (4 cases) | PASS |
+| Two contrasting synthetic policies | test_contrasting_policies (2 cases) | PASS |
+| Claim checklist, history/receipt alternatives, restrictions | test_claim_checklist_restrictions_missing_and_history | PASS |
+| POD completeness scoped to inventoried evidence, multiple candidates | test_claim_documents_multiple_candidates_and_same_evidence_signature | PASS |
+| Unconfirmed vision POD and unknown policy requirements | test_claim_unconfirmed_pod_and_missing_policy_terms | PASS |
+| Applicability and date boundaries | test_applicability (4 cases) | PASS |
+| Textual answer provenance and missing clause | test_textual_answers_require_effective_clause_facts | PASS |
+| Unsupported/untrusted/conflicting terms; pure inputs | test_invalid_policy_terms (3 cases), test_policy_untrusted_conflict_and_purity | PASS |
+| Net ledger balance and due boundary | test_notice_due_boundary_and_net_ledger_balance | PASS |
+| No case-id selection of policy behavior | test_case_identity_does_not_select_policy_behavior | PASS |
+
+### Commands/results
+
+Used existing `/tmp/recoup-007-check` Python 3.11.18, without dependency changes.
+Initial authoring lint found line lengths/import formatting; existing Ruff fixed
+formatting. Initial tests: 25 passed / 1 failed because the test omitted required
+`DeductionLine.reason`; corrected the typed fixture. Expanded edge tests pass.
+No unrelated baseline failures occurred. No product bug fix was claimed.
+
+- `RECOUP_LLM=fake /tmp/recoup-007-check/bin/python -m pytest tests/engine/test_policy_readiness.py -q`:
+  **31 passed**, exit 0.
+- `make check PYTHON=/tmp/recoup-007-check/bin/python`: exit 0, Ruff lint PASS,
+  Ruff format PASS (31 files), **470 passed in 0.65s**.
+- `RECOUP_LLM=fake /tmp/recoup-007-check/bin/python -m pytest tests/engine -q`:
+  **269 passed in 0.22s**, exit 0; includes every retained 007-0/007-1 test.
+- `git diff --exit-code 762c8213a876052b8a019efc0855be50cf7fe37d -- recoup/engine/AGENTS.md recoup/engine/rules.py tests/engine/fixtures.py tests/engine/doubles.py tests/engine/test_doubles.py tests/engine/test_vectors.py tests/engine/test_rules.py tests/engine/vectors recoup/contracts`:
+  exit 0; all predecessor implementation/tests/vectors and contracts preserved byte-for-byte.
+- `git diff --check`: PASS.
+
+Final make check tail:
+
+```text
+tests/engine/test_vectors.py ........................................... [ 75%]
+........................................................................ [ 90%]
+...........................................                              [100%]
+============================= 470 passed in 0.65s ==============================
+```
+
+### Genuine integration blockers and remaining independent work
+
+| Required real acceptance | Status | Missing provider/resolution |
+| --- | --- | --- |
+| Same policy/readiness cases using actual loaded FactSet/DocStatus/extracted revisions | BLOCKED | Charles SqliteWorld + recoup.app.build at G1 (absent in checkout) |
+| Pure dispute citation predicate plus raw backing-quote/revision resolution | BLOCKED | Charles clarification of FactSet validation boundary; request #4 in CONTRACT_REQUEST.md; actual World.resolve_citation in consumer |
+| Notice/claim behavior after actual receipt/ledger changes and staleness | BLOCKED | Charles actual persistence/transactions/cascade at G2 |
+| Tool adapters preserve answers and composed engine uses the three readiness functions | BLOCKED | Subsequent owned tools/engine/factory, Charles composition at G3 |
+
+Unit passes do not constitute real integration PASS. Reviewer/Verifier must pass
+actual integration before integrated completion. Raw citation membership is
+implemented; independent full raw-text/revision resolution is not possible with
+the pure signature as currently supplied. This is disclosed rather than hidden
+behind a fake resolver or copied evidence model. Everything else in 007-2's
+independent unit lane is implemented. The earlier 007-1 questions remain open.
+
+Future independent work is available in 007-3 (tools/gates/derivation with owned
+scripted ports), followed by injection-based 007-4/5, plus independent 007-6 SDK
+stub adapter work after its documentation prerequisite. None was started here.
+Real integration still requires real providers; no paid/live proof is authorized.
+
+### Changed paths (007-2 only)
+
+- recoup/engine/policy.py
+- recoup/engine/readiness.py
+- tests/engine/test_policy_readiness.py
+- progress/sonny/CONTRACT_REQUEST.md
+- progress/sonny/PROGRESS.md
+
+Only assigned owned paths changed. Root/docs, shared contracts, dependencies,
+build files and every 007-0/007-1 implementation/test file remain unchanged.
+
+DONE: 007-2 independent policy/readiness implemented and tested (470 full / 269 engine / 31 new tests); predecessors preserved; integration and raw-resolution boundary explicitly outstanding.
+NEXT: Commit this step, record actual implementation tip, then stop; future 007-3 work remains a separate session.
+QUESTION: Charles to resolve request #4's raw citation-validation boundary and the unchanged 007-1 consumer questions; real providers required for integration acceptance.

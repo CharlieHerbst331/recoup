@@ -27,3 +27,29 @@ Candidate: `89675c0b6ac676fa28c3475f58134689b74c274c`. References: design/02
 None prevents the independent unit lane. Automatic legal routing, propagation of
 case escalations and real email-classification integration remain unverified until
 these consumer seams are resolved. No contract models were copied or changed.
+
+## 007-2 citation-resolution boundary — 2026-11-08
+
+References: design/02 §3.2, §3.7, §5.6. Candidate unchanged.
+
+4. `readiness.dispute(line, finding, facts)` receives only `FactSet`, while shared
+   `contracts.resolve.resolve_citation(c, basis, evidence, facts)` requires raw
+   `list[Evidence]` and `list[FactRevision]`. `FactSet` includes neither raw text,
+   pages/fields nor the backing revision citation. The pure function can check
+   exact current EffectiveFact citation membership, active document membership,
+   fact locator identity and trust; it cannot independently resolve the backing
+   quote or revision chain. Consumer test: `test_dispute_citations_current_membership_and_resolver`
+   proves current membership and separately invokes the actual shared resolver
+   using hand-built evidence/revisions. It does not prove that the pure function
+   re-runs raw resolution. No resolver/types were copied and no shared signature
+   was changed.
+
+   Minimum requested resolution: Charles confirm that World-produced FactSets
+   contain only already-resolved effective citations, with the existing
+   `World.resolve_citation` used again in the actual tool/gate consumer, or specify
+   an approved input seam for raw resolution in pure readiness. Until confirmed
+   and tested with actual World/tool gates, raw citation-resolution acceptance
+   remains BLOCKED. This affects that check only; policy/date calculations,
+   notice independence, document inventory and the other readiness predicates
+   are independently implemented and tested. The existing 007-1 questions above
+   remain outstanding and were not changed by this step.
