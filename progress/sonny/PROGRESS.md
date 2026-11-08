@@ -491,3 +491,16 @@ build files and every 007-0/007-1 implementation/test file remain unchanged.
 DONE: 007-2 independent policy/readiness implemented and tested (470 full / 269 engine / 31 new tests); predecessors preserved; integration and raw-resolution boundary explicitly outstanding.
 NEXT: Commit this step, record actual implementation tip, then stop; future 007-3 work remains a separate session.
 QUESTION: Charles to resolve request #4's raw citation-validation boundary and the unchanged 007-1 consumer questions; real providers required for integration acceptance.
+
+### Actual 007-2 implementation tip
+
+Branch: `007-2-policy-and-readiness`.
+Implementation tip: `b47813d6e4370abe0c907fd2606471ba85e5afee`.
+This commit contains the complete independently implemented scope, acceptance
+evidence and request #4. A following bookkeeping commit records this actual SHA.
+The working tree was clean after the implementation commit. Required candidate,
+007-0 and retained 007-1 tips remain ancestors. No next-step work, push or merge.
+
+DONE: Committed 007-2 implementation b47813d6e4370abe0c907fd2606471ba85e5afee; make check and all engine tests pass.
+NEXT: Stop this session; real integration and raw-citation boundary acceptance remain BLOCKED as recorded above.
+QUESTION: Request #4 and prior consumer questions await Charles; no further independent 007-2 work identified without that resolution.
