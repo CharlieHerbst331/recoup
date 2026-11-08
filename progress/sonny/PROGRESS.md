@@ -560,7 +560,7 @@ language cases are verified, not arbitrary natural-language classification.
 ### Commands, failures and regressions
 
 Used existing `/tmp/recoup-007-check` Python 3.11.18; installed nothing.
-Initial authoring run: 33 passed / 10 failed. Seven failures came from test
+Initial authoring run: 33 passed / 10 failed. Nine failures came from test
 fixtures bypassing enum validation and incorrect expected receipt ordering or
 waiting-period status; corrected typed inputs/expectations. A real assertion-scope
 failure allowed unrelated negation to mask an affirmative outcome; fixed it.
@@ -630,3 +630,14 @@ these twelve skips is independent completion only, not integrated acceptance.
 DONE: Implemented independent 007-3 tools/gates/derivation; 57 new checks pass and make check is green with twelve explicitly BLOCKED integration cases.
 NEXT: Run real integration when G1/G2 providers exist, then actual validator composition at G3; stop this session without starting 007-4.
 QUESTION: No new contract request; prior consumer questions and real-provider acceptance remain outstanding.
+
+### Actual 007-3 implementation tip
+
+Branch: `007-3-tools-gates-derivation`.
+Implementation tip: `5c2223d42ffa066ce9ec8b6d219d013b02fef0b1`.
+The following bookkeeping commit records this actual SHA and corrects the initial
+fixture-failure count. No implementation changes followed the final checks.
+
+DONE: Committed independent 007-3 implementation 5c2223d42ffa066ce9ec8b6d219d013b02fef0b1; all required predecessors remain ancestors.
+NEXT: Stop; twelve real integration cases and automatic validator composition remain BLOCKED pending providers; no 007-4 work or external publication.
+QUESTION: Charles's real providers and the existing consumer requests remain outstanding; no new shared-interface mismatch identified.
