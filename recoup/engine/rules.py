@@ -1,10 +1,12 @@
 """Pure rules from design/02 §3.7 and §5.3."""
 
+import re
 from datetime import date, timedelta
 
 from recoup.contracts.models import (
     Basis,
     DeductionLine,
+    DeductionReason,
     FactSet,
     FieldTrust,
     LedgerEntry,
@@ -192,16 +194,9 @@ class _Inputs:
             if any(
                 f.doc_kind == "email"
                 and f.key.endswith(".reason")
-                and f.value
-                in {
-                    "pricing",
-                    "damage",
-                    "shortage",
-                    "returns",
-                    "promo_rebate",
-                    "late_delivery",
-                    "early_pay_discount",
-                }
+                and _classified_email(
+                    self.facts, f.evidence_id, f.key.rsplit(".", 1)[0], line.line_id
+                )
                 for f in self.facts.facts
             ):
                 raise _Undecidable(Basis.missing_evidence, ["buyer dispute classification"])
@@ -269,10 +264,58 @@ class _Inputs:
         raise _Undecidable(Basis.unsupported_terms, ["reason"])
 
 
+def _classified_email(facts, evidence_id, prefix, line_id):
+    if not re.fullmatch(r"ded\.[1-9]\d*", prefix):
+        return False
+    rows = [f for f in facts.facts if f.evidence_id == evidence_id]
+    senders = [f.value for f in rows if f.key == "from"]
+    ids = [f.value for f in rows if f.key == prefix + ".line_id"]
+    reasons = [f.value for f in rows if f.key == prefix + ".reason"]
+    return (
+        bool(senders)
+        and all(v in facts.buyer_senders for v in senders)
+        and bool(ids)
+        and all(v == line_id for v in ids)
+        and bool(reasons)
+        and len(set(reasons)) == 1
+        and reasons[0] in {r.value for r in DeductionReason if r != "nonpayment"}
+        and all(
+            f.trust not in {"ocr", "vision"}
+            for f in rows
+            if f.key in {"from", prefix + ".line_id", prefix + ".reason"}
+        )
+    )
+
+
+def _legal_review(line, facts):
+    signals = []
+    for fact in facts.facts:
+        if not re.fullmatch(r"ded\.[1-9]\d*\.requires_legal_review", fact.key):
+            continue
+        prefix = fact.key.rsplit(".", 1)[0]
+        rows = [f for f in facts.facts if f.evidence_id == fact.evidence_id]
+        if not any(f.key == prefix + ".line_id" and f.value == line.line_id for f in rows):
+            continue
+        if fact.doc_kind == "email" and not _classified_email(
+            facts, fact.evidence_id, prefix, line.line_id
+        ):
+            continue
+        if fact.doc_kind not in {"email", "remittance", "debit_memo"}:
+            continue
+        if type(fact.value) is not bool or fact.trust not in {"source", "human_confirmed"}:
+            raise NeedsHumanError("legal review signal requires human confirmation")
+        signals.append(fact.value)
+    if len(set(signals)) > 1:
+        raise NeedsHumanError("conflicting legal review signals")
+    if any(signals):
+        require_legal_authority(facts)
+
+
 def run_rules(
     lines: list[DeductionLine], facts: FactSet, ledger: list[LedgerEntry]
 ) -> list[RuleFinding]:
     for line in lines:
+        _legal_review(line, facts)
         if line.claimed.cents < 0:
             raise NeedsHumanError(f"negative deduction: {line.line_id}")
     findings = []

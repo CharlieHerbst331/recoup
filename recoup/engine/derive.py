@@ -110,7 +110,10 @@ def derive(world: World, case_id: str, line_ids: list[str] | None = None) -> lis
                     break
         elif excess < 0:
             groups.setdefault(("dispute", None), {})[lid] = -excess
-    return [
+    from recoup.engine.counteroffers import available_counteroffers
+
+    offers = available_counteroffers(world, case_id) if line_ids is None else []
+    return offers + [
         _proposal(world, decision, kind, amounts, ref, receipts)
         for (kind, ref), amounts in groups.items()
     ]

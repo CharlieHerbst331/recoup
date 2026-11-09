@@ -174,9 +174,14 @@ def test_authorized_email_amendment_and_order_independence():
 def test_nonpayment_with_classified_buyer_dispute_requires_info():
     vector = vector_named("np_balance_owed")
     vector["input"]["documents"].append(
-        {"id": "buyer-dispute", "kind": "email", "fields": {"ded.1.reason": "shortage"}}
+        {
+            "id": "buyer-dispute",
+            "kind": "email",
+            "fields": {"from": "buyer.invalid", "ded.1.line_id": "D1", "ded.1.reason": "shortage"},
+        }
     )
     lines, facts, ledger = rule_inputs(vector)
+    facts.buyer_senders = ["buyer.invalid"]
     (finding,) = run_rules(lines, facts, ledger)
     assert finding.verdict == "needs_info"
     assert proposal_kind(lines[0], finding) == "info_request"

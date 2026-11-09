@@ -1,3 +1,34 @@
+# Approval status — 2026-11-09 (America/Los_Angeles)
+
+Requests **1–4 below are resolved by Charles's approved decisions**, published in
+`933ab052bf4ded509b4d6f8c2b7d68b38cfaea2f` (shared implementation
+`75a58397bec3846847673ef8af4c7ae85d2a5264`). Normative sources are now
+current design/02 §3.7 and §5.3; see
+[Charles's handoff](../charles/SONNY-FINANCIAL-HANDOFF.md). The original requests
+below remain as history, not current blockers. No shared changes are requested
+for these four items.
+
+The existing owned implementation uses these decisions in rules, tools, harness
+and gates. Pure readiness's citation-membership boundary is approved; actual
+World exposure and current consumers provide raw citation resolution. This
+supersedes the former 007-2 citation-interface blocker; no additional readiness
+input interface is required.
+
+Verification of the current working tree on Nov 9:
+- Legal routing, buyer-sender/line classification and human-status consumers:
+  `pytest tests/engine/test_007_8_integration.py -k 'legal or buyer_classification' -q`:
+  **9 passed, 39 deselected** using `/tmp/recoup-007-check/bin/python`, fake LLM.
+- Current/superseded/cross-case citations, readiness isolation, actual World
+  fact grounding and consumer gate rechecks:
+  `pytest tests/engine/test_007_3_integration.py tests/engine/test_tools_gates_derive.py tests/engine/test_policy_readiness.py tests/world/test_counteroffer_boundary.py -k 'citation or readiness or ungrounded' -q`:
+  **52 passed, 74 deselected**, same offline interpreter.
+
+This update preserves all pre-existing uncommitted engine work and does not
+commit or publish it. Other historical requests below are outside this focused
+verification; their later approvals are recorded in Charles's handoff.
+
+---
+
 # 007-1 candidate integration questions — 2026-11-08
 
 Candidate: `89675c0b6ac676fa28c3475f58134689b74c274c`. References: design/02
@@ -67,6 +98,12 @@ References: design/02 §3.2, §3.7, §5.6. Candidate unchanged.
    edited or copied. Other independent handler behavior continues against the
    current contract; real-provider ordering acceptance remains outstanding.
 
+Resolution — 2026-11-09: Request #5 is resolved by the approved design/02
+§5.7. The scheduler now cites and uses that definition directly; the real
+app-built test `test_real_event_due_ordering` verifies its ordering with reversed
+provider inputs. The earlier fallback/sequence-blocker assessment above is
+historical and superseded. No contract change or synthetic sequence is needed.
+
 ## 007-7 doctor/composition seam — 2026-11-08
 
 6. Reference: design/02 §4.5 and §5.8. This checkout has no recoup.cli,
@@ -85,6 +122,16 @@ References: design/02 §3.2, §3.7, §5.6. Candidate unchanged.
    added to the dependency manifests. Image OCR needs no PDF renderer.
 
 ## 007-8 ambition definition and contract seams — 2026-11-08
+
+**Request 7 resolved — 2026-11-09:** Charles publication
+`933ab052bf4ded509b4d6f8c2b7d68b38cfaea2f` includes the approved shared
+`offer_ref` fields and normative counteroffer definitions in design/02 §3.7–3.8,
+§5.4–5.5. The engine imports those contracts unchanged; current counteroffer
+derivation, gates, tools and handler acceptance supersede request 7's historical
+missing-definition/blocker statements below. Added explicit imported-model legacy
+JSON/selector binding and all-stage engine gate acceptance in
+`tests/engine/test_offer_ref_acceptance.py`; results are recorded in PROGRESS.md.
+The original request text is retained as history.
 
 7. Counteroffer: spec 007 step 007-8 names this feature, but design/02
    §5.4 has no counteroffer derivation and §5.5 requires allocations supported

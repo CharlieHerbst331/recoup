@@ -27,9 +27,12 @@ def _draft_args(world, proposal, mode):
         kind=proposal.kind.value,
         line_ids=[a.line_id for a in proposal.allocations],
         recipient=recipients[0] if recipients else "",
-        draft_text=f"SYNTHETIC data. MOCK action. LLM {mode}. Please review the cited evidence.",
+        draft_text=f"SYNTHETIC data. MOCK action. LLM {mode}. Conditional offer for review."
+        if proposal.kind == "counteroffer"
+        else f"SYNTHETIC data. MOCK action. LLM {mode}. Please review the cited evidence.",
         citations=[c.model_dump(mode="json") for c in proposal.citations],
         corrects_receipt_id=proposal.corrects_receipt_id,
+        offer_ref=proposal.offer_ref,
     )
 
 
@@ -174,6 +177,8 @@ class HarnessEngine:
                                 if f.basis == "proven":
                                     line["verdict"] = f.verdict.value
                     envelope = session.call(call["name"], args)
+                    if any(i.code == "needs_human" for i in envelope.issues):
+                        return world.view(case_id)
                     result = envelope.model_dump(mode="json")
                     messages.append(
                         {

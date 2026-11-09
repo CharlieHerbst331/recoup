@@ -7,8 +7,9 @@ from typing import Literal
 from recoup.contracts.interfaces import GateError, World
 from recoup.contracts.models import KIND_TARGET, GateIssue, Proposal
 from recoup.engine import readiness
+from recoup.engine.counteroffers import derive_counteroffer
 from recoup.engine.derive import derive
-from recoup.engine.rules import run_rules
+from recoup.engine.rules import NeedsHumanError, run_rules
 
 
 def assertion_issues(text: str, citations) -> list[GateIssue]:
@@ -115,7 +116,41 @@ class ProposalValidator:
             issue("duplicate_allocation", "Each line may be allocated once")
         if any(a.amount.cents < 0 for a in proposal.allocations):
             issue("invalid_allocation", "Allocations cannot be negative")
-        if proposal.kind in {"credit_memo", "dispute", "correction", "info_request", "follow_up"}:
+        if proposal.kind != "counteroffer" and proposal.offer_ref is not None:
+            issue("invalid_offer_ref", "Only counteroffers may select an offer")
+        if proposal.kind == "counteroffer":
+            if proposal.corrects_receipt_id is not None:
+                issue("invalid_counteroffer", "Counteroffers cannot correct receipts")
+            try:
+                expected = derive_counteroffer(
+                    world,
+                    case_id,
+                    ids,
+                    proposal.offer_ref,
+                    edited={a.line_id: a.amount.cents for a in proposal.allocations}
+                    if proposal.created_by == "human_edit"
+                    else None,
+                )
+                if (
+                    expected.business_key != proposal.business_key
+                    or expected.allocations != proposal.allocations
+                ):
+                    issue("unsupported_allocation", "Counteroffer disagrees with derivation")
+                if expected.amount != proposal.amount:
+                    issue("amount_mismatch", "Counteroffer amount must equal allocations")
+                if any(c not in proposal.citations for c in expected.citations):
+                    issue("missing_offer_citation", "Counteroffer must cite its complete basis")
+                if not re.search(r"\bMOCK\b", proposal.draft_text) or not re.search(
+                    r"\bconditional\b", proposal.draft_text, re.I
+                ):
+                    issue(
+                        "conditional_offer_required", "Draft must describe a conditional MOCK offer"
+                    )
+            except GateError as exc:
+                issues.extend(exc.issues)
+            except NeedsHumanError as exc:
+                issue("needs_human", str(exc))
+        elif proposal.kind in {"credit_memo", "dispute", "correction", "info_request", "follow_up"}:
             try:
                 if proposal.kind == "follow_up" and not ids:
                     from recoup.engine.scheduler import followup_proposal
@@ -168,10 +203,12 @@ class ProposalValidator:
                     "amount_not_allowed",
                     "Insurance packages show a ledger balance, not a loss amount",
                 )
-        else:
-            issue("unsupported_proposal", "Counteroffers are outside this implementation step")
-        findings = run_rules(view.lines, facts, world.ledger(case_id))
-        if proposal.kind in {"credit_memo", "dispute", "correction"}:
+        try:
+            findings = run_rules(view.lines, facts, world.ledger(case_id))
+        except NeedsHumanError as exc:
+            issue("needs_human", str(exc))
+            return issues
+        if proposal.kind in {"credit_memo", "dispute", "correction", "counteroffer"}:
             for lid in ids:
                 finding = next((f for f in findings if f.line_id == lid), None)
                 decided = (

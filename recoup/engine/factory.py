@@ -1,11 +1,11 @@
 """Engine composition exports; design/02 §4.5."""
 
+from recoup.contracts.capabilities import scan_capabilities
 from recoup.contracts.interfaces import EngineParts
 from recoup.engine.gates import ProposalValidator
 from recoup.engine.harness import HarnessEngine
 from recoup.engine.ingest import Ingestor
 from recoup.engine.llm import FakeLLM, ReplayLLM
-from recoup.engine.scans import scan_capabilities
 from recoup.engine.tools import ToolSessionFactory
 
 

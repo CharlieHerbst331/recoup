@@ -6,6 +6,7 @@ from types import SimpleNamespace as NS
 
 import pytest
 
+from recoup.contracts import capabilities
 from recoup.contracts.interfaces import LLMResponse
 from recoup.engine import scans
 from recoup.engine.factory import build_engine
@@ -65,14 +66,14 @@ def test_capability_probe_and_vision_gate(monkeypatch):
     assert scans.scan_capabilities(llm_mode="live", vision=True)["vision"]
     assert not scans.scan_capabilities(llm_mode="fake", vision=True)["vision"]
     assert not scans.scan_capabilities(llm_mode="live", vision=False)["vision"]
-    original = scans.importlib.import_module
+    original = capabilities.importlib.import_module
 
     def missing(name):
         if name == "pytesseract":
             raise ImportError("optional extra absent")
         return original(name)
 
-    monkeypatch.setattr(scans.importlib, "import_module", missing)
+    monkeypatch.setattr(capabilities.importlib, "import_module", missing)
     assert not scans.scan_capabilities()["pytesseract"]
 
 

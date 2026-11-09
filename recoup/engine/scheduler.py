@@ -13,7 +13,8 @@ OUTBOUND = {"dispute", "correction", "follow_up"}
 
 
 def _buyer_email(world, case_id, evidence):
-    recipients = world.allowed_recipients(case_id, Target.mock_buyer_portal)
+    recipients = set(world.allowed_recipients(case_id, Target.mock_buyer_portal))
+    recipients.update(world.allowed_recipients(case_id, Target.mock_email))
     return evidence.kind == "email" and evidence.fields.get("from") in recipients
 
 
@@ -69,13 +70,24 @@ def followup_proposal(world, case_id, mode="fake"):
     receipt = max(receipts, key=lambda r: (r.at, r.receipt_id), default=None)
     if receipt is None or _reply_after(world, case_id, receipt):
         return None
-    if not any(
+    sequence = 1 + sum(receipt_kind(r, case_id) == "follow_up" for r in view.receipts)
+    key = f"{case_id}:follow_up:{sequence}"
+    due_now = any(
         w.kind == "follow_up"
         and w.basis == receipt.receipt_id
         and w.status in {"pending", "done"}
         and w.due_at <= world.clock.now()
         for w in view.due
-    ):
+    )
+    drafted = any(
+        p.kind == "follow_up"
+        and p.business_key == key
+        and p.status in {"proposed", "approved"}
+        and p.created_at <= world.clock.now()
+        and p.evidence_set_hash == world.evidence_set_hash(case_id)
+        for p in view.proposals
+    )
+    if not due_now and not drafted:
         return None
     decision = world.current_decision(case_id)
     if (
@@ -85,11 +97,10 @@ def followup_proposal(world, case_id, mode="fake"):
     ):
         return None
     text = f"SYNTHETIC data. MOCK action. LLM {mode}. Please respond to the prior correspondence."
-    sequence = 1 + sum(receipt_kind(r, case_id) == "follow_up" for r in view.receipts)
     return Proposal(
         proposal_id=str(uuid4()),
         case_id=case_id,
-        business_key=f"{case_id}:follow_up:{sequence}",
+        business_key=key,
         version=1,
         kind="follow_up",
         target=Target.mock_email,
@@ -112,9 +123,16 @@ def _receipt(world, event):
     receipt = next(r for r in world.view(case_id).receipts if r.receipt_id == event.ref)
     kind = receipt_kind(receipt, case_id)
     if kind in OUTBOUND:
-        world.cancel_due(case_id, "follow_up", "New outbound receipt")
         if _reply_after(world, case_id, receipt):
+            world.cancel_due(case_id, "follow_up", "Buyer replied")
             return
+        for due in world.view(case_id).due:
+            if (
+                due.kind == "follow_up"
+                and due.status == "pending"
+                and due.basis != receipt.receipt_id
+            ):
+                world.mark_due(due.due_id, "cancelled")
         days = next(
             (
                 f.value
@@ -168,12 +186,12 @@ def handle(engine, world, llm, run_id):
             e for e in world.pending_events() if not e.processed and e.at <= world.clock.now()
         ]
         due = [w for w in world.due(world.clock.now()) if w.status == "pending"]
-        # DueWork has no seq in the contract; events win ties, then stable due identity.
-        work = [(e.at, 0, e.seq, e.event_id, e) for e in events]
-        work += [(w.due_at, 1, 0, w.due_id, w) for w in due]
+        # Canonical ordering: design/02 §5.7.
+        work = [(e.at, 0, e.seq, e) for e in events]
+        work += [(w.due_at, 1, w.due_id, w) for w in due]
         if not work:
             return handled
-        item = min(work, key=lambda row: row[:4])[-1]
+        item = min(work, key=lambda row: row[:3])[-1]
         case_id = item.case_id
         with world.transaction():
             if isinstance(item, DueWork):
@@ -203,8 +221,18 @@ def handle(engine, world, llm, run_id):
                     _receipt(world, item)
                 elif item.type != "duplicate_ignored":
                     if item.type in {"evidence_added", "evidence_superseded"}:
-                        if _buyer_email(world, case_id, world.evidence(item.ref)):
-                            world.cancel_due(case_id, "follow_up", "Buyer replied")
+                        evidence = world.evidence(item.ref)
+                        if _buyer_email(world, case_id, evidence):
+                            view = world.view(case_id)
+                            receipts = {r.receipt_id: r for r in view.receipts}
+                            for due in view.due:
+                                receipt = receipts.get(due.basis)
+                                if (
+                                    due.kind == "follow_up"
+                                    and due.status == "pending"
+                                    and (receipt is None or evidence.available_from > receipt.at)
+                                ):
+                                    world.mark_due(due.due_id, "cancelled")
                     engine.investigate(world, case_id, llm, run_id)
                     schedule_notice(world, case_id)
                     schedule_claim(world, case_id)

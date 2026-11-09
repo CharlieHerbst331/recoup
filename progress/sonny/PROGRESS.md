@@ -1054,3 +1054,375 @@ QUESTION: Charles's existing financial definitions, selected-case routing, order
 DONE: User requested publication of the eight integration-repair files listed above; pre-commit make check passed again (884 passed, 2 OCR skips), and git diff --check passed.
 NEXT: Commit and push the current branch, including the already merged Charles history, then stop.
 QUESTION: No new question; existing shared-definition and optional capability blockers remain as recorded above.
+
+
+## Charles prerequisites merge and handoff review — 2026-11-09 (America/Los_Angeles)
+
+User requested both merging Charles's published branch and reviewing the handoff
+for the next step. Clean starting branch: codex/007-4-harness-factory-ingestion,
+tip 9c821adb23d645eea0173ad42900e23d8574ff4e. Fetched origin and fast-forwarded
+origin/006-2b-sqlite-world-core-and-app-build to 933ab05. No conflicts or manual
+changes to Charles-owned files. This session implements no subsequent engine step
+and does not push the branch.
+
+Read docs/INDEX.md, spec 007, and Charles's SONNY-UNBLOCK-ACCEPTANCE,
+SONNY-FINANCIAL-HANDOFF and SONNY-WORLD-HANDOFF. Shared candidate pin:
+75a58397bec3846847673ef8af4c7ae85d2a5264; contracts tree:
+fb064458d4070d7290bd0f242a28d56f1c31aac7. These handoffs supersede the historical
+shared-definition blockers; they do not establish remaining engine acceptance.
+
+Next implementation step is 007-8 in owned engine/tests paths: counteroffer
+derivation, semantic gates, offer_ref tool flow, completion/FakeLLM and handler
+integration, with app-built in-memory approval/MOCK-submit acceptance. Normative
+references: design/02 §3.7–3.8 and §5.4–5.5. Current derive.py has no counteroffer
+branch; gates.py explicitly rejects counteroffers. Multi-invoice allocation is
+already implemented by Charles under §3.9: verify ordinary invoice balances and
+handler re-investigation, without a second allocation implementation.
+
+Remaining consumer review should also cover legal and buyer classification
+(§3.7, §5.3), citation rechecks (§3.7), selected-case routing (§3.5, §4.5),
+event/due ordering (§5.7), and shared scan reporting (§5.8). Concrete observed
+gaps: scheduler._buyer_email currently checks portal recipients only, and
+engine.scans.scan_capabilities still duplicates the probe instead of delegating
+to contracts.capabilities. These are follow-up findings, not changes in this step.
+No Carter prerequisite remains in the handoff.
+
+Verification (existing environment; no dependencies installed):
+- make check PYTHON=/tmp/recoup-007-check/bin/python: exit 0; Ruff lint/format
+  pass, 969 passed and 2 optional OCR skips in 17.83s. Includes H/C/N app engine
+  acceptance and real engine scheduler/investigation integration tests.
+- RECOUP_LLM=fake /tmp/recoup-007-check/bin/python -m recoup.cli --db :memory:
+  check-regression: exit 0; r01–r08 all PASS, actual engine runtime.
+- No live model calls or real external actions performed.
+
+Every file imported by the fast-forward (existing Charles commits):
+- cases/ambition/README.md
+- cases/ambition/counteroffer/bundle.json
+- cases/ambition/multi-invoice/remittance.json
+- docs/design/02-technical-design.md
+- docs/specs/007-sonny-engine.md
+- progress/charles/CONTRACT_REQUEST.md
+- progress/charles/PROGRESS.md
+- progress/charles/SONNY-FINANCIAL-HANDOFF.md
+- progress/charles/SONNY-UNBLOCK-ACCEPTANCE.md
+- progress/charles/SONNY-WORLD-HANDOFF.md
+- recoup/app.py
+- recoup/cli.py
+- recoup/contracts/capabilities.py
+- recoup/contracts/interfaces.py
+- recoup/contracts/models.py
+- recoup/contracts/remittance.py
+- recoup/contracts/testing.py
+- recoup/contracts/tools.py
+- recoup/world/remittance.py
+- recoup/world/store.py
+- tests/app/doubles.py
+- tests/app/test_factory_unit.py
+- tests/app/test_financial_intake.py
+- tests/app/test_mutations_integration.py
+- tests/app/test_scoped_controller.py
+- tests/cli/test_financial_intake.py
+- tests/cli/test_routing.py
+- tests/contracts/test_capabilities.py
+- tests/contracts/test_design_contract.py
+- tests/contracts/test_financial_extensions.py
+- tests/contracts/test_models.py
+- tests/world/test_counteroffer_boundary.py
+- tests/world/test_remittance.py
+
+Only newly edited file in this session: progress/sonny/PROGRESS.md.
+
+DONE: Fast-forwarded the current branch to Charles's 933ab05 and reviewed the handoffs; make check passes (969 passed, 2 OCR skips), regression 8/8 PASS.
+NEXT: Implement 007-8 counteroffer consumers and app-built acceptance, then verify remittance and the remaining cited consumer seams; stop after this merge/review step.
+QUESTION: None; the shared decisions are available, and no Carter dependency remains. Merge is local; the progress entry remains uncommitted.
+
+## 007-8 implementation — 2026-11-09 (America/Los_Angeles)
+
+Executed only 007-8 against Charles's final publication
+933ab052bf4ded509b4d6f8c2b7d68b38cfaea2f on
+006-2b-sqlite-world-core-and-app-build (also the starting local HEAD). Shared
+implementation candidate 75a58397bec3846847673ef8af4c7ae85d2a5264 and contracts
+tree fb064458d4070d7290bd0f242a28d56f1c31aac7 remain the handoff pins.
+Preserved the pre-existing uncommitted merge/review progress entry. No protected
+files, dependencies or other owner's implementation changed; no commit or push.
+
+Implemented engine counteroffer derivation, semantic gates and offer_ref tool
+flow under design/02 §3.7–3.8 and §5.4–5.5. The existing FakeLLM consumes the
+code-owned candidate observation, including conditional MOCK wording and cited
+selectors; completion and event handlers now reach that path. Required facts
+are re-resolved, and lifetime receipts remain the reservation source. Historical
+multi-invoice intake stays in Charles's World; engine tests consume its ordinary
+cases and ledger balances. Reviewed selected-case routing and cross-kind work
+ordering against §3.5, §4.5 and §5.7; the existing adapters retain those behaviors.
+
+Finished owned nonfinancial consumers: explicit legal-review routing and human
+escalation, canonical buyer reason/sender/line matching, cited email classification
+facts, policy/readiness citation rechecks, both buyer recipient targets, and shared
+scan-capability delegation (§3.7, §5.3, §5.8). The harness preserves the actual
+human-escalation reason instead of retrying into a generic loop message.
+
+The full demo exposed follow-up defects: a receipt event cancelled an already
+scheduled matching due item, initial buyer evidence could cancel a later receipt's
+schedule, and approval could no longer validate a scheduler draft after the
+pending-only CaseView stopped exposing its completed due item. The scheduler
+retains matching schedules, checks reply chronology and recognizes the saved
+current draft when revalidating completed due work. Initial demo runs failed at
+missing/unsupported follow-up; the new receipt-event regression and final demo
+verify the repaired path. Initial authored fixtures also used incorrect Receipt
+and clock attributes, an incomplete duplicate deduction, and an incorrect claim
+item expectation; these test fixtures were corrected without changing contracts.
+
+Acceptance coverage: tests/engine/test_007_8_integration.py uses app.build and
+in-memory SQLite throughout its integration lane. Tests cover authority equality,
+below/over limits; missing/conflicting/incomplete/expired/malformed offers and
+policy; all three unconfirmed money trusts and confirmation; exact punctuation;
+NP exclusion; line/open-balance limits; complete required citations; simultaneous
+approved offers; lifetime case and line reservations; over-reservation escalation;
+zero line edits with retained keys; positive aggregates; selector replay; stale
+approval basis/decision; expiry at approval and submit; duplicate MOCK submission;
+immutable receipts and unchanged ledger; new-offer handler idempotency; remittance
+invoice balances, unrelated-case isolation and replay; legal inventory/conflicts/
+trust; and buyer identity/classification. Existing scoped-controller and event/
+due suites remain part of make check. Full H/C/N acceptance exercises day-0
+credits/dispute, day-3 correction/incremental credit, follow-up, notice and day-95
+claim readiness with blocked submission for the missing statement.
+
+Changed files for this step (all owned):
+- recoup/engine/counteroffers.py (new)
+- recoup/engine/derive.py
+- recoup/engine/gates.py
+- recoup/engine/harness.py
+- recoup/engine/rules.py
+- recoup/engine/scans.py
+- recoup/engine/scheduler.py
+- recoup/engine/tools.py
+- tests/engine/test_007_8_integration.py (new)
+- tests/engine/test_rules.py
+- tests/engine/test_scan_ingest.py
+- progress/sonny/PROGRESS.md
+
+Actual CLI check-regression: r01–r08 PASS (8/8), runtime engine, LLM fake.
+Actual doctor: text PDF/Pillow/pdftoppm available; tesseract/pytesseract absent,
+vision disabled, no key, no network check. No real OCR, live model or real send
+acceptance is claimed. Optional OCR tests remain explicit skips.
+
+Final make check: `make check PYTHON=/tmp/recoup-007-check/bin/python`, exit 0:
+
+```text
+All checks passed!
+94 files already formatted
+================= 1017 passed, 2 skipped in 111.97s (0:01:51) ==================
+```
+
+The 48 new acceptance cases execute; the full H/C/N demo and the receipt-event
+regression pass. git diff --check passes. The twelve changed files are listed
+above; every file is within the handoff ownership, and no other files need reverting.
+
+DONE: Implemented 007-8 counteroffer consumers, shared-intake integration and the cited remaining owned adapters; make check passes (1017 passed, 2 optional OCR skips), full H/C/N demo passes, regression 8/8 passes.
+NEXT: Stop after 007-8; leave the twelve owned changed files uncommitted for review.
+QUESTION: None for the offline lane; real OCR and live-model evaluation remain unavailable and unclaimed.
+
+## Approved nonfinancial rules verification — 2026-11-09 (America/Los_Angeles)
+
+Applied the user's instruction to use the approved legal-review signal,
+buyer-sender classification, escalation and citation-validity rules. Read current
+design/02 §3.7 and §5.3 and Charles's SONNY-FINANCIAL-HANDOFF.md and
+SONNY-WORLD-HANDOFF.md. Verified publication
+933ab052bf4ded509b4d6f8c2b7d68b38cfaea2f is an ancestor of HEAD; shared contracts
+and design/02 have no working-tree changes. Existing uncommitted engine changes
+already implement these approved decisions; preserved them without rewriting,
+staging, committing, or publishing them.
+
+Focused offline verification:
+- `RECOUP_LLM=fake /tmp/recoup-007-check/bin/python -m pytest tests/engine/test_007_8_integration.py -k 'legal or buyer_classification' -q`:
+  9 passed, 39 deselected. Covers explicit signal routing, authority inventory,
+  conflict/untrusted escalation and buyer sender/line classification.
+- `RECOUP_LLM=fake /tmp/recoup-007-check/bin/python -m pytest tests/engine/test_007_3_integration.py tests/engine/test_tools_gates_derive.py tests/engine/test_policy_readiness.py tests/world/test_counteroffer_boundary.py -k 'citation or readiness or ungrounded' -q`:
+  52 passed, 74 deselected. Includes actual app-built World citation/grounding
+  checks and consumer validation in addition to pure readiness checks.
+- `make check PYTHON=/tmp/recoup-007-check/bin/python`: exit 0, Ruff lint and
+  formatting PASS, 1017 passed, 2 skipped in 118.93s. The two optional OCR tests
+  remain skipped; no paid API, network test, or real send was used.
+
+Updated CONTRACT_REQUEST.md to mark requests 1–4 resolved by the approved
+normative decisions, retaining the original requests as history. Their earlier
+missing-decision/citation-interface blockers no longer apply. This session edited
+only progress/sonny/CONTRACT_REQUEST.md and progress/sonny/PROGRESS.md; all
+pre-existing implementation changes remain uncommitted for review.
+
+DONE: Verified the existing implementation uses the four approved rules; focused checks and make check pass; requests 1–4 marked resolved.
+NEXT: Stop this verification step; preserve existing uncommitted work for review.
+QUESTION: None for these approved rules.
+
+## offer_ref contract and counteroffer acceptance — 2026-11-09 (America/Los_Angeles)
+
+Applied the user's request to include the new selector contract and counteroffer
+derivation/gate acceptance. Read Charles's SONNY-FINANCIAL-HANDOFF.md, spec 007-8,
+and design/02 §3.7–3.8, §5.4–5.5. Charles publication
+`933ab052bf4ded509b4d6f8c2b7d68b38cfaea2f` is an ancestor of HEAD. The existing
+`codex/007-4-harness-factory-ingestion` working tree already contains the approved
+shared contracts and uncommitted 007-8 engine integration work. Preserved that
+work; did not stage, commit, switch branches, edit shared files, or publish it.
+
+Imported Proposal, Approval, Receipt and DraftProposalArgs carry offer_ref with
+legacy default None. Added nine explicit app-built in-memory acceptance cases in
+`tests/engine/test_offer_ref_acceptance.py` covering all four imported records'
+JSON compatibility, exact selector preservation, approval/receipt version binding,
+URL-encoded identity, code-owned allocations, positive gate acceptance at save /
+approve / submit, downward edits, rejected increases, selector rebinding, and
+selectors rejected on ordinary proposal kinds. No local contract models or
+model-supplied amount inputs were introduced.
+
+Review found a derivation gap against design/02 §5.4: different active complete
+emails with the same offer reference and different allowed senders were accepted.
+The new regression failed before the repair: **1 failed, 8 passed in 2.70s**.
+Updated only the sender-consistency check in the existing counteroffers.py so
+repeated offers must agree on sender. Equal repeated sources still yield one
+concession. The same regression checks rejection through the engine validator at
+all three stages. After repair the new module reports **9 passed in 2.60s**.
+
+Focused acceptance command:
+`RECOUP_LLM=fake /tmp/recoup-007-check/bin/python -m pytest tests/engine/test_offer_ref_acceptance.py tests/engine/test_007_8_integration.py tests/world/test_counteroffer_boundary.py -q`
+reported **79 passed in 92.68s** before the two additional repeated-source cases
+were added. It verifies the existing counteroffer derivation/gate path, boundary,
+source/trust, lifetime reservations, edits, stale approvals, competing offers,
+duplicate submission, selector replay and actual World defenses. The final full
+suite below includes all nine new cases and the sender repair.
+
+Marked historical contract request 7 resolved against the published definitions.
+No additional contract change is needed. This session's changed files are:
+- recoup/engine/counteroffers.py (small repair to existing uncommitted implementation)
+- tests/engine/test_offer_ref_acceptance.py (new)
+- progress/sonny/CONTRACT_REQUEST.md
+- progress/sonny/PROGRESS.md
+
+Other pre-existing changed/untracked files are preserved; they are not changes
+introduced by this verification/repair. Shared contracts and design/02 remain
+unchanged (`git diff --exit-code -- recoup/contracts docs/design/02-technical-design.md`:
+exit 0). `git diff --check` passes. No network, model spend or real send was used.
+
+Final verification: `make check PYTHON=/tmp/recoup-007-check/bin/python`, exit 0;
+Ruff lint PASS; format PASS (95 files); **1026 passed, 2 skipped in 114.74s**.
+The two unavailable optional OCR paths remain explicit skips; live-model and real
+send acceptance are not claimed. All new selector/counteroffer cases execute on
+actual app-built SQLite. A separately introduced untracked
+`tests/engine/test_counteroffer_harness.py` appeared during verification; it was
+not edited or included in this session's claimed test count. Existing work remains
+uncommitted for review.
+
+DONE: Included imported offer_ref compatibility/binding and derivation/gate acceptance; repaired conflicting offer senders; nine new cases and make check pass.
+NEXT: Stop this acceptance step; preserve all existing uncommitted work for review.
+QUESTION: None for the approved offer_ref/counteroffer offline acceptance.
+
+## Counteroffer harness coverage — 2026-11-09 (America/Los_Angeles)
+
+User-requested follow-through for counteroffer tool selection, completion,
+FakeLLM coverage and selected-case execution. Preserved all existing uncommitted
+implementation and tests. Existing engine behavior already handles these cases;
+this follow-through changes only `tests/engine/test_counteroffer_harness.py` and
+appends this progress entry. Business definitions: design/02 §4.5, §5.4–5.6.
+
+Five new real app-built SQLite checks (no doubles for World):
+- FakeLLM selects opaque `A/B` and D2 through `draft_proposal`, supplies no
+  money/allocations, requests approval, and ends without auto-approval or receipt.
+- Completion refuses `end` when only the counteroffer remains; accepts its draft
+  and subsequently its MOCK receipt. Submission leaves the ledger unchanged.
+- Default app `run(case_id)` drafts the selected case's offer without touching
+  another loaded case's history, pending events, due work or decision.
+- Expired and over-authority offers do not block ordinary work or completion
+  (two parametrized cases).
+
+Commands/results:
+- `python -m pytest tests/engine/test_counteroffer_harness.py -q` using existing
+  `/tmp/recoup-007-check/bin/python`: **5 passed in 1.16s**.
+- Existing counteroffer integration and offer-ref acceptance modules:
+  **57 passed in 95.37s**.
+- `git diff --check`: PASS, including preserved existing changes.
+- `make check PYTHON=/tmp/recoup-007-check/bin/python`: Ruff lint/format PASS;
+  **1031 passed, 2 skipped in 116.07s**. The two existing scan capability skips
+  remain; the five new real integration tests all ran and passed.
+
+DONE: Added five passing counteroffer harness/completion/FakeLLM/selected-case tests; full make check passes. Changed files: tests/engine/test_counteroffer_harness.py and progress/sonny/PROGRESS.md only in this follow-through.
+NEXT: Stop; leave all existing implementation edits intact and uncommitted.
+QUESTION: None for this coverage request.
+
+## 007-5 approved ordering and buyer allowlists — 2026-11-09
+
+Applied the published design/02 §5.7 ordering directly in the scheduler and
+replaced the obsolete fallback comment with its normative reference. Request #5
+is now marked resolved against that approval. Sender membership uses the union
+required by design/02 §3.7; the existing uncommitted two-allowlist behavior was
+preserved and expressed explicitly as a set union. No contract edits are needed.
+
+Added seven cases in tests/engine/test_007_5_integration.py against the actual
+app-built SqliteWorld(":memory:"). `test_real_event_due_ordering` reverses the
+provider lists, checks both ranks' tie behavior and chronological precedence,
+leaves future work pending, and verifies a second handle adds nothing. Its engine
+investigation callback is inert to isolate scheduling, while all persisted work,
+events, transactions and acknowledgements use the real World.
+`test_real_reply_allowlists` has six cases: distinct email-only and portal-only
+senders plus an ERP-only negative control, both through the email event path and
+through the due handler's active-evidence suppression path after decision refresh.
+
+Initial new integration assertions had seven fixture failures: CaseView exposes
+pending due work only, loading emits multiple initial events, and adding evidence
+invalidates the decision. Corrected the tests to observe real acknowledgements,
+include all initial events, and explicitly refresh the decision when bypassing
+its email event. No production behavior was weakened to satisfy those fixtures.
+Focused integration command: `RECOUP_LLM=fake /tmp/recoup-007-check/bin/python -m
+pytest tests/engine/test_007_5_integration.py -q`: **12 passed in 13.12s**, no skips.
+
+Files changed in this follow-up only:
+- recoup/engine/scheduler.py
+- tests/engine/test_007_5_integration.py
+- progress/sonny/CONTRACT_REQUEST.md
+- progress/sonny/PROGRESS.md
+
+All other pre-existing modified and untracked files were preserved. No network,
+real send, dependency installation, shared contract edit, commit or publication.
+
+Final `make check PYTHON=/tmp/recoup-007-check/bin/python`: exit 0; Ruff lint and
+format PASS (96 files); **1038 passed, 2 skipped in 125.13s**. The optional OCR
+skips remain; all scheduler integration cases executed. `git diff --check` passed.
+
+DONE: Used approved scheduler ordering, verified both buyer sender allowlists on actual SQLite, resolved request #5, and passed make check.
+NEXT: Stop this follow-up; preserve unrelated in-progress work and leave changes uncommitted for review.
+QUESTION: None for the approved ordering or email/portal sender recognition.
+
+## Shared capability reporting — 2026-11-09 (America/Los_Angeles)
+
+User requested delegation to contracts.capabilities.scan_capabilities (design/02
+§5.8). On entry, scans.py already imported the shared probe and its existing tests
+already patched the shared module. Preserved those edits and all other existing
+uncommitted work. Updated factory.py to import the shared probe directly.
+No shared contract files, dependencies or extraction behavior changed.
+
+Verification: make check PYTHON=/tmp/recoup-007-check/bin/python passed Ruff lint,
+format (96 files), and pytest: 1038 passed, 2 skipped in 124.12s. The two existing
+real OCR skips remain. git diff --check passed.
+
+DONE: Engine capability reporting delegates to the shared contract probe; full checks pass. Files changed in this follow-through: recoup/engine/factory.py and progress/sonny/PROGRESS.md.
+NEXT: Stop; preserve existing uncommitted changes for review.
+QUESTION: None.
+
+## Session handoff and Git publication — 2026-11-09 (America/Los_Angeles)
+
+User requested updating the session handoff and pushing the accumulated changes.
+Added [SESSION-HANDOFF.md](SESSION-HANDOFF.md) as the current consolidated status,
+including the complete 18-file publication list, shared candidate pins, acceptance
+scope and reviewer/verifier next step. Earlier instructions to leave this work
+uncommitted are superseded by this publication request. No implementation was
+changed in this publication step; all existing owned engine and test edits are
+included. No shared contracts or other protected files changed.
+
+Fresh verification: `make check PYTHON=/tmp/recoup-007-check/bin/python` exits 0:
+Ruff lint PASS, 96 files formatted, **1038 passed, 2 skipped in 116.15s**.
+The two existing optional OCR skips remain. Actual fake-LLM in-memory CLI
+`check-regression` passes r01–r08 (8/8). `git diff --check` passes.
+Fetched origin before publication; the current branch has two existing commits
+ahead and none behind its remote. Publication uses the existing
+`codex/007-4-harness-factory-ingestion` branch without a force push.
+
+DONE: Updated the session handoff and prepared all 18 owned files for the user-requested commit/push; fresh make check and regression 8/8 pass.
+NEXT: Push this publication commit, verify remote equality and a clean working tree, then stop for reviewer/verifier review.
+QUESTION: None for this publication; real OCR and live-model acceptance remain unclaimed.

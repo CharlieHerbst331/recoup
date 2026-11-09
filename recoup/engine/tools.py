@@ -20,6 +20,7 @@ from recoup.contracts.models import (
 )
 from recoup.contracts.money import Money, fmt
 from recoup.engine import policy, readiness
+from recoup.engine.counteroffers import derive_counteroffer
 from recoup.engine.derive import allocations, derive, receipt_kind
 from recoup.engine.gates import ProposalValidator
 from recoup.engine.rules import NeedsHumanError, run_rules
@@ -32,11 +33,11 @@ _KEYS = {
     "payment": r"invoice_no|paid_cents|paid_date|payment_ref",
     "remittance": (
         r"invoice_no|paid_cents|ded\.[1-9]\d*\.(line_id|reason"
-        r"|claimed_cents|sku|qty|ref|reported_date)"
+        r"|claimed_cents|sku|qty|ref|reported_date|requires_legal_review)"
     ),
     "debit_memo": (
         r"invoice_no|ded\.[1-9]\d*\.(line_id|reason|claimed_cents|sku|qty"
-        r"|ref|reported_date)"
+        r"|ref|reported_date|requires_legal_review)"
     ),
     "po": r"po_no|required_delivery_date|line\.[1-9]\d*\.(sku|qty|unit_price_cents)",
     "contract": (
@@ -66,7 +67,10 @@ _KEYS = {
     ),
 }
 _KEYS["amendment"] = _KEYS["contract"] + r"|amends|authorized_by|authority_role"
-_KEYS["email"] = _KEYS["amendment"] + r"|from|to|sent_date"
+_KEYS["email"] = (
+    _KEYS["amendment"] + r"|from|to|sent_date|ded\.[1-9]\d*\.(line_id|reason|requires_legal_review)"
+    r"|offer\..+\.(expires_date|line\..+\.concession_cents)"
+)
 
 
 def _fail(code, message, line_id=None):
@@ -297,6 +301,37 @@ class ToolSession:
         doc = self._citation(a.citation)
         trust = doc.method.value if doc.method.value in {"ocr", "vision"} else "model_extracted"
         self.world.set_line_reason(self.case_id, a.line_id, a.reason, trust, a.citation)
+        if (
+            doc.kind == "email"
+            and doc.fields.get("from") in self.world.fact_set(self.case_id).buyer_senders
+            and _contains(a.line_id, a.citation.quote, "line_id")
+            and _contains(a.reason.value, a.citation.quote, "reason")
+        ):
+            facts = self.world.fact_set(self.case_id).facts
+            indexes = {
+                f.key.split(".")[1]
+                for f in facts
+                if f.evidence_id == doc.evidence_id and re.fullmatch(r"ded\.[1-9]\d*\..+", f.key)
+            }
+            existing = next(
+                (
+                    f.key.rsplit(".", 1)[0]
+                    for f in facts
+                    if f.evidence_id == doc.evidence_id
+                    and f.key.endswith(".line_id")
+                    and f.value == a.line_id
+                ),
+                None,
+            )
+            index = 1
+            while str(index) in indexes:
+                index += 1
+            prefix = existing or f"ded.{index}"
+            for key, value in [
+                (prefix + ".line_id", a.line_id),
+                (prefix + ".reason", a.reason.value),
+            ]:
+                self.world.add_fact(doc.evidence_id, key, value, trust, a.citation, self.controller)
         return dict(line_id=a.line_id, reason=a.reason, accepted=True)
 
     def _propose_fact(self, a):
@@ -331,7 +366,11 @@ class ToolSession:
             if receipt_kind(r, self.case_id) == "insurer_notice"
         ]
         latest = max(receipts, key=lambda r: (r.at, r.receipt_id), default=None)
-        return {"answers": policy.answer(self.world.fact_set(self.case_id), a.question, latest)}
+        answers = policy.answer(self.world.fact_set(self.case_id), a.question, latest)
+        for answer in answers:
+            if answer.clause_citation is not None:
+                self._citation(answer.clause_citation)
+        return {"answers": answers}
 
     def _readiness(self, a):
         facts = self.world.fact_set(self.case_id)
@@ -358,6 +397,9 @@ class ToolSession:
                 if a.kind == "notice"
                 else readiness.claim(*inputs)
             )
+        for item in result.items:
+            if item.policy_citation is not None:
+                self._citation(item.policy_citation)
         saved = self.world.save_readiness(result)
         if saved.kind == "notice":
             from recoup.engine.scheduler import schedule_notice
@@ -485,6 +527,8 @@ class ToolSession:
         )
 
     def _draft_proposal(self, a):
+        if a.kind != "counteroffer" and a.offer_ref is not None:
+            _fail("invalid_offer_ref", "Only counteroffers select an offer")
         for lid in a.line_ids:
             self._line(lid)
         if len(set(a.line_ids)) != len(a.line_ids):
@@ -516,7 +560,11 @@ class ToolSession:
                 created_by="agent",
             )
         else:
-            candidates = derive(self.world, self.case_id, a.line_ids)
+            candidates = (
+                [derive_counteroffer(self.world, self.case_id, a.line_ids, a.offer_ref)]
+                if a.kind == "counteroffer"
+                else derive(self.world, self.case_id, a.line_ids)
+            )
             p = next(
                 (
                     p
@@ -657,12 +705,18 @@ class ToolSession:
             if receipt_kind(r, self.case_id) in {"dispute", "correction", "follow_up"}
         ]
         if outbound:
+            from recoup.engine.scheduler import _reply_after, followup_proposal
+
             latest = max(outbound, key=lambda r: (r.at, r.receipt_id))
-            if not any(
-                w.kind == "follow_up"
-                and w.basis == latest.receipt_id
-                and w.status in {"pending", "done", "cancelled"}
-                for w in view.due
+            if (
+                not _reply_after(self.world, self.case_id, latest)
+                and followup_proposal(self.world, self.case_id) is None
+                and not any(
+                    w.kind == "follow_up"
+                    and w.basis == latest.receipt_id
+                    and w.status in {"pending", "done", "cancelled"}
+                    for w in view.due
+                )
             ):
                 unmet.append("follow-up schedule")
         return unmet
