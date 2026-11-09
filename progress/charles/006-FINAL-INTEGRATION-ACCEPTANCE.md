@@ -80,8 +80,9 @@ evidence.
 in 213.74 seconds.** The targeted three escalation cases also pass independently
 on disk, and the post-fix actual-engine regression command passes **8/8**.
 
-The tested implementation SHA is recorded in the following publication-record
-commit. The shared contract tree is unchanged. All 13 paths below are published
+The tested implementation SHA is
+`97ded2c34a6215511b97fa5910d3251c1ca12521`. The shared contract tree is unchanged.
+All 13 paths below are published
 on `006-2b-sqlite-world-core-and-app-build`; subsequent record changes affect
 documentation only. Original untracked `arhcive/` and
 `recoup-006-charles-bundle-r10.md` remain untouched and excluded.
