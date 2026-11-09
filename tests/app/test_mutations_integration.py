@@ -1,4 +1,4 @@
-"""Real World with injected controllers: design/02 §4.5 orchestration acceptance."""
+"""Real World and explicit validator stub: §4.5 controller orchestration only."""
 
 from datetime import timedelta
 
@@ -20,6 +20,14 @@ from recoup.contracts.models import (
 from recoup.contracts.money import Money
 
 from .test_build_integration import synthetic_bundle
+
+
+@pytest.fixture(autouse=True)
+def contract_stub_runtime(monkeypatch):
+    import recoup.app as module
+
+    # The fabricated decision below tests routing, never real financial gates.
+    monkeypatch.setattr(module, "find_spec", lambda name: None)
 
 
 @pytest.mark.parametrize("name", ["null", "scripted-T-min", "REF", "BAD"])

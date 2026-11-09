@@ -3,6 +3,7 @@
 from datetime import date
 from pathlib import Path
 
+import pytest
 from typer.testing import CliRunner
 
 from recoup import cli
@@ -18,6 +19,15 @@ from recoup.contracts.models import (
 from recoup.contracts.money import Money
 
 runner = CliRunner()
+
+
+@pytest.fixture(autouse=True)
+def contract_stub_runtime(monkeypatch):
+    import recoup.app as module
+
+    # G1 command/persistence checks explicitly use the shared contract validator.
+    # Actual engine integration is checked separately, without this fixture.
+    monkeypatch.setattr(module, "find_spec", lambda name: None)
 
 
 def fixture_bundle(case_id="CASE", currency="USD"):

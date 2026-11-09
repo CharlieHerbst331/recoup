@@ -48,7 +48,9 @@
         "COMPANY#fields.follow_up_days",
         "COMPANY#fields.authority_cents",
         "COMPANY#fields.allowed_authority_roles",
-        "COMPANY#fields.amendment_precedence"
+        "COMPANY#fields.amendment_precedence",
+        "UNAUTHORIZED#fields.authorized_by",
+        "UNAUTHORIZED#fields.authority_role"
       ],
       "missing": []
     },

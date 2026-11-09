@@ -483,7 +483,7 @@ class SqliteWorld:
             )
             self._save("facts", fact, fact.fact_id, row.case_id)
             self.fact_set(row.case_id)
-            self._event(row.case_id, "evidence_added", fact.fact_id)
+            self._event(row.case_id, "evidence_added", evidence_id)
             self._cascade(row.case_id, revision={"kind": "fact", "id": fact.fact_id})
             return fact
 
@@ -518,7 +518,10 @@ class SqliteWorld:
         citation: Citation | None,
     ) -> LineReasonRevision:
         with self.transaction():
-            if not any(line.line_id == line_id for line in self.deduction_lines(case_id)):
+            line = next(
+                (line for line in self.deduction_lines(case_id) if line.line_id == line_id), None
+            )
+            if line is None:
                 self._error("unknown_line", line_id)
             if citation:
                 self.resolve_citation(citation)
@@ -539,7 +542,24 @@ class SqliteWorld:
             revision_id = new_id("R")
             self._save("line_reasons", revision, revision_id, case_id)
             self.fact_set(case_id)
-            self._event(case_id, "evidence_added", citation.evidence_id if citation else line_id)
+            source_id = citation.evidence_id if citation else line.source_evidence_id
+            if source_id is None:
+                # Inferred lines have ledger sources rather than their own document (§3.7).
+                ledger_sources = {entry.source for entry in self.ledger(case_id)}
+                evidence = sorted(
+                    self._evidence_rows(case_id), key=lambda row: row.active, reverse=True
+                )
+                source_id = next(
+                    (
+                        row.evidence_id
+                        for kind in ("payment", "invoice")
+                        for row in evidence
+                        if row.kind == kind and row.doc_ref in ledger_sources
+                    ),
+                    None,
+                )
+            if source_id is not None:
+                self._event(case_id, "evidence_added", source_id)
             self._cascade(case_id, revision={"kind": "line_reason", "id": revision_id})
             return revision
 
@@ -876,11 +896,15 @@ class SqliteWorld:
         reason: str = "",
     ) -> None:
         row = self._case(case_id)
+        next_status = CaseStatus(status).value if status is not None else row["status"]
+        next_insurance = (
+            InsuranceStatus(insurance).value if insurance is not None else row["insurance"]
+        )
         self.db.execute(
             "UPDATE cases SET status=?,insurance=?,reason=? WHERE id=?",
             (
-                status.value if status else row["status"],
-                insurance.value if insurance else row["insurance"],
+                next_status,
+                next_insurance,
                 reason,
                 case_id,
             ),

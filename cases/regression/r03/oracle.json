@@ -41,7 +41,7 @@
         "COMPANY#fields.amendment_precedence"
       ],
       "missing": [
-        "signed_pod"
+        "signed POD"
       ]
     }
   ],

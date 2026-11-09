@@ -52,7 +52,7 @@
   "notice_deadline": "2027-01-13",
   "claim_items": {
     "claim.notice_receipt": "missing",
-    "claim.waiting_period": "missing",
+    "claim.waiting_period": "unknown",
     "claim.doc.1": "present",
     "claim.doc.2": "present",
     "claim.doc.3": "present",

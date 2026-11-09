@@ -1,10 +1,20 @@
-"""G1: the facade builds the real SQLite provider (design/02 §4.5)."""
+"""G1: real SQLite with explicit contract stubs (design/02 §4.5)."""
 
 from datetime import date
+
+import pytest
 
 from recoup.contracts.bundle import BundleDoc, CaseBundle
 from recoup.contracts.models import DocKind
 from recoup.contracts.testing import NullController
+
+
+@pytest.fixture(autouse=True)
+def contract_stub_runtime(monkeypatch):
+    import recoup.app as module
+
+    # These tests target G1 assembly, independently of installed engine providers.
+    monkeypatch.setattr(module, "find_spec", lambda name: None)
 
 
 def synthetic_bundle():
