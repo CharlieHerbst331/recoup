@@ -1,0 +1,164 @@
+{
+  "case_id": "r07",
+  "title": "SYNTHETIC — P-B nonpayment over the credit limit",
+  "seller": "Acme Foods Co.",
+  "buyer": "Synthetic Regression Buyer",
+  "currency": "USD",
+  "invoice_ref": "INV-r07",
+  "start_date": "2026-10-20",
+  "static_day": 0,
+  "policy_ref": "P-B",
+  "allowed_recipients": {
+    "mock_buyer_portal": [
+      "buyer-portal.invalid"
+    ],
+    "mock_erp": [
+      "erp.invalid"
+    ],
+    "mock_email": [
+      "ar@example.invalid",
+      "shipping@example.invalid",
+      "buyer@example.invalid"
+    ],
+    "mock_insurer": [
+      "insurer@example.invalid"
+    ]
+  },
+  "docs": [
+    {
+      "doc_ref": "INV",
+      "version": 1,
+      "kind": "invoice",
+      "title": "SYNTHETIC — INV-r07",
+      "file": null,
+      "text": "SYNTHETIC fixture; not a real transaction. ",
+      "fields": {
+        "invoice_no": "INV-r07",
+        "invoice_date": "2026-09-01",
+        "due_date": "2026-09-30",
+        "buyer_id": "REGRESSION-BUYER",
+        "total_cents": 3000000,
+        "line.1.sku": "SKU-8",
+        "line.1.qty": 300,
+        "line.1.unit_price_cents": 10000
+      },
+      "available_at_day": 0,
+      "held_by": null
+    },
+    {
+      "doc_ref": "TERMS",
+      "version": 1,
+      "kind": "contract",
+      "title": "SYNTHETIC — Sales terms",
+      "file": null,
+      "text": "SYNTHETIC fixture; not a real transaction. ",
+      "fields": {
+        "contract_id": "ACME-TERMS",
+        "effective_date": "2026-01-01",
+        "price.SKU-8_cents": 10000
+      },
+      "available_at_day": 0,
+      "held_by": null
+    },
+    {
+      "doc_ref": "POD",
+      "version": 1,
+      "kind": "pod",
+      "title": "SYNTHETIC — Proof of delivery v1",
+      "file": null,
+      "text": "SYNTHETIC fixture; not a real transaction. ",
+      "fields": {
+        "pod_no": "POD-SYNTHETIC",
+        "delivered_date": "2026-09-01",
+        "signed": true,
+        "received.SKU-8": 300
+      },
+      "available_at_day": 0,
+      "held_by": null
+    },
+    {
+      "doc_ref": "STATEMENT",
+      "version": 1,
+      "kind": "statement",
+      "title": "SYNTHETIC — Statement of account",
+      "file": null,
+      "text": "SYNTHETIC fixture; not a real transaction. ",
+      "fields": {
+        "as_of": "2026-10-20",
+        "balance_cents": 3000000
+      },
+      "available_at_day": 0,
+      "held_by": null
+    },
+    {
+      "doc_ref": "COLLECTION",
+      "version": 1,
+      "kind": "collection_note",
+      "title": "SYNTHETIC — Prior collection contact",
+      "file": null,
+      "text": "SYNTHETIC fixture; not a real transaction. ",
+      "fields": {
+        "date": "2026-10-10",
+        "channel": "email"
+      },
+      "available_at_day": 0,
+      "held_by": null
+    },
+    {
+      "doc_ref": "COMPANY",
+      "version": 1,
+      "kind": "company_policy",
+      "title": "SYNTHETIC — Acme collection and authority policy",
+      "file": null,
+      "text": "SYNTHETIC fixture; not a real transaction. ",
+      "fields": {
+        "tolerance_cents": 0,
+        "follow_up_days": 14,
+        "authority_cents": 100000,
+        "allowed_authority_roles": "VP Sales,Finance Director",
+        "amendment_precedence": "latest_effective"
+      },
+      "available_at_day": 0,
+      "held_by": null
+    },
+    {
+      "doc_ref": "P-B",
+      "version": 1,
+      "kind": "insurance_policy",
+      "title": "SYNTHETIC — P-B trade credit policy",
+      "file": null,
+      "text": "SYNTHETIC fixture; not a real transaction. These are synthetic terms. Sending a notice does not establish coverage or claim eligibility.",
+      "fields": {
+        "policy_id": "P-B",
+        "covered_buyer.1": "NORTHWIND",
+        "covered_buyer.2": "REGRESSION-BUYER",
+        "credit_limit_cents": 2000000,
+        "period_start": "2026-01-01",
+        "period_end": "2026-12-31",
+        "mep_days_after_due": 90,
+        "notice_days_after_mep": 15,
+        "waiting_days_after_notice": 30,
+        "claim_doc.1": "invoice",
+        "claim_doc.2": "pod",
+        "claim_doc.3": "contract",
+        "claim_doc.4": "statement",
+        "disputed_debt_clause": "notice_still_required",
+        "stop_shipment_after_mep": true,
+        "clause.applicability": "This synthetic policy applies to listed buyers and invoices within its stated period.",
+        "clause.mep": "The maximum extension period ends 90 days after the invoice due date.",
+        "clause.notice": "Notice must be made within 15 days after the maximum extension period ends.",
+        "clause.waiting_period": "The claim window opens 30 days after the notice receipt.",
+        "clause.claim_documents": "The package requires an invoice, signed POD, contract and statement of account.",
+        "clause.collection_history": "A follow-up receipt or readable collection note is required.",
+        "clause.credit_limit": "A balance above the stated credit limit is restricted in the checklist.",
+        "clause.disputed_debt": "Notice is still required while the debt is disputed.",
+        "clause.stop_shipment": "Stop further shipments after the maximum extension period ends.",
+        "exclusion.1": "credit_limit"
+      },
+      "available_at_day": 0,
+      "held_by": null
+    }
+  ],
+  "events": [],
+  "provenance": "synthetic"
+}

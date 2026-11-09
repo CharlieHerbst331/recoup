@@ -1,0 +1,119 @@
+{
+  "case_id": "r03",
+  "title": "SYNTHETIC — Unsigned POD cannot prove shortage",
+  "seller": "Acme Foods Co.",
+  "buyer": "Synthetic Regression Buyer",
+  "currency": "USD",
+  "invoice_ref": "INV-r03",
+  "start_date": "2026-10-20",
+  "static_day": 0,
+  "policy_ref": null,
+  "allowed_recipients": {
+    "mock_buyer_portal": [
+      "buyer-portal.invalid"
+    ],
+    "mock_erp": [
+      "erp.invalid"
+    ],
+    "mock_email": [
+      "ar@example.invalid",
+      "shipping@example.invalid",
+      "buyer@example.invalid"
+    ],
+    "mock_insurer": [
+      "insurer@example.invalid"
+    ]
+  },
+  "docs": [
+    {
+      "doc_ref": "INV",
+      "version": 1,
+      "kind": "invoice",
+      "title": "SYNTHETIC — INV-r03",
+      "file": null,
+      "text": "SYNTHETIC fixture; not a real transaction. ",
+      "fields": {
+        "invoice_no": "INV-r03",
+        "invoice_date": "2026-09-01",
+        "due_date": "2026-09-30",
+        "buyer_id": "REGRESSION-BUYER",
+        "total_cents": 100000,
+        "line.1.sku": "SKU-3",
+        "line.1.qty": 10,
+        "line.1.unit_price_cents": 10000
+      },
+      "available_at_day": 0,
+      "held_by": null
+    },
+    {
+      "doc_ref": "PAY",
+      "version": 1,
+      "kind": "payment",
+      "title": "SYNTHETIC — Payment against INV-r03",
+      "file": null,
+      "text": "SYNTHETIC fixture; not a real transaction. ",
+      "fields": {
+        "invoice_no": "INV-r03",
+        "paid_cents": 90000,
+        "paid_date": "2026-09-10",
+        "payment_ref": "PAY-INV-r03"
+      },
+      "available_at_day": 0,
+      "held_by": null
+    },
+    {
+      "doc_ref": "REM",
+      "version": 1,
+      "kind": "remittance",
+      "title": "SYNTHETIC — Remittance against INV-r03",
+      "file": null,
+      "text": "SYNTHETIC fixture; not a real transaction. ",
+      "fields": {
+        "invoice_no": "INV-r03",
+        "paid_cents": 90000,
+        "ded.1.line_id": "D1",
+        "ded.1.reason": "shortage",
+        "ded.1.claimed_cents": 10000,
+        "ded.1.sku": "SKU-3",
+        "ded.1.qty": 1
+      },
+      "available_at_day": 0,
+      "held_by": null
+    },
+    {
+      "doc_ref": "POD",
+      "version": 1,
+      "kind": "pod",
+      "title": "SYNTHETIC — Proof of delivery v1",
+      "file": null,
+      "text": "SYNTHETIC fixture; not a real transaction. ",
+      "fields": {
+        "pod_no": "POD-SYNTHETIC",
+        "delivered_date": "2026-09-01",
+        "signed": false,
+        "received.SKU-3": 9
+      },
+      "available_at_day": 0,
+      "held_by": null
+    },
+    {
+      "doc_ref": "COMPANY",
+      "version": 1,
+      "kind": "company_policy",
+      "title": "SYNTHETIC — Acme collection and authority policy",
+      "file": null,
+      "text": "SYNTHETIC fixture; not a real transaction. ",
+      "fields": {
+        "tolerance_cents": 0,
+        "follow_up_days": 14,
+        "authority_cents": 100000,
+        "allowed_authority_roles": "VP Sales,Finance Director",
+        "amendment_precedence": "latest_effective"
+      },
+      "available_at_day": 0,
+      "held_by": null
+    }
+  ],
+  "events": [],
+  "provenance": "synthetic"
+}

@@ -1,0 +1,139 @@
+{
+  "case_id": "r01",
+  "title": "SYNTHETIC — Early payment and unauthorized price amendment",
+  "seller": "Acme Foods Co.",
+  "buyer": "Synthetic Regression Buyer",
+  "currency": "USD",
+  "invoice_ref": "INV-r01",
+  "start_date": "2026-10-20",
+  "static_day": 0,
+  "policy_ref": null,
+  "allowed_recipients": {
+    "mock_buyer_portal": [
+      "buyer-portal.invalid"
+    ],
+    "mock_erp": [
+      "erp.invalid"
+    ],
+    "mock_email": [
+      "ar@example.invalid",
+      "shipping@example.invalid",
+      "buyer@example.invalid"
+    ],
+    "mock_insurer": [
+      "insurer@example.invalid"
+    ]
+  },
+  "docs": [
+    {
+      "doc_ref": "INV",
+      "version": 1,
+      "kind": "invoice",
+      "title": "SYNTHETIC — INV-r01",
+      "file": null,
+      "text": "SYNTHETIC fixture; not a real transaction. ",
+      "fields": {
+        "invoice_no": "INV-r01",
+        "invoice_date": "2026-09-01",
+        "due_date": "2026-09-30",
+        "buyer_id": "REGRESSION-BUYER",
+        "total_cents": 1050000,
+        "line.1.sku": "SKU-7",
+        "line.1.qty": 1000,
+        "line.1.unit_price_cents": 1050
+      },
+      "available_at_day": 0,
+      "held_by": null
+    },
+    {
+      "doc_ref": "PAY",
+      "version": 1,
+      "kind": "payment",
+      "title": "SYNTHETIC — Payment against INV-r01",
+      "file": null,
+      "text": "SYNTHETIC fixture; not a real transaction. ",
+      "fields": {
+        "invoice_no": "INV-r01",
+        "paid_cents": 979000,
+        "paid_date": "2026-09-05",
+        "payment_ref": "PAY-INV-r01"
+      },
+      "available_at_day": 0,
+      "held_by": null
+    },
+    {
+      "doc_ref": "REM",
+      "version": 1,
+      "kind": "remittance",
+      "title": "SYNTHETIC — Remittance against INV-r01",
+      "file": null,
+      "text": "SYNTHETIC fixture; not a real transaction. ",
+      "fields": {
+        "invoice_no": "INV-r01",
+        "paid_cents": 979000,
+        "ded.1.line_id": "D1",
+        "ded.1.reason": "early_pay_discount",
+        "ded.1.claimed_cents": 21000,
+        "ded.2.line_id": "D2",
+        "ded.2.reason": "pricing",
+        "ded.2.claimed_cents": 50000,
+        "ded.2.sku": "SKU-7"
+      },
+      "available_at_day": 0,
+      "held_by": null
+    },
+    {
+      "doc_ref": "TERMS",
+      "version": 1,
+      "kind": "contract",
+      "title": "SYNTHETIC — Sales terms",
+      "file": null,
+      "text": "SYNTHETIC fixture; not a real transaction. ",
+      "fields": {
+        "contract_id": "ACME-TERMS",
+        "effective_date": "2026-01-01",
+        "early_pay_bp": 200,
+        "early_pay_days": 10,
+        "price.SKU-7_cents": 1050
+      },
+      "available_at_day": 0,
+      "held_by": null
+    },
+    {
+      "doc_ref": "UNAUTHORIZED",
+      "version": 1,
+      "kind": "amendment",
+      "title": "SYNTHETIC — Unauthorized pricing request",
+      "file": null,
+      "text": "SYNTHETIC fixture; not a real transaction. Buyer clerk requests a lower price but has no seller amendment authority.",
+      "fields": {
+        "amends": "ACME-TERMS",
+        "effective_date": "2026-08-15",
+        "authorized_by": "Synthetic Buyer Clerk",
+        "authority_role": "Buyer Clerk",
+        "price.SKU-7_cents": 1000
+      },
+      "available_at_day": 0,
+      "held_by": null
+    },
+    {
+      "doc_ref": "COMPANY",
+      "version": 1,
+      "kind": "company_policy",
+      "title": "SYNTHETIC — Acme collection and authority policy",
+      "file": null,
+      "text": "SYNTHETIC fixture; not a real transaction. ",
+      "fields": {
+        "tolerance_cents": 0,
+        "follow_up_days": 14,
+        "authority_cents": 100000,
+        "allowed_authority_roles": "VP Sales,Finance Director",
+        "amendment_precedence": "latest_effective"
+      },
+      "available_at_day": 0,
+      "held_by": null
+    }
+  ],
+  "events": [],
+  "provenance": "synthetic"
+}
