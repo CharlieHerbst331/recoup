@@ -1,5 +1,5 @@
 # Recoup: Functional Design (v2, 2026-11-07 4:30 PM PT)
-Status: **DESIGN REVIEW PENDING.** Nothing has been built. v2 replaces v1 in place after the Reviewer and Verifier findings (resolution map: design/03-review-resolution.md). This document supersedes the v0 plan (specs 001–003, which stay in the repo as history) and design/00-DRAFT-scope-skeleton.md.
+Status: The offline World, engine, app and CLI are implemented on the integration branch; current verification and remaining limitations are recorded in `progress/charles/006-FINAL-INTEGRATION-ACCEPTANCE.md`. UI, benchmark and live-model proof remain separate acceptance work. v2 replaces v1 in place after the Reviewer and Verifier findings (resolution map: design/03-review-resolution.md). This document supersedes the v0 plan (specs 001–003, which stay in the repo as history) and design/00-DRAFT-scope-skeleton.md.
 Owner: Recoup Lead. Companion doc: design/02-technical-design.md.
 
 **Inputs synthesized here:**

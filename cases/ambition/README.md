@@ -7,8 +7,10 @@ The executable app/CLI tests verify the resulting balances, explicit unapplied c
 restart audit and replay behavior. Use a fresh database for a new demonstration.
 
 Load `cases/ambition/counteroffer` using the ordinary `load` command. The existing
-engine produces a proven disputed D2 and the World exposes resolving cited offer
-facts. Sonny's engine counteroffer derivation/tool/gate implementation remains the
-next owner task; the fixture does not claim that path is already implemented.
-`tests/app/test_financial_intake.py` verifies the shared prerequisites, while
-`tests/world/test_counteroffer_boundary.py` checks the World defenses independently.
+engine produces a proven disputed D2 and drafts a cited conditional counteroffer.
+Inspect its proposal ID and version with `status COUNTEROFFER`, then review,
+approve and submit it through the usual mock-action commands. Sonny's published
+engine implements the derivation, tool and gate path. The app/engine acceptance
+checks exercise the real fixture and approval-bound MOCK receipt; World tests
+check the persistence defenses independently. See Charles's final integration
+report for the current verification scope and limitations.

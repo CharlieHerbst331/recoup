@@ -160,14 +160,17 @@ class HarnessEngine:
                 else:
                     args = deepcopy(call["arguments"])
                     if call["name"] == "propose_decision" and isinstance(args.get("lines"), list):
-                        findings = {
-                            f.line_id: f
-                            for f in run_rules(
-                                world.view(case_id).lines,
-                                world.fact_set(case_id),
-                                world.ledger(case_id),
-                            )
-                        }
+                        try:
+                            findings = {
+                                f.line_id: f
+                                for f in run_rules(
+                                    world.view(case_id).lines,
+                                    world.fact_set(case_id),
+                                    world.ledger(case_id),
+                                )
+                            }
+                        except NeedsHumanError as exc:
+                            return self._stop(world, case_id, run_id, step, session, str(exc))
                         for line in args["lines"]:
                             if (
                                 isinstance(line, dict)

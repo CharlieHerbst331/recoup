@@ -1,5 +1,5 @@
 # Recoup: Technical Design (v3, 2026-11-07 PT)
-Status: **DESIGN REVIEW PENDING.** The contract below is **PROPOSED v1**. It becomes frozen only at milestone **F0**, after the Reviewer and Verifier pass Charles's PR 006-1. Nothing has been built yet.
+Status: The definitions below describe the implemented branch. The current additive contract candidate is pinned in `progress/charles/SONNY-UNBLOCK-ACCEPTANCE.md`; current verification and remaining limitations are in `progress/charles/006-FINAL-INTEGRATION-ACCEPTANCE.md`. The contract remains **PROPOSED v1** until its applicable review/freeze requirements are fulfilled; branch verification alone does not establish the main-branch merge gates below or create `contract-v1`.
 
 - Functional design: 01-functional-design.md.
 - Supersedes: v0 specs 001–003 (kept as history) and v1 of this document (replaced in place).
