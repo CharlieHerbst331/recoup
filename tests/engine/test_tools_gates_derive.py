@@ -311,8 +311,8 @@ def test_static_output_claim_items_at_evaluation_clock():
     assert result.claim_items
     statuses = {i.item_id: i.status for i in result.claim_items}
     assert statuses["claim.notice_receipt"] == "missing"
-    assert statuses["claim.doc.pod"] == "present"
-    assert statuses["claim.doc.statement"] == "present"
+    assert statuses["claim.doc.2"] == "present"
+    assert statuses["claim.doc.3"] == "present"
     assert statuses["claim.waiting_period"] == "unknown"
     assert static_output(hero(), "SYNTHETIC-H").claim_items == []
 

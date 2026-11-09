@@ -319,20 +319,37 @@ def test_claim_pod_inventory(pod, status):
     facts, _, _ = inputs(pod=pod)
     result = readiness.claim(facts, ledger(), [receipt()], date(2027, 1, 1))
     checklist = items(result)
-    assert checklist["claim.doc.pod"].status == status
+    assert checklist["claim.doc.2"].status == status
     assert set(checklist) == {
         "claim.notice_receipt",
         "claim.waiting_period",
-        "claim.doc.invoice",
-        "claim.doc.pod",
-        "claim.doc.statement",
+        "claim.doc.1",
+        "claim.doc.2",
+        "claim.doc.3",
         "claim.collection_history",
         "claim.disputed_portion",
         "claim.credit_limit",
     }
     if pod == "unreadable":
-        assert checklist["claim.doc.pod"].note == "empty_text"
+        assert checklist["claim.doc.2"].note == "empty_text"
     assert "eligibility" not in result.model_dump_json()
+
+
+def test_claim_document_keys_survive_repeated_kinds_and_fact_locators():
+    facts, _, _ = inputs(changes={"claim_doc.extra-pod": "pod"})
+    fact = next(f for f in facts.facts if f.key == "claim_doc.extra-pod")
+    fact.citation = fact.citation.model_copy(update={"locator": "fact:SYNTHETIC-required-pod"})
+    answers = policy.answer(facts, "claim_documents", None)
+    assert {a.clause_key for a in answers} == {
+        "claim_doc.1",
+        "claim_doc.2",
+        "claim_doc.3",
+        "claim_doc.extra-pod",
+    }
+    checklist = items(readiness.claim(facts, ledger(), [], NOW.date()))
+    assert checklist["claim.doc.2"].status == "present"
+    assert checklist["claim.doc.extra-pod"].status == "present"
+    assert checklist["claim.doc.extra-pod"].policy_citation == fact.citation
 
 
 def test_claim_checklist_restrictions_missing_and_history():
@@ -434,23 +451,19 @@ def test_claim_documents_multiple_candidates_and_same_evidence_signature():
     facts.facts.extend(extra.facts)
     # A signature not belonging to an inventoried POD cannot complete it.
     assert (
-        items(readiness.claim(facts, ledger(), [receipt()], date(2027, 1, 1)))[
-            "claim.doc.pod"
-        ].status
+        items(readiness.claim(facts, ledger(), [receipt()], date(2027, 1, 1)))["claim.doc.2"].status
         == "defective"
     )
     facts.docs.extend(extra.docs)
     result = readiness.claim(facts, ledger(), [receipt()], date(2027, 1, 1))
     assert result.status == "ready"
-    assert items(result)["claim.doc.pod"].satisfied_by == ["other-pod"]
+    assert items(result)["claim.doc.2"].satisfied_by == ["other-pod"]
 
 
 def test_claim_unconfirmed_pod_and_missing_policy_terms():
     facts, _, _ = inputs(trust="vision")
     assert (
-        items(readiness.claim(facts, ledger(), [receipt()], date(2027, 1, 1)))[
-            "claim.doc.pod"
-        ].status
+        items(readiness.claim(facts, ledger(), [receipt()], date(2027, 1, 1)))["claim.doc.2"].status
         == "defective"
     )
     facts, _, _ = inputs(

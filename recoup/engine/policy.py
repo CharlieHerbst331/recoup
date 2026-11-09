@@ -145,7 +145,9 @@ def answer(facts: FactSet, q: PolicyQuestion, notice_receipt: Receipt | None) ->
                 raise _Unavailable(Basis.missing_evidence, "missing claim_doc")
             return [
                 result(
-                    value=_policy(facts, key).value, clause_citation=_policy(facts, key).citation
+                    clause_key=key,
+                    value=_policy(facts, key).value,
+                    clause_citation=_policy(facts, key).citation,
                 )
                 for key in keys
             ]

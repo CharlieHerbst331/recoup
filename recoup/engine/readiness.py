@@ -223,7 +223,7 @@ def claim(
             note = "signed POD not established"
         items.append(
             _item(
-                f"claim.doc.{kind}",
+                f"claim.doc.{document.clause_key.removeprefix('claim_doc.')}",
                 status,
                 note,
                 document.clause_citation,

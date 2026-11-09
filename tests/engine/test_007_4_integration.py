@@ -12,6 +12,26 @@ from .test_007_3_integration import bundle
 from .test_harness_factory_ingest import doc, scripted, write_pdf
 
 
+def test_real_reinvestigation_preserves_approved_proposals(world):
+    cid = load(world)
+    engine = HarnessEngine()
+    first = engine.investigate(world, cid, FakeLLM(), "first")
+    assert first.proposals
+    approvals = [
+        world.approve(p.proposal_id, p.version, "SYNTHETIC reviewer") for p in first.proposals
+    ]
+    second = engine.investigate(world, cid, FakeLLM(), "second")
+    assert second.status != "needs_human", second.status_reason
+    assert second.decision == first.decision
+    assert all(p.status == "approved" for p in second.proposals)
+    assert [(p.proposal_id, p.version) for p in second.proposals] == [
+        (p.proposal_id, p.version) for p in first.proposals
+    ]
+    assert world.history(cid).approvals == approvals
+    for proposal in second.proposals:
+        world.submit(proposal.proposal_id, proposal.version)
+
+
 @pytest.fixture
 def world():
     if find_spec("recoup.app") is None:

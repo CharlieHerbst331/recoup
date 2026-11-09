@@ -449,12 +449,26 @@ class ToolSession:
                 accepted=False, decision_id=None, decision_version=None, per_line_issues=issues
             )
         previous = self.world.current_decision(self.case_id)
+        basis_hash = self.world.evidence_set_hash(self.case_id)
+        if (
+            previous
+            and previous.current
+            and previous.evidence_set_hash == basis_hash
+            and sorted(previous.lines, key=lambda line: line.line_id)
+            == sorted(lines, key=lambda line: line.line_id)
+        ):
+            return dict(
+                accepted=True,
+                decision_id=previous.decision_id,
+                decision_version=previous.version,
+                per_line_issues={},
+            )
         decision = self.world.save_decision(
             Decision(
                 decision_id=previous.decision_id if previous else str(uuid4()),
                 case_id=self.case_id,
                 version=previous.version + 1 if previous else 1,
-                evidence_set_hash=self.world.evidence_set_hash(self.case_id),
+                evidence_set_hash=basis_hash,
                 lines=lines,
                 current=True,
                 model_id=self.factory.model_id,

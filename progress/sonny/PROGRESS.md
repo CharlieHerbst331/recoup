@@ -996,3 +996,61 @@ QUESTION: Charles to resolve requests #7–8; no financial behavior was guessed 
 DONE: Prepared all 21 pending files for commit and push; make check PYTHON=/tmp/recoup-007-check/bin/python passed (606 passed, 25 skipped); git diff --check passed. Files: progress/sonny/CONTRACT_REQUEST.md, progress/sonny/PROGRESS.md, recoup/engine/config.py, recoup/engine/factory.py, recoup/engine/gates.py, recoup/engine/harness.py, recoup/engine/ingest.py, recoup/engine/llm/__init__.py, recoup/engine/llm/fake.py, recoup/engine/llm/openai_compat.py, recoup/engine/llm/replay.py, recoup/engine/prompts/system_v1.md, recoup/engine/scans.py, recoup/engine/scheduler.py, recoup/engine/tools.py, tests/engine/test_007_4_integration.py, tests/engine/test_007_5_integration.py, tests/engine/test_harness_factory_ingest.py, tests/engine/test_openai_compat.py, tests/engine/test_scan_ingest.py, tests/engine/test_scheduler.py.
 NEXT: Push this commit to origin/codex/007-4-harness-factory-ingestion and stop.
 QUESTION: Existing contract requests and integration skips remain unresolved; no new question for this push.
+
+## Integration follow-up after Charles merge — 2026-11-08 (America/Los_Angeles)
+
+Starting tip: 45f99c8. Completed one integration repair step using the actual
+app.build/SQLite providers now present. Baseline make check reproduced Charles's
+audit: 874 passed, 7 failed, 2 skipped. All seven failures were stale decision
+bindings; the existing regression report additionally identified claim item IDs.
+
+The engine now retains an equivalent current decision after validating all
+submitted lines and citations (design/02 §3.7, §3.8, §5.2 and §5.5). Changed
+rationale, lines or evidence basis still creates a new decision. Approval and
+submission checks remain active. Added real app-built tests for repeated
+investigation with approval preservation and successful MOCK submission, line
+order equivalence, rationale revision and evidence-basis changes. Existing
+scheduler acceptance verifies day-3 correction/credit, silence/reply handling,
+notice/claim scheduling and rollback with the actual providers.
+
+Policy answers retain the claim_doc key so readiness exports the §5.6 item IDs,
+including separate requirements of the same document kind and fact-locator
+citations. Updated engine tests that expected document-kind IDs and added a
+repeated-kind/key/citation regression. No shared contracts, fixtures, ownership
+instructions, dependencies or other-owner implementation files changed.
+
+Verification:
+- make check PYTHON=/tmp/recoup-007-check/bin/python: ruff lint/format PASS;
+  884 passed, 2 skipped. All 23 formerly provider-blocked engine integration
+  tests now execute and pass, plus two new real-provider regression tests.
+- RECOUP_LLM=fake /tmp/recoup-007-check/bin/python -m recoup.cli check-regression:
+  r01–r08 all PASS (8/8), actual engine runtime, exit 0.
+- Actual recoup.cli doctor: engine installed, text PDF available, OCR packages
+  and tesseract unavailable, vision disabled/no configured key; no network check.
+- git diff --check: PASS.
+
+The two remaining skips are optional real image/scanned-PDF OCR tests. No live
+vision or real OCR acceptance is claimed. Request #6's CLI absence is superseded
+by the merge, but shared doctor capability reporting/PDF renderer confirmation
+remain outstanding. Cross-kind due ordering and selected-case routing still
+need the previously recorded owner/contract decisions. Requests #7–8 remain
+blocked: the pulled design/contracts do not define counteroffer derivation or
+multi-invoice allocation. These are not implemented by this integration repair.
+
+Every changed file:
+- recoup/engine/tools.py
+- recoup/engine/policy.py
+- recoup/engine/readiness.py
+- tests/engine/test_007_3_integration.py
+- tests/engine/test_007_4_integration.py
+- tests/engine/test_policy_readiness.py
+- tests/engine/test_tools_gates_derive.py
+- progress/sonny/PROGRESS.md
+
+DONE: Completed newly unblocked provider integration repairs; make check passes (884 passed, 2 OCR skips), actual regression 8/8 PASS.
+NEXT: Stop after this integration step; changes remain uncommitted for review.
+QUESTION: Charles's existing financial definitions, selected-case routing, ordering and scan-composition decisions remain outstanding; no new shared seam was invented.
+
+DONE: User requested publication of the eight integration-repair files listed above; pre-commit make check passed again (884 passed, 2 OCR skips), and git diff --check passed.
+NEXT: Commit and push the current branch, including the already merged Charles history, then stop.
+QUESTION: No new question; existing shared-definition and optional capability blockers remain as recorded above.

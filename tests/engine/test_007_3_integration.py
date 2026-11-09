@@ -313,4 +313,45 @@ def test_real_static_claim_items(real_world):
     w = real_world
     start(w, policy=True)
     items = {i.item_id: i.status for i in static_output(w, "SYNTHETIC-I").claim_items}
-    assert items["claim.doc.pod"] == "present" and items["claim.notice_receipt"] == "missing"
+    assert items["claim.doc.1"] == "present" and items["claim.notice_receipt"] == "missing"
+
+
+def test_real_decision_reuse_checks_content_and_current_basis(real_world):
+    w = real_world
+    s = start(w)
+    original = w.current_decision("SYNTHETIC-I")
+
+    def propose(lines):
+        result = s.call("propose_decision", {"lines": lines})
+        assert result.ok and result.result["accepted"]
+        return w.current_decision("SYNTHETIC-I")
+
+    lines = [
+        dict(
+            line_id=line.line_id,
+            verdict=line.verdict.value,
+            citations=[c.model_dump() for c in line.citations],
+            rationale=line.rationale,
+        )
+        for line in reversed(original.lines)
+    ]
+    assert propose(lines) == original
+    lines[0]["rationale"] = "SYNTHETIC revised explanation"
+    revised = propose(lines)
+    assert revised.version == original.version + 1
+    assert revised.lines[0].rationale == lines[0]["rationale"]
+    old = next(d for d in w.active_evidence("SYNTHETIC-I") if d.kind == "pod")
+    w.add_evidence(
+        "SYNTHETIC-I",
+        BundleDoc(
+            doc_ref=old.doc_ref,
+            version=2,
+            kind="pod",
+            title="SYNTHETIC same facts, new basis",
+            fields={"signed": True, "received.SKU-1": 400},
+        ),
+    )
+    decide(s)
+    changed = w.current_decision("SYNTHETIC-I")
+    assert changed.version == revised.version + 1
+    assert changed.evidence_set_hash != revised.evidence_set_hash
