@@ -7,10 +7,10 @@ from typing import Literal, Union, get_args, get_origin
 import pytest
 from pydantic import BaseModel
 
-from recoup.contracts import bundle, interfaces, models, money, oracle, tools
+from recoup.contracts import bundle, interfaces, models, money, oracle, remittance, tools
 from recoup.contracts.testing import stub_parts
 
-MODULES = (money, models, bundle, tools, interfaces, oracle)
+MODULES = (money, models, bundle, tools, interfaces, oracle, remittance)
 MODEL_TYPES = [
     cls
     for module in MODULES

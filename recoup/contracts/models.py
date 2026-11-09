@@ -119,6 +119,7 @@ class FactSet(BaseModel):
     basis_hash: str
     facts: list[EffectiveFact]
     docs: list[DocStatus]
+    buyer_senders: list[str] = []
 
 
 class LineReasonRevision(BaseModel):
@@ -273,6 +274,7 @@ class Proposal(BaseModel):
     evidence_set_hash: str
     balance_basis: Money | None = None
     corrects_receipt_id: str | None = None
+    offer_ref: str | None = None
     readiness_ids: list[str] = []
     status: ProposalStatus
     created_at: datetime
@@ -283,6 +285,7 @@ class Approval(BaseModel):
     approval_id: str
     proposal_id: str
     proposal_version: int
+    offer_ref: str | None = None
     recipient: str
     amount: Money | None
     draft_sha256: str
@@ -306,6 +309,7 @@ class Receipt(BaseModel):
     amount: Money | None
     allocations: list[LineAmount] = []
     corrects_receipt_id: str | None = None
+    offer_ref: str | None = None
     at: datetime
     label: str = "MOCK ACKNOWLEDGMENT — not sent to any real system"
 

@@ -1,5 +1,6 @@
 """Real World and explicit validator stub: §4.5 controller orchestration only."""
 
+from contextlib import contextmanager
 from datetime import timedelta
 
 import pytest
@@ -45,6 +46,10 @@ def test_real_mutations_only_dispatch_once_to_selected_controller(tmp_path, monk
         def __init__(self):
             self.name = name
             self.calls = []
+
+        @contextmanager
+        def scope(self, case_ids):
+            yield
 
         def react(self, world, events, run_id):
             self.calls.append((world.clock.day(), [event.type for event in events], run_id))

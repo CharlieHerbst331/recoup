@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import json
 import os
-import shutil
 import sqlite3
 from contextlib import contextmanager
 from datetime import date, datetime
@@ -19,6 +18,7 @@ from pydantic import BaseModel
 
 from recoup.app import RecoupConfig, build
 from recoup.contracts.bundle import BundleDoc
+from recoup.contracts.capabilities import scan_capabilities
 from recoup.contracts.interfaces import GateError, TransientError
 from recoup.contracts.models import LineAmount
 from recoup.contracts.money import Money
@@ -142,6 +142,17 @@ def load(
     """Load one or more bundle directories or directories of bundles."""
     with _service(ctx) as service:
         _show(service.load(paths))
+
+
+@app.command("load-remittance")
+@_handled
+def load_remittance(ctx: typer.Context, bundle_json: Path) -> None:
+    """Load synthetic historical cash allocation across explicitly referenced invoices."""
+    with _service(ctx) as service:
+        result = service.load_remittance(str(bundle_json))
+        _show(result)
+        if result.status != "loaded":
+            raise typer.Exit(1)
 
 
 @app.command()
@@ -276,20 +287,26 @@ def doctor(ctx: typer.Context) -> None:
     """Report local capability checks without opening a DB or contacting providers."""
     config = _config(ctx)
     _provenance(config, "diagnostics")
-    ocr_packages = find_spec("pytesseract") is not None and find_spec("PIL") is not None
-    executable = shutil.which("tesseract") is not None
+    caps = scan_capabilities(llm_mode=config.llm, vision=config.vision)
+    ocr_packages = caps["pytesseract"] and caps["pillow"]
+    executable = caps["tesseract"]
+    image_ocr = bool(ocr_packages and executable)
     _show(
         {
             "engine_installed": find_spec("recoup.engine") is not None,
-            "text_layer_pdf": find_spec("pypdf") is not None,
+            "text_layer_pdf": caps["pypdf"],
+            "capabilities": caps,
             "ocr": {
                 "python_packages": ocr_packages,
                 "tesseract_executable": executable,
-                "available": ocr_packages and executable,
+                "available": image_ocr,
+                "pdf_renderer": caps["pdf_renderer"],
+                "scanned_pdf_available": bool(image_ocr and caps["pypdf"] and caps["pdf_renderer"]),
             },
             "vision": {
                 "requested": config.vision,
                 "api_key_configured": bool(os.environ.get("OPENAI_API_KEY")),
+                "available": bool(caps["vision"] and caps["pillow"]),
                 "status": "Requires engine/provider support; not verified by this local check.",
             },
             "network_checked": False,

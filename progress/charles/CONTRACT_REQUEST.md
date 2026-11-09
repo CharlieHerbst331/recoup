@@ -1,4 +1,13 @@
-# 006-2A: selected-case run routing — 2026-11-08 PT
+# 006-2A: selected-case run routing — resolved 2026-11-09 PT
+
+Resolved in the additive shared-contract candidate: design/02 §3.5 defines
+`ScopedController.scope(case_ids)` and §4.5 defines its use. The default app
+composition adapter supplies it without changing `Controller.react` or custom
+controller identity. Unsupported custom controllers reject selected-case runs
+before callback. `tests/app/test_scoped_controller.py` proves two-case isolation,
+pending-event preservation, rollback, scope restoration and normal all-case runs.
+Publication and candidate pin are in SONNY-UNBLOCK-ACCEPTANCE.md. The original
+request below is retained as history.
 
 Candidate: `89675c0b6ac676fa28c3475f58134689b74c274c`. No contract files changed.
 

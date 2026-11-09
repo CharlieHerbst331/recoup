@@ -1,6 +1,7 @@
 """Small offline stubs for design/02 §3.5; no World implementation."""
 
 from collections.abc import Iterable
+from contextlib import contextmanager
 from pathlib import Path
 from typing import Literal
 
@@ -274,6 +275,10 @@ class StubToolSessionFactory:
 
 class NullController:
     name = "null"
+
+    @contextmanager
+    def scope(self, case_ids: list[str]):
+        yield
 
     def react(self, world: World, events: list[DomainEvent], run_id: str) -> None:
         pass

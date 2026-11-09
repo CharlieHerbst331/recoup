@@ -219,6 +219,7 @@ class DraftProposalArgs(BaseModel):
     draft_text: str
     citations: list[Citation]
     corrects_receipt_id: str | None = None
+    offer_ref: str | None = None
 
 
 class DraftProposalResult(BaseModel):

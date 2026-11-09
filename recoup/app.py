@@ -5,6 +5,7 @@ from __future__ import annotations
 import os
 from collections import Counter
 from collections.abc import Callable
+from contextlib import contextmanager
 from importlib.util import find_spec
 from pathlib import Path
 from typing import Literal
@@ -13,7 +14,15 @@ from uuid import uuid4
 from pydantic import BaseModel
 
 from recoup.contracts.bundle import BundleDoc, CaseBundle
-from recoup.contracts.interfaces import Controller, EngineParts, LLMClient, ToolSession, World
+from recoup.contracts.interfaces import (
+    Controller,
+    EngineParts,
+    GateError,
+    LLMClient,
+    ScopedController,
+    ToolSession,
+    World,
+)
 from recoup.contracts.models import (
     Approval,
     CaseHistory,
@@ -21,6 +30,7 @@ from recoup.contracts.models import (
     DomainEvent,
     Evidence,
     FactRevision,
+    GateIssue,
     LoadResult,
     Proposal,
     ProposalKind,
@@ -28,6 +38,7 @@ from recoup.contracts.models import (
     Verdict,
 )
 from recoup.contracts.oracle import CaseOracle, StaticOutput
+from recoup.contracts.remittance import RemittanceBundle, RemittanceLoadResult
 
 
 class RecoupConfig(BaseModel):
@@ -156,8 +167,28 @@ class Recoup:
     def run(self, case_id: str | None = None) -> list[CaseView]:
         if case_id is not None:
             self.world.view(case_id)
-        self._react([])
+            if not isinstance(self.controller, ScopedController):
+                raise GateError(
+                    [
+                        GateIssue(
+                            code="controller_scope_unsupported",
+                            message="Selected-case runs require a controller with scope(case_ids)",
+                        )
+                    ]
+                )
+            with self.controller.scope([case_id]):
+                self._react([])
+        else:
+            self._react([])
         return [self.world.view(case_id)] if case_id is not None else self.world.list_cases()
+
+    def load_remittance(self, path: str) -> RemittanceLoadResult:
+        source = Path(path)
+        bundle = RemittanceBundle.model_validate_json(source.read_text(encoding="utf-8"))
+        result = self.world.load_remittance(bundle, str(source.parent))
+        if result.status == "loaded" and not result.replay:
+            self._react()
+        return result
 
     def advance(self, days: int | None = None, to_next_due: bool = False) -> list[str]:
         if days is not None and to_next_due:
@@ -295,6 +326,49 @@ def _compare_regression(world: World, output: StaticOutput, oracle: CaseOracle) 
     return errors
 
 
+class _ScopedHarnessController:
+    """Composition adapter for the additive scoped-controller port (§4.5)."""
+
+    def __init__(self, delegate: Controller, parts: EngineParts, llm: LLMClient) -> None:
+        self.delegate, self.parts, self.llm = delegate, parts, llm
+        self.name = delegate.name
+        self._case_ids: tuple[str, ...] | None = None
+
+    @contextmanager
+    def scope(self, case_ids: list[str]):
+        if (
+            not case_ids
+            or len(set(case_ids)) != len(case_ids)
+            or any(not isinstance(case_id, str) or not case_id for case_id in case_ids)
+        ):
+            raise ValueError("A case scope requires distinct nonempty case IDs")
+        previous = self._case_ids
+        self._case_ids = tuple(case_ids)
+        try:
+            yield
+        finally:
+            self._case_ids = previous
+
+    def react(self, world: World, events: list[DomainEvent], run_id: str) -> None:
+        if self._case_ids is None:
+            self.delegate.react(world, events, run_id)
+            return
+        if events:
+            raise GateError(
+                [
+                    GateIssue(
+                        code="controller_scope_events",
+                        message="Scoped runs use an empty event list",
+                    )
+                ]
+            )
+        for case_id in self._case_ids:
+            world.view(case_id)
+        with world.transaction():
+            for case_id in self._case_ids:
+                self.parts.engine.investigate(world, case_id, self.llm, run_id)
+
+
 def build(config: RecoupConfig | None = None, controller: Controller | None = None) -> Recoup:
     """Assemble §4.5 providers; absent engine packages retain the explicit G1 runtime."""
     from recoup.contracts.testing import NullController, ScriptedLLM, stub_parts
@@ -318,7 +392,9 @@ def build(config: RecoupConfig | None = None, controller: Controller | None = No
         parts = build_engine(config)
         if controller is None:
             llm = get_llm(config)
-            selected_controller = harness_controller(parts, llm)
+            selected_controller = _ScopedHarnessController(
+                harness_controller(parts, llm), parts, llm
+            )
         else:
             selected_controller = controller
             llm = ScriptedLLM(())

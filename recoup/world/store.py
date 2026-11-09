@@ -2,11 +2,13 @@
 
 from __future__ import annotations
 
+import re
 import sqlite3
 from contextlib import contextmanager
-from datetime import datetime
+from datetime import date, datetime
 from pathlib import Path
 from typing import Iterator
+from urllib.parse import quote
 
 from recoup.contracts.bundle import BundleDoc, CaseBundle
 from recoup.contracts.interfaces import GateError, Ingestor, ProposalValidator, TransientError
@@ -42,9 +44,11 @@ from recoup.contracts.models import (
     Target,
     TraceEvent,
 )
-from recoup.contracts.money import Money
+from recoup.contracts.money import Money, fmt
+from recoup.contracts.remittance import RemittanceBundle, RemittanceLoadResult
 from recoup.contracts.resolve import resolve_citation
 
+from . import remittance
 from .clock import SimClock
 from .hashing import basis_hash as compute_basis_hash
 from .hashing import content_hash, digest
@@ -149,6 +153,7 @@ class SqliteWorld:
                 f"CREATE TABLE IF NOT EXISTS {table} "
                 "(id TEXT PRIMARY KEY, case_id TEXT NOT NULL, data TEXT NOT NULL)"
             )
+        remittance.initialize(self)
         self.clock = SimClock(self.db)
 
     def close(self) -> None:
@@ -269,6 +274,14 @@ class SqliteWorld:
             self._event(bundle.case_id, "case_loaded", bundle.case_id)
             self.fact_set(bundle.case_id)
             return LoadResult(case_id=bundle.case_id, status="loaded")
+
+    def load_remittance(
+        self, bundle: RemittanceBundle, bundle_dir: str | None = None
+    ) -> RemittanceLoadResult:
+        return remittance.load(self, bundle, bundle_dir)
+
+    def remittance_history(self, remittance_id: str | None = None) -> list[RemittanceLoadResult]:
+        return remittance.history(self, remittance_id)
 
     def _bundle_docs(self, bundle: CaseBundle, bundle_dir: str | None) -> list[BundleDoc]:
         docs = list(bundle.docs)
@@ -457,10 +470,28 @@ class SqliteWorld:
             row = self.evidence(evidence_id)
             if not row.active:
                 self._error("superseded_citation", evidence_id)
-            if citation is not None:
-                if citation.evidence_id != evidence_id:
-                    self._error("invalid_citation", "Fact citation must reference its own evidence")
-                self.resolve_citation(citation)
+            if citation is None or citation.evidence_id != evidence_id:
+                self._error("invalid_citation", "Fact needs a citation against its own evidence")
+            resolved = self.resolve_citation(citation)
+            if citation.locator.startswith(("fields.", "fact:")):
+                grounded = type(resolved) is type(value) and resolved == value
+            else:
+                rendered = [self._render(value)]
+                if key.endswith("_cents") and type(value) is int:
+                    dollars = fmt(Money(cents=value))
+                    rendered.extend([dollars, dollars.replace(",", "")])
+                text = " ".join(str(resolved).split()).replace("$", "")
+                grounded = any(
+                    re.search(
+                        r"(?<![\w.+-])" + re.escape(token.replace("$", "")) + r"(?![\w.])",
+                        text,
+                        re.I,
+                    )
+                    for token in rendered
+                    if token
+                )
+            if not grounded:
+                self._error("invalid_citation", "Fact value is absent from its supporting citation")
             old = self._latest_facts(row.case_id).get((evidence_id, key))
             if (
                 old
@@ -616,6 +647,12 @@ class SqliteWorld:
         result = FactSet(
             case_id=case_id,
             basis_hash=hashed,
+            buyer_senders=sorted(
+                set(
+                    self.allowed_recipients(case_id, Target.mock_email)
+                    + self.allowed_recipients(case_id, Target.mock_buyer_portal)
+                )
+            ),
             facts=facts,
             docs=[
                 DocStatus(
@@ -628,6 +665,10 @@ class SqliteWorld:
                 for e in active
             ],
         )
+        evidence_rows = self._evidence_rows(case_id)
+        fact_rows = self._rows("facts", case_id)
+        for fact in result.facts:
+            resolve_citation(fact.citation, result, evidence_rows, fact_rows)
         self.db.execute(
             "INSERT OR IGNORE INTO bases(case_id,hash,data) VALUES(?,?,?)",
             (case_id, hashed, result.model_dump_json()),
@@ -764,15 +805,21 @@ class SqliteWorld:
                 (p.proposal_id, p.business_key),
             ).fetchone():
                 self._error("proposal_identity", "Proposal id belongs to another business key")
+            if p.kind != "counteroffer" and p.offer_ref is not None:
+                self._error("invalid_offer_selector", "Only counteroffers carry an offer selector")
             sha = digest(p.draft_text)
             candidate = p.model_copy(update={"draft_sha256": sha})
+            if candidate.kind == "counteroffer":
+                self._current_binding(candidate)
+                self._ledger_guard(candidate)
             for old in reversed(previous):
                 if old.status in {ProposalStatus.proposed, ProposalStatus.approved} and (
                     old.draft_sha256,
                     old.allocations,
                     old.recipient,
                     old.evidence_set_hash,
-                ) == (sha, p.allocations, p.recipient, p.evidence_set_hash):
+                    old.offer_ref,
+                ) == (sha, p.allocations, p.recipient, p.evidence_set_hash, p.offer_ref):
                     return old
             self._current_binding(candidate)
             issues = self.validator.validate(self, candidate, "save")
@@ -813,6 +860,8 @@ class SqliteWorld:
                 for a in amounts
             ):
                 self._error("allocation_increase", "Edits may only decrease existing line amounts")
+            if old.kind == "counteroffer" and {a.line_id for a in amounts} != set(limits):
+                self._error("counteroffer_lines", "Offer edits must retain the original line set")
             selected = recipient if recipient is not None else old.recipient
             if selected not in self.allowed_recipients(old.case_id, old.target):
                 self._error("recipient_not_allowed", selected)
@@ -851,6 +900,8 @@ class SqliteWorld:
             if p.status != ProposalStatus.proposed:
                 self._error("not_proposed", "Proposal is not awaiting approval")
             self._current_binding(p)
+            if p.kind == "counteroffer":
+                self._ledger_guard(p)
             issues = self.validator.validate(self, p, "approve")
             if issues:
                 raise GateError(issues)
@@ -868,6 +919,7 @@ class SqliteWorld:
             draft_sha256=p.draft_sha256,
             evidence_set_hash=p.evidence_set_hash,
             decision_version=p.decision_version,
+            offer_ref=p.offer_ref,
             approver=approver,
             approved=approved,
             reason=reason,
@@ -1187,8 +1239,129 @@ class SqliteWorld:
             amounts[item.line_id] = amounts.get(item.line_id, 0) + item.amount.cents
         return amounts
 
+    def _counteroffer_guard(self, p: Proposal, amounts: dict[str, int]) -> None:
+        """Defense at the persistence boundary; semantic rules live in design/02 §5.4."""
+        if not p.offer_ref or not amounts or sum(amounts.values()) <= 0:
+            self._error("invalid_counteroffer", "Offer needs a selector and positive allocations")
+        if len(amounts) != len(p.allocations):
+            self._error("invalid_counteroffer", "Offer lines must be unique")
+        if p.amount is None or p.amount.cents != sum(amounts.values()):
+            self._error("amount_mismatch", "Amount must equal allocated cents")
+        expected = (
+            f"{p.case_id}:counteroffer:{'+'.join(sorted(amounts))}:offer:"
+            f"{quote(p.offer_ref, safe='')}"
+        )
+        if p.business_key != expected or p.target != Target.mock_buyer_portal:
+            self._error("invalid_counteroffer", "Offer identity or target is invalid")
+        if p.recipient not in self.allowed_recipients(p.case_id, p.target):
+            self._error("recipient_not_allowed", p.recipient)
+        decision = self.current_decision(p.case_id)
+        if decision is None or (p.decision_id, p.decision_version) != (
+            decision.decision_id,
+            decision.version,
+        ):
+            self._error("stale_decision", "Offer needs the current decision")
+        limits = {
+            line.line_id: line.disputed.cents
+            for line in decision.lines
+            if line.basis == "proven"
+            and line.verdict in {"invalid", "partial"}
+            and line.disputed is not None
+            and line.disputed.cents > 0
+        }
+        eligible = {
+            line.line_id for line in self.deduction_lines(p.case_id) if line.reason != "nonpayment"
+        }
+        limits = {key: value for key, value in limits.items() if key in eligible}
+        facts = self.fact_set(p.case_id).facts
+        trusted = {FieldTrust.source, FieldTrust.human_confirmed}
+
+        def resolved(fact, *, money=False):
+            self.resolve_citation(fact.citation)
+            if money and (
+                fact.trust not in trusted or type(fact.value) is not int or fact.value < 0
+            ):
+                self._error("untrusted_offer", "Offer money requires trusted integer facts")
+            if fact.citation not in p.citations:
+                self._error("missing_offer_citation", "Required offer fact citation is absent")
+            return fact.value
+
+        authority = [
+            f for f in facts if f.doc_kind == "company_policy" and f.key == "authority_cents"
+        ]
+        values = {resolved(fact, money=True) for fact in authority}
+        if len(values) != 1:
+            self._error("counteroffer_authority", "One consistent company authority is required")
+        allowed = set(self.allowed_recipients(p.case_id, Target.mock_buyer_portal))
+        allowed.update(self.allowed_recipients(p.case_id, Target.mock_email))
+        by_email = {}
+        for fact in facts:
+            if fact.doc_kind == "email":
+                by_email.setdefault(fact.evidence_id, {})[fact.key] = fact
+        prefix = f"offer.{p.offer_ref}."
+        offers = []
+        for email in by_email.values():
+            if not any(key.startswith(prefix) for key in email):
+                continue
+            sender = email.get("from")
+            expiry = email.get(prefix + "expires_date")
+            if sender is None or resolved(sender) not in allowed or expiry is None:
+                self._error("invalid_offer_source", "Offer must come from an allowed buyer")
+            try:
+                expires = date.fromisoformat(str(resolved(expiry)))
+            except ValueError:
+                self._error("invalid_offer_expiry", "Offer expiry must be an ISO date")
+            if expires < self.clock.now().date():
+                self._error("expired_offer", "Buyer offer has expired")
+            selected = {}
+            for line_id in amounts:
+                fact = email.get(f"{prefix}line.{line_id}.concession_cents")
+                if fact is None:
+                    self._error("invalid_offer_source", "Buyer offer does not specify every line")
+                selected[line_id] = resolved(fact, money=True)
+                if selected[line_id] <= 0:
+                    self._error("counteroffer_amount", "Cited concession must be positive")
+            offers.append((selected, resolved(expiry), resolved(sender)))
+        if not offers or any(offer != offers[0] for offer in offers):
+            self._error("invalid_offer_source", "Offer is absent or conflicting")
+        requested = offers[0][0]
+        for line_id, amount in amounts.items():
+            if amount > requested[line_id] or (
+                p.created_by != "human_edit" and amount != requested[line_id]
+            ):
+                self._error("counteroffer_amount", "Allocation must equal the cited concession")
+        used = 0
+        used_lines = {}
+        for receipt in self._rows("receipts", p.case_id):
+            original = self._proposal(receipt.proposal_id, receipt.proposal_version)
+            if original.kind == "counteroffer":
+                if receipt.offer_ref == p.offer_ref:
+                    self._error("offer_already_submitted", "This buyer offer already has a receipt")
+                used += receipt.amount.cents if receipt.amount else 0
+                for line_id, amount in self._allocations(receipt.allocations).items():
+                    used_lines[line_id] = used_lines.get(line_id, 0) + amount
+        if used > next(iter(values)):
+            self._error("counteroffer_history_conflict", "Prior offers exceed current authority")
+        if p.amount.cents > next(iter(values)) - used:
+            self._error("counteroffer_authority", "Offer exceeds remaining authority")
+        for line_id, amount in used_lines.items():
+            if amount > limits.get(line_id, 0):
+                self._error(
+                    "counteroffer_history_conflict", "Prior offers exceed current line capacity"
+                )
+        for line_id, amount in amounts.items():
+            if line_id not in limits or amount + used_lines.get(line_id, 0) > limits[line_id]:
+                self._error(
+                    "counteroffer_disputed", "Offer exceeds remaining proven disputed amount"
+                )
+        if p.amount.cents > self.ledger_balance(p.case_id).cents:
+            self._error("counteroffer_balance", "Offer exceeds current open balance")
+
     def _ledger_guard(self, p: Proposal) -> None:
         amounts = self._allocations(p.allocations)
+        if p.kind == "counteroffer":
+            self._counteroffer_guard(p, amounts)
+            return
         if p.kind not in {"credit_memo", "correction"}:
             return
         if p.amount is None or p.amount.cents != sum(amounts.values()):
@@ -1282,6 +1455,7 @@ class SqliteWorld:
             amount=p.amount,
             allocations=p.allocations,
             corrects_receipt_id=p.corrects_receipt_id,
+            offer_ref=p.offer_ref,
             at=self.clock.now(),
         )
         self.db.execute(
@@ -1342,6 +1516,7 @@ class SqliteWorld:
                             a.draft_sha256,
                             a.evidence_set_hash,
                             a.decision_version,
+                            a.offer_ref,
                         )
                         == (
                             p.recipient,
@@ -1349,6 +1524,7 @@ class SqliteWorld:
                             p.draft_sha256,
                             p.evidence_set_hash,
                             p.decision_version,
+                            p.offer_ref,
                         )
                         for a in self._rows("approvals", p.case_id)
                     )

@@ -47,7 +47,7 @@ def test_default_factory_assembles_exactly_once(factory):
     module, calls, parts, llm, controller = factory
     service = module.build(module.RecoupConfig(db=":memory:", llm="replay"))
     assert calls == [("parts", "replay"), ("llm", "replay"), ("harness",)]
-    assert service.controller is controller
+    assert service.controller.delegate is controller
     assert service.llm is llm
     assert service._parts is parts
     assert service.runtime_provider == "engine"

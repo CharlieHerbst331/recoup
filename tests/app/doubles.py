@@ -1,5 +1,6 @@
 """Narrow spies only; no persistence, financial validation or production World."""
 
+from contextlib import contextmanager
 from datetime import datetime, timedelta, timezone
 
 from recoup.contracts.bundle import BundleDoc, CaseBundle
@@ -235,6 +236,10 @@ class ControllerSpy:
     def __init__(self, name):
         self.name = name
         self.calls = []
+
+    @contextmanager
+    def scope(self, case_ids):
+        yield
 
     def react(self, world, events, run_id):
         self.calls.append((world, list(events), run_id, world.clock.day(), len(world.calls)))

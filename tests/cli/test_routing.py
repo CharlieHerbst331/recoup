@@ -252,7 +252,19 @@ def test_doctor_without_assembly_database_network_or_secret_output(counted, tmp_
     monkeypatch.setenv("RECOUP_VISION", "true")
     path = tmp_path / "never-created.db"
     monkeypatch.setattr(cli, "find_spec", lambda name: None)
-    monkeypatch.setattr(cli.shutil, "which", lambda name: None)
+    monkeypatch.setattr(
+        cli,
+        "scan_capabilities",
+        lambda **kwargs: {
+            "pypdf": False,
+            "pillow": False,
+            "tesseract": False,
+            "pytesseract": False,
+            "pdf_renderer": False,
+            "vision": False,
+            "llm_mode": "fake",
+        },
+    )
     result = runner.invoke(cli.app, ["--db", str(path), "doctor"])
     assert result.exit_code == 0, result.output
     assert '"engine_installed": false' in result.output
