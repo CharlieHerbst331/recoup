@@ -1,8 +1,11 @@
 # Charles prerequisites for Sonny — 2026-11-09
 
 Charles's shared-contract, World, app and CLI prerequisites are complete. The
-implementation is published on `006-2b-sqlite-world-core-and-app-build`; the final
-implementation candidate SHA is recorded below after the implementation commit.
+implementation branch is `006-2b-sqlite-world-core-and-app-build`.
+The tested implementation candidate is
+`75a58397bec3846847673ef8af4c7ae85d2a5264`; its exact `recoup/contracts` Git tree is
+`fb064458d4070d7290bd0f242a28d56f1c31aac7`. Subsequent publication-record commits
+change documentation only. Use this candidate pin for the shared extensions.
 This branch incorporates Sonny's repaired engine at
 `9c821adb23d645eea0173ad42900e23d8574ff4e` by fast-forward, then adds Charles-owned
 changes. No Sonny engine, Carter UI/bench, dependency manifest, Makefile or AGENTS
