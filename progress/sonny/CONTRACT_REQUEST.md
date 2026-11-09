@@ -53,3 +53,67 @@ References: design/02 §3.2, §3.7, §5.6. Candidate unchanged.
    notice independence, document inventory and the other readiness predicates
    are independently implemented and tested. The existing 007-1 questions above
    remain outstanding and were not changed by this step.
+
+## 007-5 due-work ordering seam — 2026-11-08
+
+5. References: design/02 §3.5 and §5.7. `DomainEvent` supplies `at` and
+   `seq`; `DueWork` supplies `due_at` but no `seq`, and `World.due` exposes
+   no ordering metadata. Exact cross-kind `(at, seq)` ordering cannot be
+   represented through the current port. Please confirm event-before-due ties
+   with stable due_id ordering, or expose an approved shared sequence seam.
+   The owned handler uses chronological timestamps, event seq, then events
+   before due items on ties and due_id for remaining ties. This is a disclosed
+   fallback, not proof of exact shared-sequence compliance. No shared model was
+   edited or copied. Other independent handler behavior continues against the
+   current contract; real-provider ordering acceptance remains outstanding.
+
+## 007-7 doctor/composition seam — 2026-11-08
+
+6. Reference: design/02 §4.5 and §5.8. This checkout has no recoup.cli,
+   recoup.app or doctor implementation. Charles should wire the owned
+   `engine.scans.scan_capabilities(llm_mode=..., vision=...)` report into doctor
+   through the allowed app composition boundary. The factory uses the same
+   capability checks. No CLI/app code or shared interfaces were changed.
+   OCR acceptance is not claimed while tesseract/pytesseract are absent; live
+   vision acceptance is not claimed from SDK-shaped offline responses.
+
+   Scanned PDFs additionally use an already-available optional `pdftoppm`
+   executable to rasterize pages before pytesseract; the report exposes
+   `pdf_renderer` separately. Missing rendering returns ocr_unavailable.
+   Charles to confirm the optional system-renderer prerequisite or provide an
+   approved renderer using the existing dependencies. Nothing was installed or
+   added to the dependency manifests. Image OCR needs no PDF renderer.
+
+## 007-8 ambition definition and contract seams — 2026-11-08
+
+7. Counteroffer: spec 007 step 007-8 names this feature, but design/02
+   §5.4 has no counteroffer derivation and §5.5 requires allocations supported
+   by that derivation. §3.7 supplies `authority_cents` and §3.8 supplies an
+   identity; neither defines what the offered amount means or how code computes
+   it. `DraftProposalArgs` has no negotiation input, and the model must not set
+   amounts. Please add the normative derivation and gate behavior to design/02:
+   whether authority caps a concession or a requested payment; the cited inputs
+   selecting an offer; per-line allocation and cap scope; treatment of existing
+   credits/disputes and repeated offers; and the receipt/ledger effect. Confirm
+   whether the existing tool input suffices or provide the approved shared seam.
+   Acceptance needs authority-boundary, missing/conflicting/untrusted authority,
+   human-edit/revalidation, approval and duplicate-receipt cases against that
+   definition. Current gates continue to reject counteroffers; no arbitrary
+   amount formula or replacement contract was introduced.
+
+8. Multi-invoice allocation: design/02 §3.6–3.7 defines single-invoice intake.
+   `CaseBundle.invoice_ref` is singular; `LedgerEntry` and `DeductionLine` have no
+   explicit invoice allocation identity. World exposes case-level ledger reads
+   and no remittance-allocation write operation. Please define the normative
+   remittance input, invoice/case scope, matching and ambiguity behavior,
+   residual handling, conservation and duplicate/reallocation semantics in
+   design/02, then confirm a representation using current contracts or supply
+   the shared models/World operation and loader wiring. Acceptance needs exact
+   conservation, invoice-specific balances, ambiguous/unmatched references,
+   overpayment/underpayment, duplicate import and transactional rollback cases.
+   A local helper or invented fact vocabulary would not establish integrated
+   allocation under the current contract. No shared or other-owner files changed.
+
+007-8 implementation is BLOCKED on these definitions. Independent prior engine
+work remains intact; neither ambition feature is claimed as implemented. This
+session stops at the request rather than guessing financial behavior.

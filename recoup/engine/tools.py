@@ -358,7 +358,12 @@ class ToolSession:
                 if a.kind == "notice"
                 else readiness.claim(*inputs)
             )
-        return {"readiness": self.world.save_readiness(result)}
+        saved = self.world.save_readiness(result)
+        if saved.kind == "notice":
+            from recoup.engine.scheduler import schedule_notice
+
+            schedule_notice(self.world, self.case_id)
+        return {"readiness": saved}
 
     def _plan_missing_evidence(self, a):
         if a.line_id is not None:

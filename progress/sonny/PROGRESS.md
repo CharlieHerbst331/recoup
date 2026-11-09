@@ -641,3 +641,358 @@ fixture-failure count. No implementation changes followed the final checks.
 DONE: Committed independent 007-3 implementation 5c2223d42ffa066ce9ec8b6d219d013b02fef0b1; all required predecessors remain ancestors.
 NEXT: Stop; twelve real integration cases and automatic validator composition remain BLOCKED pending providers; no 007-4 work or external publication.
 QUESTION: Charles's real providers and the existing consumer requests remain outstanding; no new shared-interface mismatch identified.
+
+## 007-4 — 2026-11-08 (America/Los_Angeles)
+
+Implemented the independent unit lane from the downloaded r10 handoff, applying
+its explicit test-double exception. Read design/04 §1–5, design/02 §4.5,
+§5.1–5.2, §5.8–5.10, the actual shared ports and prior tools/gates/derivation.
+The initial tree was clean on `007-3-tools-gates-derivation`. Candidate
+`89675c0b6ac676fa28c3475f58134689b74c274c` and required 007-3 implementation
+`5c2223d42ffa066ce9ec8b6d219d013b02fef0b1` both passed ancestor checks.
+Created `codex/007-4-harness-factory-ingestion` on the existing descendant.
+No prior implementation, shared contract, dependencies or other owner path changed.
+
+Added bounded HarnessEngine investigation, prompt/config, FakeLLM, exact-request
+ReplayLLM recording/replay, factory/controller exports, and structured/text/text-PDF
+ingestion with explicit failures. Definitions remain in design/02 §4.5,
+§5.1–5.2, §5.6 and §5.8–5.10. Model responses and original wrong verdicts are
+traced; tool execution uses the code-owned proven verdict. Tools retain authority
+over amounts, citations, approvals and completion. The harness offers no send or
+bench tools. Replay misses never fall back to a live call. OCR/vision are not
+implemented or claimed in this step. Wall limits are checked at call boundaries;
+a synchronous in-flight client must enforce its own transport timeout.
+
+Acceptance evidence (all independent unit PASS):
+- Hero day 0: `test_hero_day_zero_and_fake_trace` (444000 dispute, 180000 credit;
+  per-line findings and fake provenance, no receipt or automatic approval).
+- Mixed insured/missing POD isolation:
+  `test_missing_pod_does_not_block_pricing_or_notice` and
+  `test_no_insurer_recipient_still_computes_notice_readiness`.
+- Completion: `test_end_refused_until_completion`.
+- Loop/budgets: `test_loop_guard_and_keeps_prior_work`,
+  `test_tool_error_budget`, `test_step_wall_and_empty_response_limits`,
+  `test_budget_config_cannot_exceed_treatment`.
+- Wrong proven verdict: `test_wrong_proven_verdict_is_overridden_and_original_traced`.
+- Generated PDF usable through the actual fact tool and shared citation resolver:
+  `test_generated_text_pdf_is_usable_by_fact_tool`.
+- Extraction failures/structured/text/eml: `test_ingest_failure_statuses`,
+  `test_encrypted_and_scanned_pdf`, `test_structured_text_eml_and_missing_file`.
+- Factory/controller, protocol-only injected session, rules-only and replay:
+  `test_factory_selection_and_controller_delegation`,
+  `test_tool_session_injection_uses_only_protocol_methods`,
+  `test_rules_only_has_no_model_calls`, `test_replay_exact_key_and_no_fallback`.
+- Derivation safety escalation: `test_overcredit_is_escalated_without_discarding_state`.
+
+Initial new suite: 20 passed / 3 failed. Two fixture errors were missing buyer
+facts and a missing case_id argument. One implementation regression was an empty
+LLM response not immediately exhausting a one-error budget. Corrected fixtures
+and the error accounting; the same test now passes. Additional edge tests added
+for overcredit escalation, missing insurer recipients and protocol-only sessions.
+
+Commands (existing Python 3.11 environment; no installs or network):
+- `/tmp/recoup-007-check/bin/python -m pytest tests/engine/test_harness_factory_ingest.py -q`:
+  **26 passed**.
+- `make check PYTHON=/tmp/recoup-007-check/bin/python`: Ruff lint/format PASS;
+  **553 passed, 18 skipped in 1.10s** (exit 0).
+- `git diff --check`: PASS.
+
+Real integration in `test_007_4_integration.py`: six explicit BLOCKED cases,
+none PASS. Missing providers: app.build/SqliteWorld at G1/G2, actual ingestor and
+factory wiring at G3. Cases: `test_real_hero_harness`,
+`test_real_mixed_insurance_isolation`, `test_real_completion_and_loop` (2),
+`test_real_model_verdict_override`, `test_real_pdf_loader_factory_ingestor`.
+The twelve existing 007-3 integration skips remain BLOCKED. No unit-double pass
+is claimed as real loader, persistence, restart or automatic validator proof.
+
+`HarnessEngine.handle` deliberately raises with the missing 007-5 prerequisite;
+the exported controller delegates to it. Event/due-work behavior and automatic
+app orchestration therefore remain unavailable until that separate step. Live
+adapter selection explicitly reports the 007-6 prerequisite. Neither later step
+was started. Reviewer/Verifier real integration acceptance remains outstanding.
+
+Changed files (007-4 only):
+- recoup/engine/config.py
+- recoup/engine/factory.py
+- recoup/engine/harness.py
+- recoup/engine/ingest.py
+- recoup/engine/llm/__init__.py
+- recoup/engine/llm/fake.py
+- recoup/engine/llm/replay.py
+- recoup/engine/prompts/system_v1.md
+- tests/engine/test_harness_factory_ingest.py
+- tests/engine/test_007_4_integration.py
+- progress/sonny/PROGRESS.md
+
+DONE: 007-4 independent implementation and 26 new unit checks pass; make check is green with 18 explicitly blocked integration cases. Changes remain uncommitted.
+NEXT: Stop this session; real 007-4 integration needs G1/G2/G3 providers, and controller event handling remains the separate 007-5 step.
+QUESTION: No new contract mismatch; prior consumer requests and real-provider review/verification remain outstanding.
+
+## 007-5 — 2026-11-08 (America/Los_Angeles)
+
+Implemented the owned independent handler lane against design/02 §5.7 and the
+existing shared ports, using the explicit r10 unit-double exception in the engine
+instructions. Preserved the pre-existing, uncommitted 007-4 implementation and
+progress entry. No shared contract, dependencies, root/docs, or other owner files
+changed. Did not start 007-6, commit, publish, or perform an external action.
+
+Added scheduler event/due processing and HarnessEngine delegation, notice
+scheduling at the readiness tool boundary, claim-window rescheduling after policy
+changes, and gate revalidation for case-wide scheduled follow-ups. Each item and
+its acknowledgement share a World transaction. Generated follow-ups are proposals
+only, labeled SYNTHETIC/MOCK/LLM mode; they never approve or submit themselves.
+Normative behavior remains in design/02 §3.8, §5.5–5.7.
+
+Acceptance evidence in tests/engine/test_scheduler.py (independent unit lane):
+- Day 3 correction + incremental credit without repost:
+  test_day_three_correction_incremental_credit_no_repost.
+- Silence and repeat/reconstructed-engine no-op:
+  test_silence_exactly_one_followup_and_restart_no_op.
+- Buyer reply cancellation and late reply suppression:
+  test_buyer_email_cancels_followup,
+  test_reply_after_basis_suppresses_overdue_work_even_without_email_event;
+  test_unrelated_email_does_not_cancel checks sender isolation.
+- Notice deadline minus seven and claim package at claim window:
+  test_notice_deadline_minus_seven_and_claim_window;
+  test_direct_investigation_schedules_notice_once checks the tool boundary.
+- Receipt replacement, company follow-up interval and sequence:
+  test_new_receipt_replaces_followup_basis_and_uses_company_policy.
+- Policy changes: test_policy_change_reschedules_claim_window.
+- Exception rollback and retry:
+  test_event_exception_rolls_back_then_retries_once,
+  test_save_failure_rolls_back_event_before_ack,
+  test_due_exception_rolls_back_proposal_and_ack.
+- Gate revalidation: test_followup_revalidation_rejects_early_forged_and_replied.
+- Event sequence and duplicate trace:
+  test_duplicate_is_trace_only_and_events_sort_by_time_sequence.
+
+The first unit run had five failures from writing a nonexistent ScriptedClock
+attribute; fixed the new fixtures to use its actual start/current_day interface.
+The same cases then passed. Updated the retained factory test to check an idle
+handle instead of the removed 007-5 NotImplementedError. Added regressions for
+policy-date changes and immediate post-save failures; these pass. Unit transaction
+snapshots/reconstructed engines are deliberately owned test support and do not
+prove actual SQLite durability or process restart. No copied contract models.
+
+Real acceptance in tests/engine/test_007_5_integration.py: five explicitly BLOCKED
+cases (all skipped because recoup.app is absent), covering day-3 release, silence,
+buyer email, notice/claim dates and mid-event rollback using actual app-built
+SqliteWorld when available. Real persisted restart acceptance also remains
+BLOCKED pending the real provider; the current memory-only test port does not
+expose a reopen operation. The prior eighteen integration skips remain unchanged.
+Request #5 records the unavailable shared sequence for due-work ordering. The
+implemented fallback is disclosed there; exact cross-kind sequence compliance
+is not claimed. No real integration or durable-restart pass is claimed.
+
+Changed files for this step only:
+- recoup/engine/scheduler.py
+- recoup/engine/harness.py (handle delegation in existing uncommitted 007-4 file)
+- recoup/engine/tools.py
+- recoup/engine/gates.py
+- tests/engine/test_scheduler.py
+- tests/engine/test_007_5_integration.py
+- tests/engine/test_harness_factory_ingest.py (obsolete stub assertion only)
+- progress/sonny/CONTRACT_REQUEST.md
+- progress/sonny/PROGRESS.md
+
+Verification: existing /tmp/recoup-007-check Python environment; no installations
+or network. Focused scheduler suite: 14 passed. Final make check and diff audit
+recorded below.
+
+Final `make check PYTHON=/tmp/recoup-007-check/bin/python`: exit 0; Ruff lint and
+format PASS (50 files); **567 passed, 23 skipped in 1.97s**. `git diff --check`:
+PASS. All nine step changes are within the assigned engine/tests/progress paths;
+pre-existing uncommitted 007-4 files remain present. No outside-owner edits.
+
+DONE: Implemented independent 007-5 handlers and fourteen unit checks; make check passes with twenty-three explicitly blocked integration cases overall.
+NEXT: Stop this session; run real-provider integration and persisted-restart acceptance when G2/G3 are available.
+QUESTION: Charles to resolve request #5 for cross-kind due sequence; real-provider acceptance and previous requests remain outstanding.
+
+## 007-6 — 2026-11-08 (America/Los_Angeles)
+
+Before writing the adapter, read the current official OpenAI Python tool-calling
+examples and request/response reference on 2026-11-08:
+- https://developers.openai.com/api/docs/guides/function-calling
+- https://developers.openai.com/api/reference/python/resources/chat/subresources/completions/methods/create
+
+Checked the installed, already pinned openai 3.46.0 constructor signature as well.
+Implementation follows design/02 §4.5 and §5.9, using Chat Completions function
+calling and the existing contract LLMResponse and ReplayLLM. Existing uncommitted
+007-4/007-5 work is preserved. Tests use injected SDK-shaped clients under the
+engine AGENTS.md explicit r10 unit-lane exception; no live request is authorized
+or performed and no real model-investigation result is claimed.
+
+Added OpenAICompatLLM with SDK Chat Completions translation for the shared tool
+schemas and harness conversation, validated JSON-object tool arguments, explicit
+live provenance, optional returned token counts, measured latency and transport
+timeout with automatic retries disabled. Client failures, incomplete completions,
+malformed call identities and invalid JSON fail without recording or fallback.
+Successful responses are recorded through the existing ReplayLLM for exact replay.
+The configured model identifier is retained for recording/replay, including when
+the provider returns a resolved snapshot name. No amounts, verdicts, citations or
+actions are computed or executed by this adapter.
+
+Factory live selection now constructs the adapter; fake/replay paths are unchanged.
+Model/base URL can come from the supplied config or RECOUP_MODEL/OPENAI_BASE_URL;
+the official SDK reads OPENAI_API_KEY. Removed the predecessor's obsolete
+NotImplementedError assertion; live selection is checked with a stub SDK factory.
+No new dependencies, contract edits, network in tests, live spend, commit or
+publication. Did not start 007-7.
+
+Acceptance evidence: tests/engine/test_openai_compat.py has 19 passing cases:
+- test_tool_round_trip_and_exact_replay checks actual contract schemas, two-turn
+  conversation conversion, immutable inputs, live metadata and exact offline replay.
+- test_text_without_usage_and_empty_tools and test_multiple_calls_preserved check
+  optional usage/text and ordered parallel calls.
+- test_bad_arguments_never_recorded (5), test_partial_responses_never_recorded (3),
+  test_invalid_call_identity (3), test_empty_choices_fail_closed and
+  test_client_error_propagates_without_record_or_fallback check failure boundaries.
+- test_env_sdk_configuration_and_factory, test_required_model_and_timeout and
+  test_real_sdk_reads_key_without_network check config, factory and installed SDK
+  construction. Network connect operations are blocked throughout this test module.
+
+Initial focused suite: 19 passed. Ruff reported one long authored test line;
+formatting resolved it. Final make check (exit 0):
+
+```text
+make check PYTHON=/tmp/recoup-007-check/bin/python
+All checks passed!
+52 files already formatted
+======================= 586 passed, 23 skipped in 2.28s ========================
+```
+
+The 23 pre-existing real-provider integration cases remain explicitly blocked;
+this step claims offline adapter acceptance only. Real model investigation is
+not verified. git diff --check passed. All changes for this session are owned:
+- recoup/engine/llm/openai_compat.py (new)
+- recoup/engine/factory.py (live selection only)
+- tests/engine/test_openai_compat.py (new)
+- tests/engine/test_harness_factory_ingest.py (removed obsolete assertion only)
+- progress/sonny/PROGRESS.md (this entry and documentation URLs/date)
+
+DONE: 007-6 live adapter, factory selection and ReplayLLM recording implemented; 19 new offline checks pass and make check is green (586 passed, 23 skipped).
+NEXT: Stop after 007-6; real-provider integration and authorized live evaluation remain separate outstanding work.
+QUESTION: No new contract or dependency request; existing provider blockers and prior requests remain outstanding.
+
+## 007-7 — 2026-11-08 (America/Los_Angeles)
+
+Implemented the independent engine scan lane against design/02 §5.8, preserving
+all pre-existing uncommitted 007-4/5/6 work. Stayed inside engine/tests/progress;
+no dependency installations, manifests, shared contracts, app/CLI or other owner
+files changed. Stopped after this step; no 007-8 work, commit or publication.
+
+Added capability reporting for the doctor owner, optional tesseract/pytesseract
+image OCR, multi-frame input, scanned/mixed PDF page OCR, and explicit image
+vision through the existing live adapter. PDF page rendering uses the existing
+optional pdftoppm executable with a bounded subprocess; pytesseract also has a
+30-second timeout. Native PDF text remains in page order alongside scan text.
+OCR/vision fields carry their extraction trust, and the actual propose_fact tool
+writes matching trust on cited facts. No model computes amounts. Unavailable,
+empty and corrupt extraction paths return explicit contract statuses without
+retaining supplied fields as a substitute for failed scan extraction.
+
+The factory enables image vision only with config.vision, live mode, Pillow,
+and a present API key. The config/environment mapping remains Charles's §4.5
+composition responsibility. No vision request runs for the default fake path.
+Vision requests transcribe images with no tools; successful SDK responses use
+existing ReplayLLM recording. Tests cover exact image-request replay. Scanned
+PDFs use OCR, not vision. This is an offline implementation, not evidence of
+real transcription accuracy or model judgment.
+
+Used the OpenAI Docs skill and read the official image-input guide on 2026-11-08
+before implementing image requests:
+https://developers.openai.com/api/docs/guides/images-vision?api-mode=chat
+
+Acceptance evidence in tests/engine/test_scan_ingest.py (20 PASS, 2 SKIP):
+- Always-run missing capability: test_ocr_unavailable (image and scanned PDF).
+- Capability/key/mode gating: test_capability_probe_and_vision_gate and
+  test_factory_vision_requires_flag_live_and_key.
+- Actual propose_fact trust propagation: test_scan_trust_reaches_actual_fact_tool
+  (ocr/vision), using the authorized owned unit-double lane.
+- PDF page isolation/order: test_pdf_missing_pages_use_ocr_in_page_order.
+- Actual installed PDF renderer, with stub OCR only:
+  test_real_pdf_renderer_with_stub_ocr. This is not a real OCR pass.
+- SDK-shaped multimodal request and exact recorded replay:
+  test_vision_sdk_image_request_and_exact_replay; no network or live spend.
+- Frame order/timeouts: test_ocr_backend_uses_timeout_and_preserves_frame_order.
+- Failures: test_scan_backend_failures (3),
+  test_empty_scan_cannot_use_supplied_fields,
+  test_pdf_renderer_missing_is_unavailable, test_pdf_renderer_failure_is_unavailable,
+  test_ocr_execution_failure_is_unavailable (2),
+  test_invalid_image_is_corrupt_with_available_backend,
+  test_vision_client_failure_is_unavailable, test_vision_tool_calls_are_rejected.
+- Real optional OCR: test_real_tesseract_image and test_real_scanned_pdf explicitly
+  SKIPPED because tesseract and pytesseract are absent. Pillow/pypdf and the PDF
+  renderer are available. No real OCR or vision acceptance is claimed.
+
+Updated the two predecessor failure-status tests to force unavailable OCR, so
+expectations remain deterministic on machines with or without optional tools.
+Initial focused runs exposed two fixture mistakes (missing case_id, then checking
+EffectiveFacts instead of the test port's appended revisions); corrected both.
+The first full check rejected a variable-name dynamic import in the capability
+probe. Replaced it with literal module imports and reran make check successfully.
+No shared guard was changed or bypassed.
+
+Final verification (existing /tmp/recoup-007-check environment, no network):
+
+```text
+make check PYTHON=/tmp/recoup-007-check/bin/python
+All checks passed!
+54 files already formatted
+======================= 606 passed, 25 skipped in 2.40s ========================
+```
+
+Focused scan suite: 20 passed, 2 skipped. git diff --check: PASS. The 23 existing
+real-provider integration skips remain unchanged. Actual doctor wiring is
+BLOCKED by the absent CLI/app providers. Request #6 records that seam and the
+optional PDF renderer prerequisite for Charles. No integrated doctor, real OCR,
+or live vision pass is claimed from green unit tests.
+
+Changed files for 007-7 only (all within ownership):
+- recoup/engine/scans.py (new)
+- recoup/engine/ingest.py
+- recoup/engine/factory.py
+- tests/engine/test_scan_ingest.py (new)
+- tests/engine/test_harness_factory_ingest.py (two deterministic failure fixtures)
+- progress/sonny/CONTRACT_REQUEST.md (request #6)
+- progress/sonny/PROGRESS.md (this entry)
+
+DONE: Implemented the independent 007-7 OCR and optional image vision paths; make check passes with 606 passed and 25 skipped.
+NEXT: Stop; Charles to wire doctor and resolve the PDF renderer prerequisite; execute real OCR/vision acceptance only when those paths are available.
+QUESTION: Request #6 covers absent doctor/composition and the optional PDF renderer; existing real-provider blockers remain outstanding.
+
+## 007-8 — 2026-11-08 (America/Los_Angeles)
+
+Reviewed root/engine instructions, docs/INDEX, spec 007 step 007-8, design/01
+§4–5, design/02 §3.2, §3.6–3.8, §5.4–5.5, and the actual shared bundle,
+proposal/tool/ledger models and World ports. The handoff names counteroffers
+and multi-invoice allocation but the normative financial behavior and shared
+allocation seam are missing. Requests #7–8 in CONTRACT_REQUEST.md identify the
+specific decisions and consumer acceptance needed from Charles. No code or
+tests were added around invented financial definitions; existing counteroffer
+rejection remains in force. Neither 007-8 feature is implemented or verified.
+
+Preserved all pre-existing uncommitted engine/tests/progress work. This session
+changed only progress/sonny/CONTRACT_REQUEST.md and progress/sonny/PROGRESS.md.
+No shared contracts, dependencies, docs or other owner files changed; no commit,
+publication or external action. Stopped after the 007-8 contract review.
+
+Verification: `make check PYTHON=/tmp/recoup-007-check/bin/python` exited 0:
+
+```text
+All checks passed!
+54 files already formatted
+======================= 606 passed, 25 skipped in 2.87s ========================
+```
+
+The 25 existing skips remain; green checks verify the existing implementation,
+not acceptance of either ambition feature. No bug fix or new acceptance pass
+is claimed. `git diff --check` passed.
+
+DONE: Reviewed 007-8 and recorded blocking definition/contract requests #7–8; existing make check passes (606 passed, 25 skipped).
+NEXT: Implement only 007-8 once Charles supplies normative counteroffer and multi-invoice allocation definitions and confirms the shared seams.
+QUESTION: Charles to resolve requests #7–8; no financial behavior was guessed and no contract was copied or changed.
+
+DONE: Prepared all 21 pending files for commit and push; make check PYTHON=/tmp/recoup-007-check/bin/python passed (606 passed, 25 skipped); git diff --check passed. Files: progress/sonny/CONTRACT_REQUEST.md, progress/sonny/PROGRESS.md, recoup/engine/config.py, recoup/engine/factory.py, recoup/engine/gates.py, recoup/engine/harness.py, recoup/engine/ingest.py, recoup/engine/llm/__init__.py, recoup/engine/llm/fake.py, recoup/engine/llm/openai_compat.py, recoup/engine/llm/replay.py, recoup/engine/prompts/system_v1.md, recoup/engine/scans.py, recoup/engine/scheduler.py, recoup/engine/tools.py, tests/engine/test_007_4_integration.py, tests/engine/test_007_5_integration.py, tests/engine/test_harness_factory_ingest.py, tests/engine/test_openai_compat.py, tests/engine/test_scan_ingest.py, tests/engine/test_scheduler.py.
+NEXT: Push this commit to origin/codex/007-4-harness-factory-ingestion and stop.
+QUESTION: Existing contract requests and integration skips remain unresolved; no new question for this push.

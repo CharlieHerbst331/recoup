@@ -117,7 +117,13 @@ class ProposalValidator:
             issue("invalid_allocation", "Allocations cannot be negative")
         if proposal.kind in {"credit_memo", "dispute", "correction", "info_request", "follow_up"}:
             try:
-                candidates = derive(world, case_id, ids)
+                if proposal.kind == "follow_up" and not ids:
+                    from recoup.engine.scheduler import followup_proposal
+
+                    candidate = followup_proposal(world, case_id)
+                    candidates = [candidate] if candidate else []
+                else:
+                    candidates = derive(world, case_id, ids)
                 expected = next(
                     (
                         p
