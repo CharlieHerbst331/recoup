@@ -1,0 +1,93 @@
+{
+  "remittance_id": "SYNTHETIC-MULTI-001",
+  "version": 1,
+  "payment_ref": "SYNTHETIC-BANK-001",
+  "buyer_id": "SYNTHETIC-BUYER",
+  "currency": "USD",
+  "paid_cents": 23000,
+  "paid_date": "2026-10-20",
+  "cases": [
+    {
+      "case_id": "ALLOC-A",
+      "title": "SYNTHETIC — Remittance invoice A",
+      "seller": "Synthetic seller",
+      "buyer": "Synthetic buyer",
+      "currency": "USD",
+      "invoice_ref": "INV",
+      "start_date": "2026-10-20",
+      "static_day": 0,
+      "policy_ref": null,
+      "allowed_recipients": {
+        "mock_email": [
+          "buyer@example.invalid"
+        ]
+      },
+      "docs": [
+        {
+          "doc_ref": "INV",
+          "version": 1,
+          "kind": "invoice",
+          "title": "SYNTHETIC invoice A",
+          "file": null,
+          "text": "",
+          "fields": {
+            "invoice_no": "INV-ALLOC-A",
+            "buyer_id": "SYNTHETIC-BUYER",
+            "total_cents": 10000,
+            "due_date": "2026-10-01"
+          },
+          "available_at_day": 0,
+          "held_by": null
+        }
+      ],
+      "events": [],
+      "provenance": "synthetic"
+    },
+    {
+      "case_id": "ALLOC-B",
+      "title": "SYNTHETIC — Remittance invoice B",
+      "seller": "Synthetic seller",
+      "buyer": "Synthetic buyer",
+      "currency": "USD",
+      "invoice_ref": "INV",
+      "start_date": "2026-10-20",
+      "static_day": 0,
+      "policy_ref": null,
+      "allowed_recipients": {
+        "mock_email": [
+          "buyer@example.invalid"
+        ]
+      },
+      "docs": [
+        {
+          "doc_ref": "INV",
+          "version": 1,
+          "kind": "invoice",
+          "title": "SYNTHETIC invoice B",
+          "file": null,
+          "text": "",
+          "fields": {
+            "invoice_no": "INV-ALLOC-B",
+            "buyer_id": "SYNTHETIC-BUYER",
+            "total_cents": 15000,
+            "due_date": "2026-10-01"
+          },
+          "available_at_day": 0,
+          "held_by": null
+        }
+      ],
+      "events": [],
+      "provenance": "synthetic"
+    }
+  ],
+  "allocations": [
+    {
+      "invoice_no": "INV-ALLOC-A",
+      "paid_cents": 12000
+    },
+    {
+      "invoice_no": "INV-ALLOC-B",
+      "paid_cents": 10000
+    }
+  ]
+}

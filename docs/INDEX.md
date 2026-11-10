@@ -1,9 +1,19 @@
 # Recoup documents
 
-**Current milestone: 006-1 / F0 complete**, accepted by the owner on 2026-11-08.
+**006-1 / F0 complete**, accepted by the owner on 2026-11-08.
 Owner acceptance supersedes the outstanding independent review gate; independent
 Reviewer/Verifier reviews were not performed. The source documents below retain
 their original proposal labels. See the [acceptance record](../progress/charles/006-1-ACCEPTANCE.md).
+
+Current implementation and verification:
+
+- [Main merge acceptance](../progress/charles/006-MAIN-MERGE-ACCEPTANCE.md)
+- [Getting started](../README.md)
+- [Charles final integration acceptance](../progress/charles/006-FINAL-INTEGRATION-ACCEPTANCE.md)
+- [Sonny published engine handoff](../progress/sonny/SESSION-HANDOFF.md)
+- [Synthetic financial examples](../cases/ambition/README.md)
+
+Designs and ownership:
 
 - [design/01-functional-design.md](design/01-functional-design.md)
 - [design/02-technical-design.md](design/02-technical-design.md)

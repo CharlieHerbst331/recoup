@@ -2,7 +2,7 @@ import ast
 import re
 from pathlib import Path
 
-from recoup.contracts import bundle, interfaces, models, money, oracle, tools
+from recoup.contracts import bundle, interfaces, models, money, oracle, remittance, tools
 
 
 def test_normative_model_fields_and_port_signatures():
@@ -15,6 +15,7 @@ def test_normative_model_fields_and_port_signatures():
         ("3.3", bundle),
         ("3.4", tools),
         ("3.5", interfaces),
+        ("3.9", remittance),
         ("8.1", oracle),
     ]:
         section_text = design.split(f"### {section} ", 1)[1].split("\n### ", 1)[0]

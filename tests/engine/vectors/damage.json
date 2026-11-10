@@ -1,0 +1,471 @@
+{
+  "fixture_format": "sonny-rule-vectors-v1",
+  "provenance": "SYNTHETIC",
+  "stage": "run_rules",
+  "vectors": [
+    {
+      "id": "damage_window_boundary",
+      "reference": "design/02 \u00a73.7; \u00a75.3",
+      "input": {
+        "line": {
+          "line_id": "D1",
+          "reason": "damage",
+          "claimed_cents": 10000,
+          "sku": "SKU-1"
+        },
+        "documents": [
+          {
+            "id": "invoice",
+            "kind": "invoice",
+            "fields": {
+              "invoice_no": "INV-SYNTHETIC",
+              "invoice_date": "2026-08-03",
+              "due_date": "2026-09-02",
+              "total_cents": 100000,
+              "line.1.sku": "SKU-1",
+              "line.1.qty": 10,
+              "line.1.unit_price_cents": 1000,
+              "line.2.sku": "SKU-2",
+              "line.2.qty": 90,
+              "line.2.unit_price_cents": 1000
+            }
+          },
+          {
+            "id": "company_policy",
+            "kind": "company_policy",
+            "fields": {
+              "tolerance_cents": 0,
+              "allowed_authority_roles": "VP Sales",
+              "amendment_precedence": "latest_effective"
+            }
+          },
+          {
+            "id": "contract",
+            "kind": "contract",
+            "fields": {
+              "damage_window_days": 5
+            }
+          },
+          {
+            "id": "pod",
+            "kind": "pod",
+            "fields": {
+              "delivered_date": "2026-08-10"
+            }
+          },
+          {
+            "id": "inspection",
+            "kind": "inspection",
+            "fields": {
+              "sku": "SKU-1",
+              "damaged_qty": 6,
+              "report_date": "2026-08-15"
+            }
+          }
+        ]
+      },
+      "expected_finding": {
+        "verdict": "partial",
+        "basis": "proven",
+        "valid_cents": 6000,
+        "disputed_cents": 4000
+      }
+    },
+    {
+      "id": "damage_missing_inspection",
+      "reference": "design/02 \u00a73.7; \u00a75.3",
+      "input": {
+        "line": {
+          "line_id": "D1",
+          "reason": "damage",
+          "claimed_cents": 10000,
+          "sku": "SKU-1"
+        },
+        "documents": [
+          {
+            "id": "invoice",
+            "kind": "invoice",
+            "fields": {
+              "invoice_no": "INV-SYNTHETIC",
+              "invoice_date": "2026-08-03",
+              "due_date": "2026-09-02",
+              "total_cents": 100000,
+              "line.1.sku": "SKU-1",
+              "line.1.qty": 10,
+              "line.1.unit_price_cents": 1000,
+              "line.2.sku": "SKU-2",
+              "line.2.qty": 90,
+              "line.2.unit_price_cents": 1000
+            }
+          },
+          {
+            "id": "company_policy",
+            "kind": "company_policy",
+            "fields": {
+              "tolerance_cents": 0,
+              "allowed_authority_roles": "VP Sales",
+              "amendment_precedence": "latest_effective"
+            }
+          },
+          {
+            "id": "contract",
+            "kind": "contract",
+            "fields": {
+              "damage_window_days": 5
+            }
+          },
+          {
+            "id": "pod",
+            "kind": "pod",
+            "fields": {
+              "delivered_date": "2026-08-10"
+            }
+          }
+        ]
+      },
+      "expected_finding": {
+        "verdict": "needs_info",
+        "basis": "missing_evidence",
+        "valid_cents": null,
+        "disputed_cents": null
+      }
+    },
+    {
+      "id": "damage_outside_waiver_none",
+      "reference": "design/02 \u00a73.7; \u00a75.3",
+      "input": {
+        "line": {
+          "line_id": "D1",
+          "reason": "damage",
+          "claimed_cents": 10000,
+          "sku": "SKU-1"
+        },
+        "documents": [
+          {
+            "id": "invoice",
+            "kind": "invoice",
+            "fields": {
+              "invoice_no": "INV-SYNTHETIC",
+              "invoice_date": "2026-08-03",
+              "due_date": "2026-09-02",
+              "total_cents": 100000,
+              "line.1.sku": "SKU-1",
+              "line.1.qty": 10,
+              "line.1.unit_price_cents": 1000,
+              "line.2.sku": "SKU-2",
+              "line.2.qty": 90,
+              "line.2.unit_price_cents": 1000
+            }
+          },
+          {
+            "id": "company_policy",
+            "kind": "company_policy",
+            "fields": {
+              "tolerance_cents": 0,
+              "allowed_authority_roles": "VP Sales",
+              "amendment_precedence": "latest_effective"
+            }
+          },
+          {
+            "id": "contract",
+            "kind": "contract",
+            "fields": {
+              "damage_window_days": 5
+            }
+          },
+          {
+            "id": "pod",
+            "kind": "pod",
+            "fields": {
+              "delivered_date": "2026-08-10"
+            }
+          },
+          {
+            "id": "inspection",
+            "kind": "inspection",
+            "fields": {
+              "sku": "SKU-1",
+              "damaged_qty": 6,
+              "report_date": "2026-08-16"
+            }
+          }
+        ]
+      },
+      "expected_finding": {
+        "verdict": "needs_info",
+        "basis": "unsupported_terms",
+        "valid_cents": null,
+        "disputed_cents": null
+      }
+    },
+    {
+      "id": "damage_outside_waiver_false",
+      "reference": "design/02 \u00a73.7; \u00a75.3",
+      "input": {
+        "line": {
+          "line_id": "D1",
+          "reason": "damage",
+          "claimed_cents": 10000,
+          "sku": "SKU-1"
+        },
+        "documents": [
+          {
+            "id": "invoice",
+            "kind": "invoice",
+            "fields": {
+              "invoice_no": "INV-SYNTHETIC",
+              "invoice_date": "2026-08-03",
+              "due_date": "2026-09-02",
+              "total_cents": 100000,
+              "line.1.sku": "SKU-1",
+              "line.1.qty": 10,
+              "line.1.unit_price_cents": 1000,
+              "line.2.sku": "SKU-2",
+              "line.2.qty": 90,
+              "line.2.unit_price_cents": 1000
+            }
+          },
+          {
+            "id": "company_policy",
+            "kind": "company_policy",
+            "fields": {
+              "tolerance_cents": 0,
+              "allowed_authority_roles": "VP Sales",
+              "amendment_precedence": "latest_effective"
+            }
+          },
+          {
+            "id": "contract",
+            "kind": "contract",
+            "fields": {
+              "damage_window_days": 5,
+              "damage_late_waived": false
+            }
+          },
+          {
+            "id": "pod",
+            "kind": "pod",
+            "fields": {
+              "delivered_date": "2026-08-10"
+            }
+          },
+          {
+            "id": "inspection",
+            "kind": "inspection",
+            "fields": {
+              "sku": "SKU-1",
+              "damaged_qty": 6,
+              "report_date": "2026-08-16"
+            }
+          }
+        ]
+      },
+      "expected_finding": {
+        "verdict": "needs_info",
+        "basis": "unsupported_terms",
+        "valid_cents": null,
+        "disputed_cents": null
+      }
+    },
+    {
+      "id": "damage_outside_waiver_true",
+      "reference": "design/02 \u00a73.7; \u00a75.3",
+      "input": {
+        "line": {
+          "line_id": "D1",
+          "reason": "damage",
+          "claimed_cents": 10000,
+          "sku": "SKU-1"
+        },
+        "documents": [
+          {
+            "id": "invoice",
+            "kind": "invoice",
+            "fields": {
+              "invoice_no": "INV-SYNTHETIC",
+              "invoice_date": "2026-08-03",
+              "due_date": "2026-09-02",
+              "total_cents": 100000,
+              "line.1.sku": "SKU-1",
+              "line.1.qty": 10,
+              "line.1.unit_price_cents": 1000,
+              "line.2.sku": "SKU-2",
+              "line.2.qty": 90,
+              "line.2.unit_price_cents": 1000
+            }
+          },
+          {
+            "id": "company_policy",
+            "kind": "company_policy",
+            "fields": {
+              "tolerance_cents": 0,
+              "allowed_authority_roles": "VP Sales",
+              "amendment_precedence": "latest_effective"
+            }
+          },
+          {
+            "id": "contract",
+            "kind": "contract",
+            "fields": {
+              "damage_window_days": 5,
+              "damage_late_waived": true
+            }
+          },
+          {
+            "id": "pod",
+            "kind": "pod",
+            "fields": {
+              "delivered_date": "2026-08-10"
+            }
+          },
+          {
+            "id": "inspection",
+            "kind": "inspection",
+            "fields": {
+              "sku": "SKU-1",
+              "damaged_qty": 6,
+              "report_date": "2026-08-16"
+            }
+          }
+        ]
+      },
+      "expected_finding": {
+        "verdict": "invalid",
+        "basis": "proven",
+        "valid_cents": 0,
+        "disputed_cents": 10000
+      }
+    },
+    {
+      "id": "damage_refused_pod",
+      "reference": "design/02 \u00a73.7; \u00a75.3",
+      "input": {
+        "line": {
+          "line_id": "D1",
+          "reason": "damage",
+          "claimed_cents": 10000,
+          "sku": "SKU-1",
+          "reported_date": "2026-08-12"
+        },
+        "documents": [
+          {
+            "id": "invoice",
+            "kind": "invoice",
+            "fields": {
+              "invoice_no": "INV-SYNTHETIC",
+              "invoice_date": "2026-08-03",
+              "due_date": "2026-09-02",
+              "total_cents": 100000,
+              "line.1.sku": "SKU-1",
+              "line.1.qty": 10,
+              "line.1.unit_price_cents": 1000,
+              "line.2.sku": "SKU-2",
+              "line.2.qty": 90,
+              "line.2.unit_price_cents": 1000
+            }
+          },
+          {
+            "id": "company_policy",
+            "kind": "company_policy",
+            "fields": {
+              "tolerance_cents": 0,
+              "allowed_authority_roles": "VP Sales",
+              "amendment_precedence": "latest_effective"
+            }
+          },
+          {
+            "id": "contract",
+            "kind": "contract",
+            "fields": {
+              "damage_window_days": 5
+            }
+          },
+          {
+            "id": "pod",
+            "kind": "pod",
+            "fields": {
+              "delivered_date": "2026-08-10",
+              "refused.SKU-1": 6,
+              "exception_note": "6 units damaged at dock"
+            }
+          }
+        ]
+      },
+      "expected_finding": {
+        "verdict": "partial",
+        "basis": "proven",
+        "valid_cents": 6000,
+        "disputed_cents": 4000
+      }
+    },
+    {
+      "id": "damage_deduction_date_precedence",
+      "reference": "design/02 \u00a73.7; \u00a75.3",
+      "input": {
+        "line": {
+          "line_id": "D1",
+          "reason": "damage",
+          "claimed_cents": 10000,
+          "sku": "SKU-1",
+          "reported_date": "2026-08-15"
+        },
+        "documents": [
+          {
+            "id": "invoice",
+            "kind": "invoice",
+            "fields": {
+              "invoice_no": "INV-SYNTHETIC",
+              "invoice_date": "2026-08-03",
+              "due_date": "2026-09-02",
+              "total_cents": 100000,
+              "line.1.sku": "SKU-1",
+              "line.1.qty": 10,
+              "line.1.unit_price_cents": 1000,
+              "line.2.sku": "SKU-2",
+              "line.2.qty": 90,
+              "line.2.unit_price_cents": 1000
+            }
+          },
+          {
+            "id": "company_policy",
+            "kind": "company_policy",
+            "fields": {
+              "tolerance_cents": 0,
+              "allowed_authority_roles": "VP Sales",
+              "amendment_precedence": "latest_effective"
+            }
+          },
+          {
+            "id": "contract",
+            "kind": "contract",
+            "fields": {
+              "damage_window_days": 5
+            }
+          },
+          {
+            "id": "pod",
+            "kind": "pod",
+            "fields": {
+              "delivered_date": "2026-08-10"
+            }
+          },
+          {
+            "id": "inspection",
+            "kind": "inspection",
+            "fields": {
+              "sku": "SKU-1",
+              "damaged_qty": 6,
+              "report_date": "2026-08-16"
+            }
+          }
+        ]
+      },
+      "expected_finding": {
+        "verdict": "partial",
+        "basis": "proven",
+        "valid_cents": 6000,
+        "disputed_cents": 4000
+      }
+    }
+  ]
+}

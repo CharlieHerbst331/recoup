@@ -1,0 +1,370 @@
+{
+  "fixture_format": "sonny-rule-vectors-v1",
+  "provenance": "SYNTHETIC",
+  "stage": "run_rules",
+  "vectors": [
+    {
+      "id": "tolerance_claimed_100_entitled_98",
+      "reference": "design/02 \u00a73.7; \u00a75.3",
+      "input": {
+        "line": {
+          "line_id": "D1",
+          "reason": "pricing",
+          "claimed_cents": 100,
+          "sku": "SKU-1"
+        },
+        "documents": [
+          {
+            "id": "invoice",
+            "kind": "invoice",
+            "fields": {
+              "invoice_date": "2026-08-03",
+              "line.1.sku": "SKU-1",
+              "line.1.qty": 1,
+              "line.1.unit_price_cents": 200
+            }
+          },
+          {
+            "id": "contract",
+            "kind": "contract",
+            "fields": {
+              "price.SKU-1_cents": 102
+            }
+          },
+          {
+            "id": "company_policy",
+            "kind": "company_policy",
+            "fields": {
+              "tolerance_cents": 1
+            }
+          }
+        ]
+      },
+      "expected_finding": {
+        "verdict": "partial",
+        "basis": "proven",
+        "valid_cents": 98,
+        "disputed_cents": 2
+      }
+    },
+    {
+      "id": "tolerance_claimed_100_entitled_99",
+      "reference": "design/02 \u00a73.7; \u00a75.3",
+      "input": {
+        "line": {
+          "line_id": "D1",
+          "reason": "pricing",
+          "claimed_cents": 100,
+          "sku": "SKU-1"
+        },
+        "documents": [
+          {
+            "id": "invoice",
+            "kind": "invoice",
+            "fields": {
+              "invoice_date": "2026-08-03",
+              "line.1.sku": "SKU-1",
+              "line.1.qty": 1,
+              "line.1.unit_price_cents": 200
+            }
+          },
+          {
+            "id": "contract",
+            "kind": "contract",
+            "fields": {
+              "price.SKU-1_cents": 101
+            }
+          },
+          {
+            "id": "company_policy",
+            "kind": "company_policy",
+            "fields": {
+              "tolerance_cents": 1
+            }
+          }
+        ]
+      },
+      "expected_finding": {
+        "verdict": "valid",
+        "basis": "proven",
+        "valid_cents": 100,
+        "disputed_cents": 0
+      }
+    },
+    {
+      "id": "tolerance_claimed_100_entitled_100",
+      "reference": "design/02 \u00a73.7; \u00a75.3",
+      "input": {
+        "line": {
+          "line_id": "D1",
+          "reason": "pricing",
+          "claimed_cents": 100,
+          "sku": "SKU-1"
+        },
+        "documents": [
+          {
+            "id": "invoice",
+            "kind": "invoice",
+            "fields": {
+              "invoice_date": "2026-08-03",
+              "line.1.sku": "SKU-1",
+              "line.1.qty": 1,
+              "line.1.unit_price_cents": 200
+            }
+          },
+          {
+            "id": "contract",
+            "kind": "contract",
+            "fields": {
+              "price.SKU-1_cents": 100
+            }
+          },
+          {
+            "id": "company_policy",
+            "kind": "company_policy",
+            "fields": {
+              "tolerance_cents": 1
+            }
+          }
+        ]
+      },
+      "expected_finding": {
+        "verdict": "valid",
+        "basis": "proven",
+        "valid_cents": 100,
+        "disputed_cents": 0
+      }
+    },
+    {
+      "id": "tolerance_claimed_100_entitled_101",
+      "reference": "design/02 \u00a73.7; \u00a75.3",
+      "input": {
+        "line": {
+          "line_id": "D1",
+          "reason": "pricing",
+          "claimed_cents": 100,
+          "sku": "SKU-1"
+        },
+        "documents": [
+          {
+            "id": "invoice",
+            "kind": "invoice",
+            "fields": {
+              "invoice_date": "2026-08-03",
+              "line.1.sku": "SKU-1",
+              "line.1.qty": 1,
+              "line.1.unit_price_cents": 200
+            }
+          },
+          {
+            "id": "contract",
+            "kind": "contract",
+            "fields": {
+              "price.SKU-1_cents": 99
+            }
+          },
+          {
+            "id": "company_policy",
+            "kind": "company_policy",
+            "fields": {
+              "tolerance_cents": 1
+            }
+          }
+        ]
+      },
+      "expected_finding": {
+        "verdict": "valid",
+        "basis": "proven",
+        "valid_cents": 100,
+        "disputed_cents": 0
+      }
+    },
+    {
+      "id": "tolerance_claimed_1_entitled_0",
+      "reference": "design/02 \u00a73.7; \u00a75.3",
+      "input": {
+        "line": {
+          "line_id": "D1",
+          "reason": "pricing",
+          "claimed_cents": 1,
+          "sku": "SKU-1"
+        },
+        "documents": [
+          {
+            "id": "invoice",
+            "kind": "invoice",
+            "fields": {
+              "invoice_date": "2026-08-03",
+              "line.1.sku": "SKU-1",
+              "line.1.qty": 1,
+              "line.1.unit_price_cents": 200
+            }
+          },
+          {
+            "id": "contract",
+            "kind": "contract",
+            "fields": {
+              "price.SKU-1_cents": 200
+            }
+          },
+          {
+            "id": "company_policy",
+            "kind": "company_policy",
+            "fields": {
+              "tolerance_cents": 1
+            }
+          }
+        ]
+      },
+      "expected_finding": {
+        "verdict": "valid",
+        "basis": "proven",
+        "valid_cents": 1,
+        "disputed_cents": 0
+      }
+    },
+    {
+      "id": "tolerance_claimed_2_entitled_0",
+      "reference": "design/02 \u00a73.7; \u00a75.3",
+      "input": {
+        "line": {
+          "line_id": "D1",
+          "reason": "pricing",
+          "claimed_cents": 2,
+          "sku": "SKU-1"
+        },
+        "documents": [
+          {
+            "id": "invoice",
+            "kind": "invoice",
+            "fields": {
+              "invoice_date": "2026-08-03",
+              "line.1.sku": "SKU-1",
+              "line.1.qty": 1,
+              "line.1.unit_price_cents": 200
+            }
+          },
+          {
+            "id": "contract",
+            "kind": "contract",
+            "fields": {
+              "price.SKU-1_cents": 200
+            }
+          },
+          {
+            "id": "company_policy",
+            "kind": "company_policy",
+            "fields": {
+              "tolerance_cents": 1
+            }
+          }
+        ]
+      },
+      "expected_finding": {
+        "verdict": "invalid",
+        "basis": "proven",
+        "valid_cents": 0,
+        "disputed_cents": 2
+      }
+    },
+    {
+      "id": "tolerance_claimed_0_entitled_0",
+      "reference": "design/02 \u00a73.7; \u00a75.3",
+      "input": {
+        "line": {
+          "line_id": "D1",
+          "reason": "pricing",
+          "claimed_cents": 0,
+          "sku": "SKU-1"
+        },
+        "documents": [
+          {
+            "id": "invoice",
+            "kind": "invoice",
+            "fields": {
+              "invoice_date": "2026-08-03",
+              "line.1.sku": "SKU-1",
+              "line.1.qty": 1,
+              "line.1.unit_price_cents": 200
+            }
+          },
+          {
+            "id": "contract",
+            "kind": "contract",
+            "fields": {
+              "price.SKU-1_cents": 200
+            }
+          },
+          {
+            "id": "company_policy",
+            "kind": "company_policy",
+            "fields": {
+              "tolerance_cents": 1
+            }
+          }
+        ]
+      },
+      "expected_finding": {
+        "verdict": "valid",
+        "basis": "proven",
+        "valid_cents": 0,
+        "disputed_cents": 0
+      },
+      "expected_route": "none"
+    },
+    {
+      "id": "negative_claimed",
+      "reference": "design/02 \u00a73.7; \u00a75.3",
+      "input": {
+        "line": {
+          "line_id": "D1",
+          "reason": "pricing",
+          "claimed_cents": -1,
+          "sku": "SKU-1"
+        },
+        "documents": [
+          {
+            "id": "invoice",
+            "kind": "invoice",
+            "fields": {
+              "invoice_no": "INV-SYNTHETIC",
+              "invoice_date": "2026-08-03",
+              "due_date": "2026-09-02",
+              "total_cents": 100000,
+              "line.1.sku": "SKU-1",
+              "line.1.qty": 10,
+              "line.1.unit_price_cents": 1000,
+              "line.2.sku": "SKU-2",
+              "line.2.qty": 90,
+              "line.2.unit_price_cents": 1000
+            }
+          },
+          {
+            "id": "company_policy",
+            "kind": "company_policy",
+            "fields": {
+              "tolerance_cents": 0,
+              "allowed_authority_roles": "VP Sales",
+              "amendment_precedence": "latest_effective"
+            }
+          },
+          {
+            "id": "contract",
+            "kind": "contract",
+            "fields": {
+              "contract_id": "C1",
+              "effective_date": "2026-01-01",
+              "price.SKU-1_cents": 400
+            }
+          }
+        ]
+      },
+      "expected_finding": {
+        "verdict": "needs_human",
+        "valid_cents": null,
+        "disputed_cents": null,
+        "note_contains": "negative deduction"
+      }
+    }
+  ]
+}

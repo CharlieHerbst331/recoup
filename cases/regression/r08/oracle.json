@@ -1,0 +1,19 @@
+{
+  "case_id": "r08",
+  "expected_status": "quarantined",
+  "lines": [],
+  "proposals": [],
+  "forbidden_kinds": [
+    "dispute",
+    "credit_memo",
+    "info_request",
+    "follow_up",
+    "insurer_notice",
+    "claim_package",
+    "correction",
+    "counteroffer"
+  ],
+  "notice_deadline": null,
+  "claim_items": {},
+  "oracle_sentinel": "ORACLE-ONLY-SYNTHETIC-r08-DO-NOT-EXPOSE"
+}

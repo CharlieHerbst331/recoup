@@ -43,6 +43,7 @@ from .models import (
     TraceEvent,
 )
 from .oracle import StaticOutput
+from .remittance import RemittanceBundle, RemittanceLoadResult
 from .tools import ToolEnvelope
 
 
@@ -99,6 +100,12 @@ class World(Protocol):
     clock: Clock
 
     def load_bundle(self, bundle: CaseBundle, bundle_dir: str | None = None) -> LoadResult: ...
+    def load_remittance(
+        self, bundle: RemittanceBundle, bundle_dir: str | None = None
+    ) -> RemittanceLoadResult: ...
+    def remittance_history(
+        self, remittance_id: str | None = None
+    ) -> list[RemittanceLoadResult]: ...
     def list_quarantined(self) -> list[QuarantineRecord]: ...
     def add_evidence(
         self, case_id: str, doc: BundleDoc, bundle_dir: str | None = None
@@ -201,6 +208,12 @@ class Controller(Protocol):
     name: str
 
     def react(self, world: World, events: list[DomainEvent], run_id: str) -> None: ...
+
+
+@runtime_checkable
+class ScopedController(Controller, Protocol):
+    @contextmanager
+    def scope(self, case_ids: list[str]) -> Iterator[None]: ...
 
 
 class EngineParts(BaseModel, arbitrary_types_allowed=True):

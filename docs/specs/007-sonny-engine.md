@@ -75,7 +75,11 @@
 
 **007-7: OCR path (SHOULD).** Use tesseract via pytesseract when `doctor` finds it; fields get `ocr` trust. Add the vision path (AMBITION). Tests are skipped when the tool is unavailable, and there is always an `ocr_unavailable` test.
 
-**007-8: ambition.** Counteroffer within `authority_cents`, and multi-invoice allocation.
+**007-8: ambition (shared seams approved 2026-11-09).** Implement the counteroffer engine derivation, gates, tools and FakeLLM/handler behavior against design/02 §3.7–3.8 and §5.4–5.5, using the imported `offer_ref` contracts. Add engine integration coverage for positive boundary, missing/conflicting/expired/untrusted evidence, nonpayment exclusion, cumulative receipt reservations, downward edits, stale approval revalidation, duplicate submissions and concurrent approved offers. This completes Sonny's remaining engine work; the Charles World guard is defense in depth, not a replacement for engine derivation.
+
+Multi-invoice historical remittance intake belongs to **Charles's contracts/World/app/CLI** under design/02 §3.9; Sonny's engine consumes the resulting ordinary cases and payment ledger through the existing World port. Sonny adds app-built multi-invoice rule/handler integration coverage and any normal re-investigation handling needed after intake; do not create a parallel allocation implementation or an external settlement action. Charles supplies the shared models, transactional intake and loader wiring. Carter has no prerequisite implementation for either feature.
+
+The remaining shared decisions in `progress/sonny/CONTRACT_REQUEST.md` are resolved normatively in design/02: escalation/legal/buyer-email classification and citation validation (§3.7, §5.3), selected-case routing (§3.5, §4.5), event/due ordering (§5.7), and optional scan/doctor prerequisites (§5.8). Sonny should verify the existing owned consumers against those sections and finish any owned adapter gaps; no further invented contract seam is required.
 
 ## Acceptance
 - `make check` is green with no network.

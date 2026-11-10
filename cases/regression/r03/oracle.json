@@ -1,0 +1,64 @@
+{
+  "case_id": "r03",
+  "expected_status": "loaded",
+  "lines": [
+    {
+      "line_id": "D1",
+      "verdict": "needs_info",
+      "valid_cents": null,
+      "disputed_cents": null,
+      "required_refs": [
+        "POD#fields.signed"
+      ],
+      "acceptable_refs": [
+        "POD#fields.signed",
+        "INV",
+        "INV#fields.invoice_no",
+        "INV#fields.invoice_date",
+        "INV#fields.due_date",
+        "INV#fields.buyer_id",
+        "INV#fields.total_cents",
+        "INV#fields.line.1.sku",
+        "INV#fields.line.1.qty",
+        "INV#fields.line.1.unit_price_cents",
+        "REM",
+        "REM#fields.invoice_no",
+        "REM#fields.paid_cents",
+        "REM#fields.ded.1.line_id",
+        "REM#fields.ded.1.reason",
+        "REM#fields.ded.1.claimed_cents",
+        "REM#fields.ded.1.sku",
+        "REM#fields.ded.1.qty",
+        "POD",
+        "POD#fields.pod_no",
+        "POD#fields.delivered_date",
+        "POD#fields.received.SKU-3",
+        "COMPANY",
+        "COMPANY#fields.tolerance_cents",
+        "COMPANY#fields.follow_up_days",
+        "COMPANY#fields.authority_cents",
+        "COMPANY#fields.allowed_authority_roles",
+        "COMPANY#fields.amendment_precedence"
+      ],
+      "missing": [
+        "signed POD"
+      ]
+    }
+  ],
+  "proposals": [
+    {
+      "kind": "info_request",
+      "line_ids": [
+        "D1"
+      ],
+      "amount_cents": null
+    }
+  ],
+  "forbidden_kinds": [
+    "dispute",
+    "credit_memo"
+  ],
+  "notice_deadline": null,
+  "claim_items": {},
+  "oracle_sentinel": "ORACLE-ONLY-SYNTHETIC-r03-DO-NOT-EXPOSE"
+}

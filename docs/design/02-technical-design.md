@@ -1,5 +1,5 @@
 # Recoup: Technical Design (v3, 2026-11-07 PT)
-Status: **DESIGN REVIEW PENDING.** The contract below is **PROPOSED v1**. It becomes frozen only at milestone **F0**, after the Reviewer and Verifier pass Charles's PR 006-1. Nothing has been built yet.
+Status: The definitions below describe the implemented branch. The current additive contract candidate is pinned in `progress/charles/SONNY-UNBLOCK-ACCEPTANCE.md`; current verification and remaining limitations are in `progress/charles/006-FINAL-INTEGRATION-ACCEPTANCE.md`. The contract remains **PROPOSED v1** until its applicable review/freeze requirements are fulfilled; branch verification alone does not establish the main-branch merge gates below or create `contract-v1`.
 
 - Functional design: 01-functional-design.md.
 - Supersedes: v0 specs 001–003 (kept as history) and v1 of this document (replaced in place).
@@ -142,6 +142,7 @@ class DocStatus(BaseModel):         # immutable projection of one active Evidenc
 class FactSet(BaseModel):           # immutable snapshot of one decision basis
     case_id: str; basis_hash: str; facts: list[EffectiveFact]   # active evidence only; latest revision per (evidence_id, key)
     docs: list[DocStatus]           # every active evidence row in the same basis (its E:<id>:<hash> lines already bind it)
+    buyer_senders: list[str] = []
 
 class LineReasonRevision(BaseModel):  # immutable; append-only
     case_id: str; line_id: str; reason: DeductionReason; trust: FieldTrust; citation: Citation | None; at: datetime
@@ -203,18 +204,20 @@ class Proposal(BaseModel):
     allocations: list[LineAmount] = []; amount: Money | None   # amount == sum(allocations) when money-bearing
     draft_text: str; draft_sha256: str; citations: list[Citation]
     decision_id: str | None; decision_version: int | None; evidence_set_hash: str
-    balance_basis: Money | None = None; corrects_receipt_id: str | None = None; readiness_ids: list[str] = []
+    balance_basis: Money | None = None; corrects_receipt_id: str | None = None; offer_ref: str | None = None
+    readiness_ids: list[str] = []
     status: ProposalStatus; created_at: datetime; created_by: Literal["agent","human_edit","scheduler"]
 
 class Approval(BaseModel):
     approval_id: str; proposal_id: str; proposal_version: int; recipient: str; amount: Money | None
-    draft_sha256: str; evidence_set_hash: str; decision_version: int | None
+    draft_sha256: str; evidence_set_hash: str; decision_version: int | None; offer_ref: str | None = None
     approver: str; approved: bool; reason: str = ""; at: datetime; void: bool = False; void_reason: str = ""
 
 class Receipt(BaseModel):
     receipt_id: str             # MOCK-DISP- / MOCK-CM- / MOCK-MSG- / MOCK-INS- / MOCK-CLM- / MOCK-CORR- + 4 digits
     proposal_id: str; proposal_version: int; business_key: str; idempotency_key: str
     target: Target; amount: Money | None; allocations: list[LineAmount] = []; corrects_receipt_id: str | None = None
+    offer_ref: str | None = None
     at: datetime; label: str = "MOCK ACKNOWLEDGMENT — not sent to any real system"
 
 class LedgerEntry(BaseModel):
@@ -398,7 +401,7 @@ class ProposeDecisionResult(BaseModel):
 
 class DraftProposalArgs(BaseModel):
     kind: ProposalKind; line_ids: list[str] = []; recipient: str; draft_text: str; citations: list[Citation]
-    corrects_receipt_id: str | None = None                  # the model never sends amounts
+    corrects_receipt_id: str | None = None; offer_ref: str | None = None   # the model never sends amounts
 class DraftProposalResult(BaseModel):
     accepted: bool; proposal_id: str | None; version: int | None; business_key: str | None
     amount_cents: int | None; allocations: dict[str, int]; issues: list[GateIssue]; no_op: bool = False
@@ -449,6 +452,7 @@ from .models import *     # explicit names in the implementation
 from .bundle import BundleDoc, CaseBundle
 from .tools import ToolEnvelope
 from .oracle import StaticOutput
+from .remittance import RemittanceBundle, RemittanceLoadResult
 
 class GateError(Exception):
     def __init__(self, issues: list[GateIssue]) -> None: ...
@@ -478,6 +482,8 @@ class World(Protocol):              # SqliteWorld(path, ingestor, validator); te
     clock: Clock
     # intake
     def load_bundle(self, bundle: CaseBundle, bundle_dir: str | None = None) -> LoadResult: ...
+    def load_remittance(self, bundle: RemittanceBundle, bundle_dir: str | None = None) -> RemittanceLoadResult: ...
+    def remittance_history(self, remittance_id: str | None = None) -> list[RemittanceLoadResult]: ...
     def list_quarantined(self) -> list[QuarantineRecord]: ...
     def add_evidence(self, case_id: str, doc: BundleDoc, bundle_dir: str | None = None) -> Evidence | None: ...  # None = duplicate no-op
     def attach_held(self, case_id: str, system: str, query: str) -> list[Evidence]: ...
@@ -545,6 +551,10 @@ class Controller(Protocol):         # who reacts to world changes; injected into
     name: str
     def react(self, world: World, events: list[DomainEvent], run_id: str) -> None: ...
 
+class ScopedController(Controller, Protocol):
+    @contextmanager
+    def scope(self, case_ids: list[str]) -> Iterator[None]: ...
+
 class EngineParts(BaseModel, arbitrary_types_allowed=True):
     engine: Engine; ingestor: Ingestor; validator: ProposalValidator; tools: ToolSessionFactory
 ```
@@ -587,7 +597,7 @@ class EngineParts(BaseModel, arbitrary_types_allowed=True):
 - `fact:<fact_id>`: the FactRevision with that id (immutable, so it resolves forever). The quote must equal `str(value)`. The revision's own `citation` must also resolve, through these same rules, against its evidence (normally a `text`/`page` quote that contains the value).
   - **Current use** (gates, readiness, rules): the fact_id must be the latest revision in the current FactSet; otherwise `superseded_citation`.
   - **Historical use** (history, receipts, scorer): any fact_id resolves, together with the FactSet of the stored basis_hash.
-- **Citation generation:** rules, policy and readiness cite `EffectiveFact.citation` verbatim. They never compose locators themselves.
+- **Citation generation:** World-produced FactSets contain only effective facts with resolving citations. `add_fact` rejects missing or nonresolving backing citations, a mismatched evidence identity or a value not supported by that citation. Rules, policy and readiness cite `EffectiveFact.citation` verbatim; they never compose locators themselves. Pure readiness validates current FactSet membership; actual tool/save/approve/submit consumers must additionally recheck `World.resolve_citation` against the current basis. History uses the stored basis and immutable revision chain.
 - **Inputs:** `run_rules(lines: list[DeductionLine], facts: FactSet, ledger: list[LedgerEntry]) -> list[RuleFinding]`, `policy.answer(facts: FactSet, q: PolicyQuestion, notice_receipt: Receipt | None) -> list[PolicyAnswer]` and the three pure readiness functions:
   - `readiness.dispute(line: DeductionLine, finding: RuleFinding, facts: FactSet) -> Readiness` (`line_id = line.line_id`; `finding.line_id` must equal it, else ValueError);
   - `readiness.notice(facts: FactSet, ledger: list[LedgerEntry], receipts: list[Receipt], now: date, findings: list[RuleFinding] | None) -> Readiness` (`line_id = None`; `findings` = `run_rules` over the same `facts`, or None when not yet computed);
@@ -596,7 +606,7 @@ class EngineParts(BaseModel, arbitrary_types_allowed=True):
 
     | Function | Reads | Why |
     |---|---|---|
-    | `run_rules` | `facts.facts`, `facts.docs`, ledger | `facts.docs` covers returns RMA absence vs an unreadable or incomplete RMA, and legal_authority presence |
+    | `run_rules` | `facts.facts`, `facts.docs`, `facts.buyer_senders`, ledger | `facts.docs` covers returns RMA absence vs an unreadable or incomplete RMA, and legal_authority presence; `buyer_senders` establishes buyer-email origin |
     | `policy.answer` | `facts.facts`, `notice_receipt` | `notice_receipt` is the latest `insurer_notice` receipt; `claim_window` needs its date |
     | `readiness.dispute` | line, finding, `facts.facts` | §5.6 table |
     | `readiness.notice` | `facts.facts`, ledger, receipts, now, findings | findings give the dispute status (§5.6) |
@@ -609,7 +619,7 @@ class EngineParts(BaseModel, arbitrary_types_allowed=True):
 |---|---|
 | invoice | `invoice_no`, `invoice_date`, `due_date`, `buyer_id`, `total_cents`, `line.<i>.sku`, `line.<i>.qty`, `line.<i>.unit_price_cents` |
 | payment | `invoice_no`, `paid_cents`, `paid_date`, `payment_ref` |
-| remittance / debit_memo | `invoice_no`, `paid_cents` (remittance), `ded.<n>.line_id`, `ded.<n>.reason` (DeductionReason value, optional), `ded.<n>.claimed_cents`, optional `ded.<n>.sku`, `ded.<n>.qty`, `ded.<n>.ref`, `ded.<n>.reported_date` |
+| remittance / debit_memo | `invoice_no`, `paid_cents` (remittance), `ded.<n>.line_id`, `ded.<n>.reason` (DeductionReason value, optional), `ded.<n>.claimed_cents`, optional `ded.<n>.sku`, `ded.<n>.qty`, `ded.<n>.ref`, `ded.<n>.reported_date`, `ded.<n>.requires_legal_review` (boolean) |
 | po | `po_no`, `line.<i>.sku`, `line.<i>.qty`, `line.<i>.unit_price_cents`, `required_delivery_date` |
 | contract | `contract_id`, `effective_date`, `price.<SKU>_cents`, `early_pay_bp`, `early_pay_days`, `late_penalty_bp`, `late_grace_days`, `damage_window_days`, `damage_late_waived`, `promo.<CODE>.cap_cents`, `promo.<CODE>.earned` (absent = unknown), `returns_require_rma`, `required_delivery_date` |
 | amendment (doc or email carrying these keys) | `amends`, `effective_date`, `authorized_by`, `authority_role`, plus any contract key it overrides |
@@ -623,12 +633,14 @@ class EngineParts(BaseModel, arbitrary_types_allowed=True):
 | collection_note | `date`, `channel` |
 | company_policy | `tolerance_cents`, `follow_up_days`, `authority_cents`, `allowed_authority_roles` (comma list), `amendment_precedence` (= `latest_effective`) |
 | insurance_policy | `policy_id`, `covered_buyer.<i>`, `credit_limit_cents`, `period_start`, `period_end`, `mep_days_after_due`, `notice_days_after_mep`, `waiting_days_after_notice`, `claim_doc.<i>` (DocKind value), `disputed_debt_clause` (`excluded_until_resolved` or `notice_still_required`), `stop_shipment_after_mep`, `clause.<key>` (that clause's wording, string; a structured field, or a cited `propose_fact` from `text`), `exclusion.<i>` (a clause key that is an exclusion; structured, or extracted from `text` via `propose_fact`) |
-| email | `from`, `to`, `sent_date`; the body is in `text` |
+| email | `from`, `to`, `sent_date`; optional buyer-classification keys `ded.<n>.line_id`, `ded.<n>.reason`, `ded.<n>.requires_legal_review`; counteroffer keys `offer.<REF>.line.<LINE>.concession_cents`, `offer.<REF>.expires_date` (§5.4); the body is in `text` |
 
 **Ledger intake at load:**
 - One `invoice` entry for `total_cents`.
 - One `payment` entry per payment doc.
 - Pre-existing `credit_memo` docs post `credit_posted` with their `line_id`.
+
+**Buyer-email classification:** World populates `FactSet.buyer_senders` with the sorted distinct union of the case's current `mock_email` and `mock_buyer_portal` allowed recipients. Newly stored historical FactSets carry the case sender metadata in effect for that stored basis; historical rows written before this additive field retain its default empty list and fail closed. Pure rules and readiness use this shared field for sender identity; the default empty list fails closed. A buyer reason is established only by active email evidence whose `from` exactly matches the union of the case's `mock_email` and `mock_buyer_portal` allowed recipients and whose `ded.<n>.line_id` and `ded.<n>.reason` identify the same actual line. Only this classified buyer email can suppress the nonpayment path. Supplier, unclassified and free-text-only emails do not establish a buyer dispute. `classify_line` retains its email citation in `LineReasonRevision.citation`; the tool adapter may append cited reason facts on that evidence through `World.add_fact` so the pure FactSet consumer sees the classification. World does not invent an implicit evidence edit.
 
 **Deduction lines:**
 - One line per `ded.<n>` across active remittance and debit_memo docs.
@@ -640,7 +652,8 @@ class EngineParts(BaseModel, arbitrary_types_allowed=True):
 **`business_key` formats:**
 | Proposal | Key |
 |---|---|
-| dispute, credit_memo, info_request, counteroffer | `f"{case_id}:{kind}:{'+'.join(sorted(line_ids))}"` |
+| dispute, credit_memo, info_request | `f"{case_id}:{kind}:{'+'.join(sorted(line_ids))}"` |
+| counteroffer | `f"{case_id}:counteroffer:{'+'.join(sorted(line_ids))}:offer:{quote(offer_ref, safe='')}"` (`urllib.parse.quote`) |
 | insurer_notice, claim_package | `f"{case_id}:{kind}:case"` |
 | follow_up | `...:follow_up:<n>`, where n = 1 + the number of follow-up receipts |
 | correction | `...:correction:<receipt_id>:<n>`, n = 1 + corrections already receipted against that receipt |
@@ -657,6 +670,47 @@ class EngineParts(BaseModel, arbitrary_types_allowed=True):
   - For each allocated line: pre-existing credits + posted credits + allocation ≤ the current decision's valid amount for that line.
   - Total credits ≤ open balance.
   - Each correction ≤ its linked receipt's unwithdrawn allocation for that line (§5.4).
+
+### 3.9 Historical multi-invoice remittance intake
+`recoup/contracts/remittance.py` is the shared input/output schema. It imports existing `CaseBundle`, `LoadResult`, `GateIssue` and `Money`; it introduces no alternative ledger or monetary model.
+
+```python
+class RemittanceAllocation(BaseModel):
+    invoice_no: str
+    paid_cents: int                 # strict nonnegative integer
+class RemittanceBundle(BaseModel):
+    remittance_id: str
+    version: int = 1                # strict positive integer
+    payment_ref: str
+    buyer_id: str
+    currency: str
+    paid_cents: int                 # strict nonnegative integer
+    paid_date: date
+    cases: list[CaseBundle]
+    allocations: list[RemittanceAllocation]
+class CasePaymentAllocation(BaseModel):
+    case_id: str
+    invoice_no: str
+    amount: Money
+class RemittanceLoadResult(BaseModel):
+    remittance_id: str
+    version: int
+    status: Literal["loaded", "needs_info", "needs_human", "quarantined"]
+    results: list[LoadResult] = []
+    allocations: list[CasePaymentAllocation] = []
+    unapplied: Money | None = None
+    issues: list[GateIssue] = []
+    replay: bool = False
+```
+
+- This is intake of a **historical bank payment**, never a new external action. Reject `paid_date` after the effective simulated date as `needs_info`; an uninitialized World uses the new case start date that initializes its clock, and a running World uses its current date. `World.load_remittance(bundle, bundle_dir=None) -> RemittanceLoadResult` performs one transaction. `World.remittance_history(remittance_id: str | None = None) -> list[RemittanceLoadResult]` returns the persisted revision outcomes, with `replay=False`; duplicate reads/import returns do not append history. App and CLI delegate through this World port; no engine writes ledger entries directly.
+- Validate currency on the raw outer bundle and every nested case **before constructing Money or CaseView**. Any non-USD input quarantines the entire remittance with raw JSON and no cases/payments; output `status="quarantined"`, `unapplied=None`. Quarantine history remains available. Missing/empty identity fields are `needs_info`.
+- Match each requested allocation to the invoice evidence whose `doc_ref == CaseBundle.invoice_ref`; its exact `fields.invoice_no` and `fields.buyer_id` must match the requested invoice and outer buyer. Include persisted cases when checking ambiguous invoice matches and duplicate bank payments. No FIFO, approximate matching, inferred buyer identity or arbitrary residual allocation is permitted. Repeated requested invoice numbers, unmatched/ambiguous invoice numbers, buyer mismatch or total requested cents greater than paid cents yield `needs_info`, no partial case/monetary writes and all cash unapplied.
+- The same bank payment cannot also enter through a nested or already-loaded **payment** evidence document. A payment document whose `payment_ref` (falling back to its `doc_ref` when absent) matches this buyer/payment is rejected as `needs_info` (`payment_already_intaken`) before any write, including a payment attached after initial case load. Payment documents for other bank references remain ordinary historical balances. A remittance deduction document may retain the original raw bank amount for audit; it never posts an independent cash entry.
+- For each uniquely matched invoice, allocate `min(requested_cents, max(current_open_balance_cents, 0))`. The current balance includes that case's ordinary historical payments and credits and excludes this new remittance. Each positive result appends exactly one `payment` ledger entry linked to the immutable remittance revision and invoice; a zero result writes no payment entry. Preserve every pre-existing entry. Overflow and unspecified cash remain explicitly `unapplied`. For `loaded`, `sum(result.allocations.amount.cents) + result.unapplied.cents == bundle.paid_cents` exactly. No concession, credit, payment receipt or mock external action is synthesized.
+- The transaction encompasses nested case intake, all invoice allocations, evidence/status/events/cascades and remittance persistence; a failure rolls them all back. A successful payment changes only the matching invoice balances and runs their existing ledger/staleness behavior. Invalid intake does not create partial cases, trigger ingestion side effects or change existing ledger/decision/proposal/approval state.
+- Source identity is `(remittance_id, version)` plus canonical JSON content hash. Exact same revision/content returns its saved result with `replay=True` and no writes. Same identity with changed content is `needs_human`, unchanged ledger; preserve the accepted source and conflict audit. The bank identity `(buyer_id, payment_ref)` is unique across remittance IDs; a new remittance ID cannot repost that payment.
+- A strictly higher revision of the same remittance may correct a failed/unallocated intake only before **any** positive allocation from its bank payment has ever posted. Once any positive allocation exists, reject every changed source revision (`needs_human`) with no ledger change; exact original replay remains safe. Lower unseen revisions are rejected. Reallocation/reversal, allocating a posted payment's remaining unapplied balance and cross-buyer remittances are deferred. Retain rejected revision outcomes for audit without replacing accepted sources.
 
 ## 4. World (Charles)
 ### 4.1 Tables
@@ -706,7 +760,8 @@ class Recoup:                                   # the only object UI, CLI and be
     def history(self, case_id: str) -> CaseHistory: ...
     def check_regression(self, cases_dir: str = "cases/regression") -> list[tuple[str, bool, list[str]]]: ...  # exact compare to oracle.json
     def load(self, paths: list[str]) -> list[LoadResult]: ...   # bundle dir or dir of bundle dirs -> controller.react(events)
-    def run(self, case_id: str | None = None) -> list[CaseView]: ...   # -> controller.react(world, [], run_id) for the case(s)
+    def load_remittance(self, path: str) -> RemittanceLoadResult: ...   # JSON file, react only on first loaded intake
+    def run(self, case_id: str | None = None) -> list[CaseView]: ...   # selected case requires ScopedController; see below
     def advance(self, days: int | None = None, to_next_due: bool = False) -> list[str]: ...
         # for each day: events = world.advance_to(d); controller.react(world, events, run_id) (also when events == [],
         # so a clock-only day still lets the controller run due work). No background process or timer.
@@ -720,7 +775,7 @@ class Recoup:                                   # the only object UI, CLI and be
 def build(config: RecoupConfig | None = None, controller: Controller | None = None) -> Recoup: ...
 # G1 (006-2): parts = contracts.testing stubs.  G3 (006-5): parts = recoup.engine.factory.build_engine(config).
 # world = SqliteWorld(config.db, ingestor=parts.ingestor, validator=parts.validator)
-# controller default = factory.harness_controller(parts, llm) (wraps the engine's handle with the config's LLM; only this controller calls it).
+# controller default = app-owned ScopedController adapter around factory.harness_controller(parts, llm); see below.
 # A caller-supplied controller replaces it; the harness controller is then NOT constructed.
 # Spy test (tests/app): for controller in (NullController, a scripted T-min stub, REF, BAD), call load, run, advance (with and
 # without events), add_evidence, confirm_field, edit, approve, reject, submit; assert 0 calls to the harness factory/
@@ -728,6 +783,10 @@ def build(config: RecoupConfig | None = None, controller: Controller | None = No
 ```
 `recoup/engine/factory.py` (Sonny) provides `build_engine(config) -> EngineParts`, `get_llm(config) -> LLMClient` and `harness_controller(parts, llm) -> Controller`.
 Every `Recoup` mutation (`load`, `run`, `advance`, `add_evidence`, `confirm_field`, `edit`, `approve`, `reject`, `submit`) dispatches its events **only** to `controller.react`. No Recoup method calls an engine function directly.
+
+**Selected-case routing:** `Controller.react(world, events, run_id)` stays unchanged. Additive `ScopedController.scope(case_ids)` is an explicit temporary scope, restored even on exceptions. `Recoup.run(case_id)` first verifies the case exists, then requires that the injected controller implements this scope; otherwise it raises `GateError(controller_scope_unsupported)` before any callback. Within `controller.scope([case_id])`, it dispatches exactly one `controller.react(world, [], run_id)`. It never fabricates domain events, substitutes a filtered World or encodes routing in the run ID. `run(None)` retains ordinary all-case behavior.
+
+The default app-owned adapter delegates ordinary unscoped reactions to Sonny's unchanged factory harness controller. Its explicitly scoped reaction calls the injected engine's `investigate` for the selected IDs only, in a World transaction; it does not drain unrelated pending events or due work. The adapter around contract test stubs remains inert. Caller-supplied controller identity is preserved and no harness controller is constructed for it. Legacy custom controllers remain valid for ordinary mutations and `run(None)`; they must implement `ScopedController` before accepting selected-case runs. Carter's existing `react` method needs no signature change. This is orchestration through the controller, not a second engine path in Recoup.
 
 ## 5. Engine (Sonny)
 ### 5.1 What the model owns vs code
@@ -787,7 +846,9 @@ Example: claimed 10,000, entitled 6,000, prior credit 2,000 → valid 6,000, dis
 
 **Anomaly flags (factual, never "fraud"):** `claimed_exceeds_line_total`, `duplicate_deduction_ref`, `remittance_math_mismatch`, `already_credited`, `unauthorized_amendment`, `seller_short_shipped`.
 
-**Legal:** a `legal_authority` doc in the case is citable like any document. Presence = a readable `legal_authority` entry in `facts.docs`. A line that needs legal interpretation without one → `needs_human` ("legal authority not supplied"). An unreadable one gives the note "legal authority unreadable".
+**Legal:** The optional boolean `ded.<n>.requires_legal_review`, mapped through `ded.<n>.line_id`, is the explicit routing signal on remittance/debit-memo evidence or classified buyer-email reason evidence. A current established true signal requires a readable `legal_authority` entry in `facts.docs`; missing or unreadable legal-authority inventory, or conflicting review signals, escalate for human handling. Only a source/human-confirmed false signal establishes that review is not required. An untrusted possible-true signal cannot suppress review and escalates for human confirmation. An absent signal does not invent legal review from ordinary document prose. A readable legal-authority document permits only case-cited reasoning, never an inferred general legal conclusion. Missing inventory has reason "legal authority not supplied"; unreadable inventory has reason "legal authority unreadable".
+
+**Escalation boundary:** `engine.rules.NeedsHumanError` is an approved engine-local exception for negative claimed money, required legal-review failures and other unsupported cases requiring a human. It carries no invented contract verdict and creates no RuleFinding money. Tool/harness consumers catch it and set the actual case status to `CaseStatus.needs_human`; they preserve the evidence and explain the reason.
 
 ### 5.4 Proposals derived from the current decision (code computes the amounts)
 | Line state | Proposal |
@@ -800,8 +861,18 @@ Example: claimed 10,000, entitled 6,000, prior credit 2,000 → valid 6,000, dis
 | nonpayment, invalid | `follow_up` per the schedule |
 
 - One `credit_memo` and one `dispute` per decision version, each with per-line allocations.
-- The model supplies only `line_ids`, the recipient, text and citations. A mismatch with the derivation is rejected.
+- The model supplies only `line_ids`, the recipient, text, citations and, for counteroffers, the `offer_ref` selector below. A mismatch with the derivation is rejected.
 - **The original concession is never reposted.**
+
+**Counteroffer (additional conditional settlement concession):**
+- `counteroffer.amount` and its line allocations mean an **additional concession offered by the seller** against the current proven disputed deduction, not a requested cash payment or the gross valid credit. Existing valid portions still derive their ordinary credits independently. The draft must clearly describe a conditional MOCK offer; a mock receipt proves neither buyer acceptance nor an accepted waiver/settlement.
+- The model selects an opaque nonempty `offer_ref`, existing deduction `line_ids`, recipient, draft and citations only. It supplies no cents. Resolve exact flat keys `offer.<REF>.line.<LINE>.concession_cents` and `offer.<REF>.expires_date` from active buyer `email` evidence. REF and LINE are substituted exactly, including punctuation; no fuzzy matching, splitting on punctuation or interpretation of free-form amounts. The email's `from` must exactly equal a value in the case's union of `mock_email` and `mock_buyer_portal` recipient lists. The proposal recipient must separately satisfy its target's allowlist. All selected amounts, expiry and sender require current resolving citations; different active values for any required key are a conflict. Unselected line keys do not silently expand the selected lines.
+- Each active email containing the selected offer prefix must supply all selected line amounts, sender and expiry as one complete offer, agreeing with every other active email for that prefix. Do not assemble a partial offer across different emails. Missing or disagreeing offer fields fail closed.
+- Each selected line must be an actual deduction other than `nonpayment`, with current decision `basis=proven`, verdict `invalid` or `partial`, and positive disputed cents. `needs_info`, contradictory/unproven decisions, collection-only NP and unsupported lines cannot negotiate. Required `concession_cents` is a strict positive integer. The expiry is an ISO date and is valid through that date in the simulated clock. Missing, malformed, conflicting or expired offer facts fail closed. The expiry/from source may be shared by multiple selected lines within the same offer.
+- Obtain `authority_cents` only from active company-policy effective facts. It is a strict nonnegative integer. Conflicting active values fail even if the requested amount fits one value. Every money fact used (authority and each concession) must be `source` or `human_confirmed`; OCR, vision or unconfirmed model-extracted money is blocked. Company policy, buyer email and all offer fact citations must resolve against the current basis. Matching repeated equal facts do not multiply the authority or concession.
+- Lifetime used authority is the sum of amounts on all prior case counteroffer receipts, including offers whose email later expires or is superseded. Remaining case authority is current policy authority minus that sum. For each selected line, remaining concession capacity is its current decision's disputed amount minus all prior counteroffer receipt allocations on that line. New allocations equal the exact selected cited concession; their total must be positive, no greater than remaining case authority or current open balance, and each no greater than its remaining line capacity. Never clamp an excessive request to fit. If past receipts now exceed the policy or line capacity, escalate `needs_human`; no automatic release, negative amount or reversal is permitted. Counteroffers do not subtract from ordinary disputed/credit derivation.
+- Revalidate at save, approval and submit using the simulated date, current evidence/decision, current balances and **all** historical counteroffer receipts. A human edit may lower an existing allocation to any nonnegative integer, including zero, while retaining exactly the original selected line IDs; the aggregate must remain positive. It cannot drop or introduce a line, change `offer_ref`, increase a cited concession or evade case/line caps; revisions preserve the original business key and its selected line IDs. An explicit zero aggregate is rejected, rather than consuming authority. Existing supersession and approval invalidation apply. Approval and immutable receipt bind the exact `offer_ref` as well as the existing version/recipient/amount/draft/basis fields. Other proposal kinds require `offer_ref=None`.
+- Receipt identity follows §3.8 with URL-encoded `offer_ref` (`quote(..., safe="")`); equal keys cannot be submitted twice. Additionally, at most one counteroffer receipt may exist per `(case_id, offer_ref)`, regardless of selected line subset/superset or human-edited zero allocations; a previously receipted reference cannot be reused under a different business key. Receipt creation reserves authority atomically with submit. Proposed/approved offers reserve nothing; concurrent approved offers are rechecked serially at submit. Every receipt retains the offer selector and actual human-edited allocations permanently. Counteroffer mock submission creates **no payment, cash collected, credit ledger entry or dispute withdrawal**. Acceptance, settlement posting, release of an offer's reservation and reversal are deferred to a separately specified approved action. Counteroffer receipts cannot be correction targets.
 
 ### 5.5 Gates (`gates.py` implements `ProposalValidator`; World calls it at save, approve and submit)
 - kind/target matches `KIND_TARGET`.
@@ -811,7 +882,7 @@ Example: claimed 10,000, entitled 6,000, prior credit 2,000 → valid 6,000, dis
 - Dispute: dispute readiness `ready` for every allocated line.
 - Notice: notice readiness present and `balance_basis` = balance.
 - Claim package: claim readiness computed. A not-ready package can be saved and approved, and its checklist lists what is missing. **Submit is blocked unless readiness is `ready`.**
-- Money facts that are ocr/vision must be human_confirmed.
+- Money facts that are ocr/vision must be human_confirmed. Counteroffers additionally enforce the source, authority, reservation and edit rules in §5.4.
 - **Assertion check** (replaces the word ban). Each sentence of `draft_text` is classified:
   - **Fail:** an affirmative assertion of coverage, eligibility, payout, claim approval, recovery or a guarantee.
   - **Pass:** negated caveats (e.g. "does not establish coverage or eligibility"), text inside a cited quote (e.g. policy wording "not covered"), and factual ledger statements (e.g. "cash collected: $0").
@@ -865,7 +936,7 @@ Each item is `present`, `missing` or `unknown`. A line is dispute-ready only if 
 4. Follow-ups needed by receipts are scheduled.
 
 ### 5.7 Handlers (`scheduler.py`; `HarnessEngine.handle`)
-Pending events and due work (due_at ≤ now) are processed in `(at, seq)` order.
+Pending events and due work (`due_at <= now`) are processed chronologically by their timestamp. On equal timestamps, events precede due items; events use `DomainEvent.seq`, and due items use stable `due_id` ordering. The canonical cross-kind sort is `(timestamp, event-before-due rank, event.seq or due_id)`, with the third component compared only within its rank. `DueWork` needs no synthetic sequence field. This confirms the scheduler ordering previously disclosed in Sonny's contract request.
 | Trigger | Action |
 |---|---|
 | `case_loaded`, `evidence_added`, `evidence_superseded`, `reopened`, `ledger_changed` | `investigate(case)` |
@@ -895,7 +966,7 @@ Each event or due item is handled inside `with world.transaction():`. Everything
 
 - Any **readable** evidence is usable. **Unreadable** evidence produces a missing item: "readable copy of <doc_ref>".
 - Trust is per field and separate from readability.
-- `recoup doctor` reports: pypdf importable; tesseract binary + pytesseract; vision flag + key present; LLM mode.
+- The canonical local probe is `recoup.contracts.capabilities.scan_capabilities(*, llm_mode: str = "fake", vision: bool = False) -> dict[str, bool | str]`. Doctor imports it directly without constructing a World/provider; Sonny's scans module re-exports or delegates to the same helper. `recoup doctor` reports: pypdf importable, Pillow, tesseract binary, pytesseract importable, `pdf_renderer` (`pdftoppm` executable), vision flag plus live mode plus key presence, and LLM mode. Image OCR requires Pillow, tesseract and pytesseract. Scanned-PDF OCR additionally requires the already-available optional system `pdftoppm` renderer; its absence yields `ocr_unavailable`, not fabricated extraction. Use of this detected optional executable is approved; installing software or changing dependency manifests still requires a separate Charles decision. Vision/image support does not imply PDF rasterization support. No probe calls a live model or exposes the key.
 - **No OCR or vision claim is made unless doctor reports the path available and its test passed.**
 
 ### 5.9 LLM adapters (`engine/llm/`)

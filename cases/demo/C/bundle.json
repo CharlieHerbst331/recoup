@@ -1,0 +1,137 @@
+{
+  "case_id": "C",
+  "title": "SYNTHETIC — Authorized pricing concession",
+  "seller": "Acme Foods Co.",
+  "buyer": "Synthetic Regression Buyer",
+  "currency": "USD",
+  "invoice_ref": "INV-C",
+  "start_date": "2026-10-20",
+  "static_day": 0,
+  "policy_ref": null,
+  "allowed_recipients": {
+    "mock_buyer_portal": [
+      "buyer-portal.invalid"
+    ],
+    "mock_erp": [
+      "erp.invalid"
+    ],
+    "mock_email": [
+      "ar@example.invalid",
+      "shipping@example.invalid",
+      "buyer@example.invalid"
+    ],
+    "mock_insurer": [
+      "insurer@example.invalid"
+    ]
+  },
+  "docs": [
+    {
+      "doc_ref": "INV",
+      "version": 1,
+      "kind": "invoice",
+      "title": "SYNTHETIC — INV-C",
+      "file": null,
+      "text": "SYNTHETIC fixture; not a real transaction. ",
+      "fields": {
+        "invoice_no": "INV-C",
+        "invoice_date": "2026-09-01",
+        "due_date": "2026-09-30",
+        "buyer_id": "REGRESSION-BUYER",
+        "total_cents": 1050000,
+        "line.1.sku": "SKU-7",
+        "line.1.qty": 1000,
+        "line.1.unit_price_cents": 1050
+      },
+      "available_at_day": 0,
+      "held_by": null
+    },
+    {
+      "doc_ref": "PAY",
+      "version": 1,
+      "kind": "payment",
+      "title": "SYNTHETIC — Payment against INV-C",
+      "file": null,
+      "text": "SYNTHETIC fixture; not a real transaction. ",
+      "fields": {
+        "invoice_no": "INV-C",
+        "paid_cents": 1000000,
+        "paid_date": "2026-09-10",
+        "payment_ref": "PAY-INV-C"
+      },
+      "available_at_day": 0,
+      "held_by": null
+    },
+    {
+      "doc_ref": "REM",
+      "version": 1,
+      "kind": "remittance",
+      "title": "SYNTHETIC — Remittance against INV-C",
+      "file": null,
+      "text": "SYNTHETIC fixture; not a real transaction. ",
+      "fields": {
+        "invoice_no": "INV-C",
+        "paid_cents": 1000000,
+        "ded.1.line_id": "D1",
+        "ded.1.reason": "pricing",
+        "ded.1.claimed_cents": 50000,
+        "ded.1.sku": "SKU-7"
+      },
+      "available_at_day": 0,
+      "held_by": null
+    },
+    {
+      "doc_ref": "TERMS",
+      "version": 1,
+      "kind": "contract",
+      "title": "SYNTHETIC — Sales terms",
+      "file": null,
+      "text": "SYNTHETIC fixture; not a real transaction. ",
+      "fields": {
+        "contract_id": "ACME-TERMS",
+        "effective_date": "2026-01-01",
+        "price.SKU-7_cents": 1050
+      },
+      "available_at_day": 0,
+      "held_by": null
+    },
+    {
+      "doc_ref": "PRICE-AMENDMENT",
+      "version": 1,
+      "kind": "email",
+      "title": "SYNTHETIC — Authorized VP Sales price amendment",
+      "file": null,
+      "text": "SYNTHETIC fixture; not a real transaction. VP Sales authorizes SKU-7 at 1000 cents per unit effective 2026-08-15.",
+      "fields": {
+        "from": "vp-sales@example.invalid",
+        "to": "ar@example.invalid",
+        "sent_date": "2026-08-15",
+        "amends": "ACME-TERMS",
+        "effective_date": "2026-08-15",
+        "authorized_by": "Synthetic VP Sales",
+        "authority_role": "VP Sales",
+        "price.SKU-7_cents": 1000
+      },
+      "available_at_day": 0,
+      "held_by": null
+    },
+    {
+      "doc_ref": "COMPANY",
+      "version": 1,
+      "kind": "company_policy",
+      "title": "SYNTHETIC — Acme collection and authority policy",
+      "file": null,
+      "text": "SYNTHETIC fixture; not a real transaction. ",
+      "fields": {
+        "tolerance_cents": 0,
+        "follow_up_days": 14,
+        "authority_cents": 100000,
+        "allowed_authority_roles": "VP Sales,Finance Director",
+        "amendment_precedence": "latest_effective"
+      },
+      "available_at_day": 0,
+      "held_by": null
+    }
+  ],
+  "events": [],
+  "provenance": "synthetic"
+}

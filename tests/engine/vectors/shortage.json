@@ -1,0 +1,221 @@
+{
+  "fixture_format": "sonny-rule-vectors-v1",
+  "provenance": "SYNTHETIC",
+  "stage": "run_rules",
+  "vectors": [
+    {
+      "id": "shortage_partial",
+      "reference": "design/02 \u00a73.7; \u00a75.3",
+      "input": {
+        "line": {
+          "line_id": "D1",
+          "reason": "shortage",
+          "claimed_cents": 10000,
+          "sku": "SKU-1"
+        },
+        "documents": [
+          {
+            "id": "invoice",
+            "kind": "invoice",
+            "fields": {
+              "invoice_no": "INV-SYNTHETIC",
+              "invoice_date": "2026-08-03",
+              "due_date": "2026-09-02",
+              "total_cents": 100000,
+              "line.1.sku": "SKU-1",
+              "line.1.qty": 10,
+              "line.1.unit_price_cents": 1000,
+              "line.2.sku": "SKU-2",
+              "line.2.qty": 90,
+              "line.2.unit_price_cents": 1000
+            }
+          },
+          {
+            "id": "company_policy",
+            "kind": "company_policy",
+            "fields": {
+              "tolerance_cents": 0,
+              "allowed_authority_roles": "VP Sales",
+              "amendment_precedence": "latest_effective"
+            }
+          },
+          {
+            "id": "pod",
+            "kind": "pod",
+            "fields": {
+              "signed": true,
+              "received.SKU-1": 4
+            }
+          }
+        ]
+      },
+      "expected_finding": {
+        "verdict": "partial",
+        "basis": "proven",
+        "valid_cents": 6000,
+        "disputed_cents": 4000
+      }
+    },
+    {
+      "id": "shortage_missing_pod",
+      "reference": "design/02 \u00a73.7; \u00a75.3",
+      "input": {
+        "line": {
+          "line_id": "D1",
+          "reason": "shortage",
+          "claimed_cents": 10000,
+          "sku": "SKU-1"
+        },
+        "documents": [
+          {
+            "id": "invoice",
+            "kind": "invoice",
+            "fields": {
+              "invoice_no": "INV-SYNTHETIC",
+              "invoice_date": "2026-08-03",
+              "due_date": "2026-09-02",
+              "total_cents": 100000,
+              "line.1.sku": "SKU-1",
+              "line.1.qty": 10,
+              "line.1.unit_price_cents": 1000,
+              "line.2.sku": "SKU-2",
+              "line.2.qty": 90,
+              "line.2.unit_price_cents": 1000
+            }
+          },
+          {
+            "id": "company_policy",
+            "kind": "company_policy",
+            "fields": {
+              "tolerance_cents": 0,
+              "allowed_authority_roles": "VP Sales",
+              "amendment_precedence": "latest_effective"
+            }
+          }
+        ]
+      },
+      "expected_finding": {
+        "verdict": "needs_info",
+        "basis": "missing_evidence",
+        "valid_cents": null,
+        "disputed_cents": null
+      }
+    },
+    {
+      "id": "shortage_unsigned_pod",
+      "reference": "design/02 \u00a73.7; \u00a75.3",
+      "input": {
+        "line": {
+          "line_id": "D1",
+          "reason": "shortage",
+          "claimed_cents": 10000,
+          "sku": "SKU-1"
+        },
+        "documents": [
+          {
+            "id": "invoice",
+            "kind": "invoice",
+            "fields": {
+              "invoice_no": "INV-SYNTHETIC",
+              "invoice_date": "2026-08-03",
+              "due_date": "2026-09-02",
+              "total_cents": 100000,
+              "line.1.sku": "SKU-1",
+              "line.1.qty": 10,
+              "line.1.unit_price_cents": 1000,
+              "line.2.sku": "SKU-2",
+              "line.2.qty": 90,
+              "line.2.unit_price_cents": 1000
+            }
+          },
+          {
+            "id": "company_policy",
+            "kind": "company_policy",
+            "fields": {
+              "tolerance_cents": 0,
+              "allowed_authority_roles": "VP Sales",
+              "amendment_precedence": "latest_effective"
+            }
+          },
+          {
+            "id": "pod",
+            "kind": "pod",
+            "fields": {
+              "signed": false,
+              "received.SKU-1": 4
+            }
+          }
+        ]
+      },
+      "expected_finding": {
+        "verdict": "needs_info",
+        "basis": "missing_evidence",
+        "valid_cents": null,
+        "disputed_cents": null
+      }
+    },
+    {
+      "id": "shortage_seller_short_shipped",
+      "reference": "design/02 \u00a73.7; \u00a75.3",
+      "input": {
+        "line": {
+          "line_id": "D1",
+          "reason": "shortage",
+          "claimed_cents": 10000,
+          "sku": "SKU-1"
+        },
+        "documents": [
+          {
+            "id": "invoice",
+            "kind": "invoice",
+            "fields": {
+              "invoice_no": "INV-SYNTHETIC",
+              "invoice_date": "2026-08-03",
+              "due_date": "2026-09-02",
+              "total_cents": 100000,
+              "line.1.sku": "SKU-1",
+              "line.1.qty": 10,
+              "line.1.unit_price_cents": 1000,
+              "line.2.sku": "SKU-2",
+              "line.2.qty": 90,
+              "line.2.unit_price_cents": 1000
+            }
+          },
+          {
+            "id": "company_policy",
+            "kind": "company_policy",
+            "fields": {
+              "tolerance_cents": 0,
+              "allowed_authority_roles": "VP Sales",
+              "amendment_precedence": "latest_effective"
+            }
+          },
+          {
+            "id": "pod",
+            "kind": "pod",
+            "fields": {
+              "signed": true,
+              "received.SKU-1": 4
+            }
+          },
+          {
+            "id": "bol",
+            "kind": "bol",
+            "fields": {
+              "shipped.SKU-1": 8
+            }
+          }
+        ]
+      },
+      "expected_finding": {
+        "verdict": "partial",
+        "basis": "proven",
+        "valid_cents": 6000,
+        "disputed_cents": 4000,
+        "flags_include": [
+          "seller_short_shipped"
+        ]
+      }
+    }
+  ]
+}

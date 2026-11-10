@@ -1,0 +1,131 @@
+{
+  "case_id": "r02",
+  "expected_status": "loaded",
+  "lines": [
+    {
+      "line_id": "D1",
+      "verdict": "valid",
+      "valid_cents": 10000,
+      "disputed_cents": 0,
+      "required_refs": [
+        "PO#fields.required_delivery_date",
+        "POD#fields.delivered_date",
+        "TERMS#fields.late_penalty_bp"
+      ],
+      "acceptable_refs": [
+        "PO#fields.required_delivery_date",
+        "POD#fields.delivered_date",
+        "TERMS#fields.late_penalty_bp",
+        "INV",
+        "INV#fields.invoice_no",
+        "INV#fields.invoice_date",
+        "INV#fields.due_date",
+        "INV#fields.buyer_id",
+        "INV#fields.total_cents",
+        "INV#fields.line.1.sku",
+        "INV#fields.line.1.qty",
+        "INV#fields.line.1.unit_price_cents",
+        "REM",
+        "REM#fields.invoice_no",
+        "REM#fields.paid_cents",
+        "REM#fields.ded.1.line_id",
+        "REM#fields.ded.1.reason",
+        "REM#fields.ded.1.claimed_cents",
+        "REM#fields.ded.2.line_id",
+        "REM#fields.ded.2.reason",
+        "REM#fields.ded.2.claimed_cents",
+        "REM#fields.ded.2.sku",
+        "REM#fields.ded.2.qty",
+        "TERMS",
+        "TERMS#fields.contract_id",
+        "TERMS#fields.effective_date",
+        "TERMS#fields.late_grace_days",
+        "TERMS#fields.returns_require_rma",
+        "PO",
+        "PO#fields.po_no",
+        "PO#fields.line.1.sku",
+        "PO#fields.line.1.qty",
+        "PO#fields.line.1.unit_price_cents",
+        "POD",
+        "POD#fields.pod_no",
+        "POD#fields.signed",
+        "POD#fields.received.SKU-2",
+        "COMPANY",
+        "COMPANY#fields.tolerance_cents",
+        "COMPANY#fields.follow_up_days",
+        "COMPANY#fields.authority_cents",
+        "COMPANY#fields.allowed_authority_roles",
+        "COMPANY#fields.amendment_precedence"
+      ],
+      "missing": []
+    },
+    {
+      "line_id": "D2",
+      "verdict": "valid",
+      "valid_cents": 50000,
+      "disputed_cents": 0,
+      "required_refs": [
+        "TERMS#fields.returns_require_rma",
+        "RMA#fields.authorized_qty",
+        "RMA#fields.received_qty"
+      ],
+      "acceptable_refs": [
+        "TERMS#fields.returns_require_rma",
+        "RMA#fields.authorized_qty",
+        "RMA#fields.received_qty",
+        "INV",
+        "INV#fields.invoice_no",
+        "INV#fields.invoice_date",
+        "INV#fields.due_date",
+        "INV#fields.buyer_id",
+        "INV#fields.total_cents",
+        "INV#fields.line.1.sku",
+        "INV#fields.line.1.qty",
+        "INV#fields.line.1.unit_price_cents",
+        "REM",
+        "REM#fields.invoice_no",
+        "REM#fields.paid_cents",
+        "REM#fields.ded.1.line_id",
+        "REM#fields.ded.1.reason",
+        "REM#fields.ded.1.claimed_cents",
+        "REM#fields.ded.2.line_id",
+        "REM#fields.ded.2.reason",
+        "REM#fields.ded.2.claimed_cents",
+        "REM#fields.ded.2.sku",
+        "REM#fields.ded.2.qty",
+        "TERMS",
+        "TERMS#fields.contract_id",
+        "TERMS#fields.effective_date",
+        "TERMS#fields.late_penalty_bp",
+        "TERMS#fields.late_grace_days",
+        "RMA",
+        "RMA#fields.rma_no",
+        "RMA#fields.sku",
+        "RMA#fields.received_date",
+        "COMPANY",
+        "COMPANY#fields.tolerance_cents",
+        "COMPANY#fields.follow_up_days",
+        "COMPANY#fields.authority_cents",
+        "COMPANY#fields.allowed_authority_roles",
+        "COMPANY#fields.amendment_precedence"
+      ],
+      "missing": []
+    }
+  ],
+  "proposals": [
+    {
+      "kind": "credit_memo",
+      "line_ids": [
+        "D1",
+        "D2"
+      ],
+      "amount_cents": 60000
+    }
+  ],
+  "forbidden_kinds": [
+    "dispute"
+  ],
+  "notice_deadline": null,
+  "claim_items": {},
+  "oracle_sentinel": "ORACLE-ONLY-SYNTHETIC-r02-DO-NOT-EXPOSE"
+}
