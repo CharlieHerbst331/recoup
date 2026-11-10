@@ -1,5 +1,9 @@
 """007-1 pure acceptance against shared models; design/02 §3.7, §5.3."""
 
+import json
+import os
+import subprocess
+import sys
 from copy import deepcopy
 
 import pytest
@@ -185,3 +189,75 @@ def test_nonpayment_with_classified_buyer_dispute_requires_info():
     (finding,) = run_rules(lines, facts, ledger)
     assert finding.verdict == "needs_info"
     assert proposal_kind(lines[0], finding) == "info_request"
+
+
+@pytest.mark.parametrize(
+    "vector",
+    [v for v in VECTORS if v["expected_finding"]["verdict"] != "needs_human"],
+    ids=lambda v: v["id"],
+)
+def test_rule_output_is_sorted_and_repeatable(vector):
+    lines, facts, ledger = rule_inputs(vector)
+    # Include proven zero claims and unresolved findings alongside the vector result.
+    lines = (
+        [
+            lines[0].model_copy(
+                update={
+                    "line_id": "Z-zero",
+                    "claimed": lines[0].claimed.model_copy(update={"cents": 0}),
+                }
+            )
+        ]
+        + lines
+        + [lines[0].model_copy(update={"line_id": "A-missing", "reason": None})]
+    )
+    first = run_rules(lines, facts, ledger)
+    second = run_rules(lines, facts, ledger)
+    assert first == second
+    assert (
+        json.dumps([f.model_dump(mode="json") for f in first]).encode()
+        == json.dumps([f.model_dump(mode="json") for f in second]).encode()
+    )
+    assert [f.line_id for f in first] == sorted(f.line_id for f in first)
+    for finding in first:
+        citations = [(c.evidence_id, c.locator, c.quote) for c in finding.citations]
+        assert citations == sorted(citations)
+        contradictions = [
+            tuple((c.evidence_id, c.locator, c.quote) for c in pair)
+            for pair in finding.contradictions
+        ]
+        assert all(pair == tuple(sorted(pair)) for pair in contradictions)
+        assert contradictions == sorted(contradictions)
+        assert finding.missing == sorted(finding.missing)
+        assert finding.flags == sorted(finding.flags)
+    facts.facts.reverse()
+    assert run_rules(list(reversed(lines)), facts, ledger) == first
+
+
+@pytest.mark.parametrize("vector_id", ["amendment_authorized", "amendment_same_date_conflict"])
+def test_amendment_output_is_identical_across_hash_seeds(vector_id):
+    vector = vector_named(vector_id)
+    for document in vector["input"]["documents"]:
+        if document["kind"] == "amendment":
+            document["fields"]["price.SKU-2_cents"] = document["fields"]["price.SKU-1_cents"]
+            document["fields"]["early_pay_bp"] = document["fields"]["price.SKU-1_cents"]
+    script = """
+import json
+import sys
+from recoup.engine.rules import run_rules
+from tests.engine.fixtures import rule_inputs
+findings = run_rules(*rule_inputs(json.load(sys.stdin)))
+print(json.dumps([finding.model_dump(mode="json") for finding in findings]))
+"""
+    outputs = [
+        subprocess.run(
+            [sys.executable, "-c", script],
+            input=json.dumps(vector),
+            text=True,
+            capture_output=True,
+            check=True,
+            env={**os.environ, "PYTHONHASHSEED": str(seed), "RECOUP_LLM": "fake"},
+        ).stdout
+        for seed in (1, 2)
+    ]
+    assert outputs[0].encode() == outputs[1].encode()
