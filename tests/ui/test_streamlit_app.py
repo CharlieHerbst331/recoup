@@ -43,15 +43,17 @@ def test_empty_queue_banners_db_override_and_service_per_rerun(tracked_app):
     assert configs[0].db == "runs/demo.db"
     assert configs[0].llm == "fake"
     assert [element.value for element in page.info] == [
+        "No cases loaded. Use the sidebar to load the SYNTHETIC demo cases.",
+    ]
+    banner = " ".join(item.proto.body for item in page.get("html"))
+    for label in (
         "DEMO CLOCK: day 0 (2026-10-20, simulated)",
         "LLM: fake",
-        "No cases loaded. Use the sidebar to load the SYNTHETIC demo cases.",
-        "No quarantined bundles.",
-    ]
-    assert page.warning[0].value == "SYNTHETIC DATA"
-    assert "MOCK ACKNOWLEDGMENT — not sent to any real system" in [
-        element.value for element in page.caption
-    ]
+        "SYNTHETIC DATA",
+        "MOCK actions",
+        "Not sent to any real system",
+    ):
+        assert label in banner
     assert closed == services
     page.sidebar.text_input(key="db_path").set_value("runs/other.db").run()
     assert not page.exception
@@ -146,17 +148,17 @@ def test_pick_case_opens_details_and_back_returns_to_queue(tracked_app, monkeypa
 
     monkeypatch.setattr(app, "build", build)
     page.run()
-    assert page.title[0].value == "Recoup case queue"
-    page.selectbox(key="selected_case").select("H").run()
+    assert page.title[0].value == "Cases"
+    page.radio(key="selected_case").set_value("H").run()
     assert not page.exception
     assert not page.error
-    assert page.title[0].value.startswith("Case H:")
+    assert page.title[0].value == "Northwind Grocers"
     assert histories[-1].case_id == "H"
-    assert page.dataframe[0].value.to_dict("records") == money_table(views[-1])
+    assert any(table.value.to_dict("records") == money_table(views[-1]) for table in page.dataframe)
     assert page.dataframe[-1].value.to_dict("records") == timeline_rows(histories[-1])
-    assert f"Status: {views[-1].status.value}" in [item.value for item in page.info]
-    assert f"Insurance: {views[-1].insurance.value}" in [item.value for item in page.info]
-    assert f"Status reason: {views[-1].status_reason}" in [item.value for item in page.text]
+    assert f"Status: {views[-1].status.value}" in [item.value for item in page.text]
+    assert f"Insurance: {views[-1].insurance.value}" in [item.value for item in page.text]
+    assert f"Latest update: {views[-1].status_reason}" in [item.value for item in page.text]
     assert [
         item.label for item in page.expander if item.label in {"Dispute", "Notice", "Claim"}
     ] == [
@@ -170,10 +172,10 @@ def test_pick_case_opens_details_and_back_returns_to_queue(tracked_app, monkeypa
             table.value.to_dict("records") == [citation.model_dump() for citation in line.citations]
             for table in page.dataframe
         )
-    assert page.warning[0].value == "SYNTHETIC DATA"
+    assert any("SYNTHETIC DATA" in item.proto.body for item in page.get("html"))
     assert closed == services
     next(button for button in page.button if button.label == "Back to queue").click().run()
     assert not page.exception
-    assert page.title[0].value == "Recoup case queue"
-    assert page.selectbox(key="selected_case").value is None
+    assert page.title[0].value == "Cases"
+    assert page.radio(key="selected_case").value is None
     assert closed == services

@@ -8,6 +8,7 @@ from streamlit.testing.v1 import AppTest
 import recoup.app as app
 from recoup.contracts.interfaces import GateError, TransientError
 from recoup.contracts.models import GateIssue, ProposalStatus
+from recoup.contracts.money import fmt
 from recoup.contracts.testing import NullController
 from recoup.ui.actions import draft_diff, proposal_groups
 
@@ -99,7 +100,7 @@ def seed_page(action_page, service):
 
 
 def edit_button(page, proposal):
-    return page.button(key=f"FormSubmitter:edit:{widget_key(proposal)}-Edit")
+    return page.button(key=f"FormSubmitter:edit:{widget_key(proposal)}-Save changes")
 
 
 def reject_button(page, proposal):
@@ -163,13 +164,15 @@ def test_action_cards_show_details_citations_history_and_diff(action_page, actio
         table.value.to_dict("records") == [row.model_dump() for row in edited.citations]
         for table in page.dataframe
     )
-    assert any(
-        table.value.to_dict("records")
-        == [
-            {"Line": row.line_id, "Allocation (cents)": str(row.amount.cents)}
-            for row in edited.allocations
-        ]
+    allocation_tables = [
+        table.value
         for table in page.dataframe
+        if {"Line", "Amount (USD)"} <= set(table.value.columns)
+    ]
+    assert any(
+        list(zip(table["Line"], table["Amount (USD)"]))
+        == [(row.line_id, fmt(row.amount)) for row in edited.allocations]
+        for table in allocation_tables
     )
     assert draft_diff(original, edited) in [code.value for code in page.code]
     assert "--- v1" in draft_diff(original, edited)

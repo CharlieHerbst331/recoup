@@ -51,3 +51,12 @@ def format_quarantine(record: QuarantineRecord) -> dict[str, str]:
         "Reason": record.reason,
         "Quarantined at": record.at.isoformat(),
     }
+
+
+def display_title(title: str) -> str:
+    """Keep provenance in the app banner and make case titles easy to scan."""
+    return title.removeprefix("SYNTHETIC — ")
+
+
+def case_label(case: CaseView) -> str:
+    return f"**{case.buyer}**  \n{display_title(case.title)}"

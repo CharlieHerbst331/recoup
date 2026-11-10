@@ -262,7 +262,7 @@ def test_inject_form_adds_evidence_and_refreshes_pane(case_page):
     page, state = case_page
     page.run()
     page.text_area(key="document-json:H").set_value(document(version=2).model_dump_json())
-    next(button for button in page.button if button.label == "Inject document").click().run()
+    next(button for button in page.button if button.label == "Add document").click().run()
     assert not page.exception and not page.error
     assert any(
         row.doc_ref == "SYNTHETIC-UI-doc" and row.version == 2 for row in state["view"].evidence
@@ -274,7 +274,7 @@ def test_invalid_form_json_displays_error_without_traceback(case_page):
     page, _ = case_page
     page.run()
     page.text_area(key="document-json:H").set_value("invalid JSON")
-    next(button for button in page.button if button.label == "Inject document").click().run()
+    next(button for button in page.button if button.label == "Add document").click().run()
     assert not page.exception
     assert page.error[0].value.startswith("Invalid document:")
 
@@ -300,7 +300,7 @@ def test_gate_issues_display_code_and_message_without_traceback(
         page.button(key=f"confirm:H:{scanned_evidence.evidence_id}:ocr_field").click().run()
     else:
         page.text_area(key="document-json:H").set_value(document().model_dump_json())
-        next(button for button in page.button if button.label == "Inject document").click().run()
+        next(button for button in page.button if button.label == "Add document").click().run()
     assert not page.exception
     assert [error.value for error in page.error] == [
         "SYNTHETIC_gate: SYNTHETIC gate detail",

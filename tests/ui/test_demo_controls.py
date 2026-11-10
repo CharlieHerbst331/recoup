@@ -67,11 +67,11 @@ def test_demo_edit_approve_submit_next_due_refreshes_proposals_and_readiness(dem
     page, state = demo_page
     load_demo(page)
     assert set(page.dataframe[0].value["Case"]) == {"H", "C", "N"}
-    page.selectbox(key="selected_case").select("H").run()
+    page.radio(key="selected_case").set_value("H").run()
     proposal = next(row for row in state["view"].proposals if row.kind == "dispute")
     draft = proposal.draft_text + "\nPlease review the cited documents."
     page.text_area(key=f"draft:{key(proposal)}").set_value(draft)
-    page.button(key=f"FormSubmitter:edit:{key(proposal)}-Edit").click().run()
+    page.button(key=f"FormSubmitter:edit:{key(proposal)}-Save changes").click().run()
     assert not page.exception and not page.error
     edited = next(row for row in state["view"].proposals if row.kind == "dispute")
     assert edited.version == proposal.version + 1 and edited.draft_text == draft
@@ -91,8 +91,8 @@ def test_demo_edit_approve_submit_next_due_refreshes_proposals_and_readiness(dem
     assert not page.exception and not page.error
     assert state["calls"][-1] == ("advance", (), {"to_next_due": True})
     assert state["day"] == due
-    assert page.selectbox(key="selected_case").value == "H"
-    assert any(f"DEMO CLOCK: day {due} " in row.value for row in page.info)
+    assert page.radio(key="selected_case").value == "H"
+    assert any(f"DEMO CLOCK: day {due} " in row.proto.body for row in page.get("html"))
     correction = next(row for row in state["view"].proposals if row.kind == "correction")
     assert correction.proposal_id not in before
     assert correction.corrects_receipt_id == receipt.receipt_id
@@ -115,7 +115,7 @@ def test_controls_disable_without_work_and_run_only_the_open_case(demo_page, mon
     assert page.sidebar.button(key="advance_next_due").disabled
     assert "Next due: none scheduled." in [row.value for row in page.sidebar.caption]
     load_demo(page)
-    page.selectbox(key="selected_case").select("H").run()
+    page.radio(key="selected_case").set_value("H").run()
     spinners = []
 
     @contextmanager
@@ -128,14 +128,14 @@ def test_controls_disable_without_work_and_run_only_the_open_case(demo_page, mon
     assert not page.exception and not page.error
     assert state["calls"] == [("run", ("H",), {})]
     assert spinners == ["Running agent for case H…"]
-    assert page.title[0].value.startswith("Case H:")
+    assert page.title[0].value == "Northwind Grocers"
     page.sidebar.number_input(key="advance_days").set_value(2)
     page.sidebar.button(key="advance_n_days").click().run()
     assert not page.exception and not page.error
     assert state["calls"][-1] == ("advance", (), {"days": 2})
     assert spinners[-1] == "Advancing 2 days…"
     assert state["day"] == 2
-    assert any("DEMO CLOCK: day 2 " in row.value for row in page.info)
+    assert any("DEMO CLOCK: day 2 " in row.proto.body for row in page.get("html"))
     assert state["closed"] == state["built"]
 
 
@@ -143,7 +143,7 @@ def test_controls_disable_without_work_and_run_only_the_open_case(demo_page, mon
 def test_control_errors_are_visible_and_world_is_closed(demo_page, control, operation):
     page, state = demo_page
     load_demo(page)
-    page.selectbox(key="selected_case").select("H").run()
+    page.radio(key="selected_case").set_value("H").run()
     state["fail"][operation] = TransientError("SYNTHETIC temporary failure")
     page.sidebar.button(key=control).click().run()
     assert not page.exception
@@ -155,8 +155,25 @@ def test_control_errors_are_visible_and_world_is_closed(demo_page, control, oper
 def test_database_switch_clears_open_case(demo_page):
     page, _ = demo_page
     load_demo(page)
-    page.selectbox(key="selected_case").select("H").run()
+    page.radio(key="selected_case").set_value("H").run()
     page.sidebar.text_input(key="db_path").set_value("runs/other.db").run()
     assert not page.exception and not page.error
-    assert page.selectbox(key="selected_case").value is None
+    assert page.radio(key="selected_case").value is None
     assert page.sidebar.button(key="run_agent").disabled
+
+
+def test_case_navigation_and_tabs_do_not_mutate_the_case(demo_page):
+    page, state = demo_page
+    load_demo(page)
+    assert any("Northwind Grocers" in label for label in page.radio(key="selected_case").options)
+    page.radio(key="selected_case").set_value("H").run()
+    before = state["history"].model_dump_json()
+    assert [tab.label for tab in page.tabs] == ["Review", "Documents", "Activity"]
+    page.radio(key="selected_case").set_value("C").run()
+    assert not page.exception and not page.error
+    assert page.title[0].value == "Synthetic Regression Buyer"
+    page.radio(key="selected_case").set_value("H").run()
+    assert not page.exception and not page.error
+    assert state["history"].model_dump_json() == before
+    assert state["calls"] == []
+    assert state["built"] == state["closed"]

@@ -1,136 +1,133 @@
-# UI refinement foundation — 2026-11-09 PT
+# UI refinement — current handoff, 2026-11-10 PT
 
-## Scope and checkpoint
+## Result and scope
 
-This session completes one preparation step: preserve the running build, make
-the root README accurate and concise, and research design tools. It does not
-implement the visual redesign. Current-session edits are limited to:
+Implemented the user's selected **option 2 / Case Navigator**, with the requested
+Ramp-inspired neutral palette, black primary buttons, pale lime selection, and
+modest corner radii. The existing Streamlit app, SQLite persistence, and app
+facade remain the runtime. No dependencies, backend, contracts, or real actions
+were added. Normative UI and action behavior: design/02 §6 and §4.2–4.3.
 
-- `README.md`
+The previous build is preserved on `origin/charles/ui` at
+`1b4b58f3474ab93da10ac555728d8c854cc36447`. This implementation is on
+`codex/enterprise-ui`; main is unchanged. Prior research, audit, and the original
+three-option mapping are preserved in this file's history at `6af3311`.
+
+Current task's changed files (complete list):
+
+- `.streamlit/config.toml`
+- `recoup/ui/README.md`
+- `recoup/ui/actions.py`
+- `recoup/ui/case_page.py`
+- `recoup/ui/queue.py`
+- `recoup/ui/streamlit_app.py`
+- `tests/ui/test_action_cards.py`
+- `tests/ui/test_demo_controls.py`
+- `tests/ui/test_evidence.py`
+- `tests/ui/test_streamlit_app.py`
 - `progress/charles/UI-REFINEMENT-HANDOFF.md`
 - `progress/charles/PROGRESS.md`
 
-The existing UI and tests were committed unchanged as
-`1b4b58f3474ab93da10ac555728d8c854cc36447` and pushed to `origin/charles/ui`.
-The remote SHA was verified before creating `codex/enterprise-ui`.
-Original untracked `arhcive/` and `recoup-006-charles-bundle-r10.md` inputs were
-left in place, outside both commits. Local databases remain ignored.
+## Behavior
 
-The checkpoint preserves these 17 previously uncommitted files:
+The case list uses customer names, subjects, and formatted balances. Review,
+Documents, and Activity tabs organize each case. The main review shows the
+current proposed action, recipient target, allocations in USD, draft, edit form,
+and separate approval/submission controls. Technical identifiers, earlier
+versions, supporting details, rejection, and additional actions remain available
+in expandable sections. A case-level MOCK receipt stays visible when the next
+pending action becomes the main review.
 
-```text
-progress/carter/PROGRESS.md
-progress/charles/PROGRESS.md
-recoup/ui/README.md
-recoup/ui/__init__.py
-recoup/ui/actions.py
-recoup/ui/case.py
-recoup/ui/case_page.py
-recoup/ui/evidence.py
-recoup/ui/queue.py
-recoup/ui/streamlit_app.py
-tests/ui/conftest.py
-tests/ui/test_action_cards.py
-tests/ui/test_case.py
-tests/ui/test_demo_controls.py
-tests/ui/test_evidence.py
-tests/ui/test_queue.py
-tests/ui/test_streamlit_app.py
-```
+The existing SYNTHETIC/MOCK/LLM/simulated-clock labels remain visible in a compact
+banner. Money is formatted from imported contract values; no new financial
+calculations were added. The UI instructions describe the new labels and tabs.
 
-## Findings and tools
+## Visual sources and evidence
 
-Inspected the running queue and case H at localhost:8501, plus their source.
-This is a Python/Streamlit frontend using `recoup.app.build`, with no React
-application or JavaScript package manifest. The case page puts long evidence
-tables ahead of the review actions; it exposes field names, business keys,
-checklist IDs, and raw enums. The next pass needs clearer order and language as
-well as consistent typography, spacing, and color.
+Selected original option 2:
+`/Users/charlieherbst/.codex/generated_images/01a1c458-1d0d-7c83-a372-848a9c0f6abe/exec-f8e7bd75-4604-4ee0-b174-a28cbc18cf93.png`.
+The requested Ramp variation was generated and shown before implementation:
+`/Users/charlieherbst/.codex/generated_images/01a1c458-1d0d-7c83-a372-848a9c0f6abe/exec-cd6020e3-cc6a-47b5-bc72-b38690eb6833.png`.
+Ramp's current colors and buttons were inspected at https://ramp.com/.
 
-| Tool | What it provides | Fit for Recoup |
-| --- | --- | --- |
-| [shadcn MCP](https://ui.shadcn.com/docs/mcp) and [official skill](https://ui.shadcn.com/docs/skills) | Component registry search, installation, and composition guidance | Strong candidate for a future React frontend. Its [supported setup](https://ui.shadcn.com/docs/installation) does not directly target this Streamlit app. |
-| [Anthropic frontend-design](https://github.com/anthropics/skills/blob/main/skills/frontend-design/SKILL.md) | Guidance on visual direction, typography, layout, and critique | Useful design guidance; it is not a component library or a Streamlit adapter. Discoverable through [skills.sh](https://skills.sh/anthropics/skills/frontend-design). |
-| [UI UX Pro Max](https://github.com/nextlevelbuilder/ui-ux-pro-max-skill) | Design catalogs, theme and interaction guidance, and assistant integrations | An alternative skill source. Streamlit is not listed among its stack-specific guides. |
-| Product Design plugin | Flow audits, visual directions, and interactive prototypes | Installed after the preparation checkpoint. Used for the screenshot audit and three visual concepts below. |
+Evidence folder:
+`/Users/charlieherbst/.codex/generated_images/recoup-ramp-implementation/`.
+Important files: `ramp-reference.png`, `comparison-first.png`,
+`comparison-final.png`, `comparison-review-detail.png`,
+`implementation-desktop-final.png`, `mobile-review-top.png`,
+`mobile-review-controls.png`, `mobile-case-navigation.png`,
+`desktop-sidebar-collapsed.png`, `documents.png`, `empty-state.png`,
+`mock-receipt-confirmation.png`, and `day-3-correction.png`.
 
-Recommendation: improve the existing Streamlit workbench first using native
-layout and [theme controls](https://docs.streamlit.io/develop/concepts/configuration/theming).
-Use a design skill to guide deliberate choices and browser review to judge the
-result. Reserve shadcn MCP and its skill for a separately scoped frontend
-migration. No skills, MCP servers, packages, or runtime dependencies were installed.
+## Design QA
 
-## Proposed next implementation step
+QA is recorded here to respect this handoff's repository file scope; a standalone
+`design-qa.md` is also saved in the evidence folder outside the source tree.
 
-Create a calm finance workspace with a neutral canvas, a restrained blue action
-color, readable type, and consistent spacing. Lead the queue with customer,
-case subject, open balance, next deadline, and a clear route into review.
-Lead each case with its summary and proposed actions; group documents,
-checklists, and history into focused sections. Show readable document titles
-beside citations, with technical identifiers available in expanded details.
+State: case H, day 0, unapproved dispute, Review tab, sidebar expanded. Source
+and final implementation are both **1487 × 1058** pixels, CSS viewport
+1487 × 1058, devicePixelRatio 1; no density normalization or resizing in the final
+comparison. Source and implementation were inspected together in the full-view
+and focused review-region comparison files. Additional viewport: 390 × 844.
+The temporary browser viewport override was reset after verification.
 
-Copy examples: “Quarantined bundles” → “Imports needing attention”; “Inject
-document” → “Add supporting document”; “Line decisions” → “Deduction review”;
-“Status reason” → “Latest update”. Keep demo controls in a secondary area.
-UI behavior and provenance requirements remain defined by design/02 §6;
-approval and staleness behavior remain defined by §4.2–4.3.
+Earlier findings and fixes:
 
-Proposed file scope for that next session: `.streamlit/config.toml`,
-`recoup/ui/{streamlit_app.py,queue.py,case_page.py,case.py,actions.py,evidence.py,README.md}`,
-`tests/ui/{test_streamlit_app.py,test_demo_controls.py,test_queue.py,test_case.py,test_action_cards.py,test_evidence.py}`,
-and `progress/charles/{UI-REFINEMENT-HANDOFF.md,PROGRESS.md}`.
-Verify queue → case → edit → approve → MOCK submit → next due, plus stale
-actions, empty/import-error states, keyboard use, and desktop/narrow layouts.
-Use `make check` and browser screenshots. No backend or contract changes are
-part of this proposed step.
+1. **P2 — Excessive vertical space and weak case navigation.** The first capture
+   placed review controls too low and used a radio-style presentation without
+   clear customer hierarchy. Reduced header gaps, moved queue navigation into
+   the sidebar, styled the native case rows, and moved editing into the draft.
+2. **P2 — Narrow-screen toolbar overlap.** Reserved mobile toolbar space and
+   gave its fixed header a solid background. Post-fix mobile captures show
+   readable provenance and usable full-width approval controls.
+3. **P2 — Collapsed desktop sidebar retained empty space.** Limited custom width
+   constraints to expanded sidebars. Verified collapsed sidebar width 0, main
+   workspace width 1487, and no page-wide overflow.
 
-## Verification
+Final fidelity review:
 
-`make check`: Ruff lint and formatting passed; 1,123 tests passed and 2 optional
-OCR tests skipped in 330.64 seconds. The suite ran against the saved build;
-all subsequent edits are documentation only. README local links resolve, and
-`git diff --check` passes. The README is 330 words, down from 422, with stale
-branch status and provider internals replaced by current run instructions.
+- **Typography:** neutral Arial/system sans, clear customer/action headings,
+  compact native table type, readable labels, and preserved long-draft wrapping.
+- **Spacing/layout:** case list, case summary, three tabs, and focused draft
+  review retain option 2's structure. Native widgets are deliberately more
+  compact than the illustrative mock. Secondary details remain accessible.
+- **Colors/tokens:** white/light neutral surfaces, near-black primary controls,
+  pale lime case/status accents, restrained borders, and six-pixel button radii.
+- **Images/icons:** the target needs no raster imagery. Text wordmark and native
+  Streamlit widget icons are used; no placeholder artwork or custom SVG assets.
+- **Copy/data:** actual contract-backed values and recipients replace conceptual
+  mock content; line responses say Proposed dispute before submission. Extra
+  mock date chrome was omitted. The $1,800 credit remains separate from dispute.
+- **Interactions:** arrow-key case navigation, tabs, document expansion, edit,
+  approve, MOCK submit, receipt confirmation, and next-due refresh were exercised.
 
-## Product Design follow-up — visual selection pending
+No actionable P0/P1/P2 findings remain. P3 follow-up: some document titles already
+contain a version suffix, so their expanded-list labels can repeat the version.
+A full screen-reader/zoom/accessibility certification was not performed. Native
+wide data tables scroll within their component on narrow screens; the document
+itself has no horizontal overflow.
 
-The user installed Product Design. Followed its index, audit, context, and
-ideation workflows against the existing app; no saved product context existed.
-This step produces visual choices before implementation.
+Browser error logs contained expected health-check disconnects during deliberate
+preview-server restarts, last at 08:20:06 UTC. No new application errors were
+reported during the final walkthrough after the server started at 08:20:08 UTC.
 
-Fresh audit evidence is saved outside the source tree at
-`/Users/charlieherbst/.codex/generated_images/recoup-design-audit-2026-11-09/`.
-Each screenshot was captured in the in-app browser, saved, reopened, and reviewed:
+**final result: passed**
 
-1. `01-case-queue.png` — Functional queue; letter-only case selection separates
-   navigation from the meaningful customer/subject/balance shown in the table.
-2. `02-case-overview.png` — Functional detail navigation; oversized header and
-   status banners fill the first screen before the balance and proposed actions.
-3. `03-action-review.png` — Separate approval/submission controls are visible,
-   but raw business keys, target enums, and cents allocations hinder review.
+## Verification and delivery
 
-Accessibility limits: desktop screenshot/structure review only. Keyboard flows,
-focus, screen-reader output, measured contrast, zoom, and narrow-screen reflow
-have not been verified. No edits, approvals, submissions, or clock advances were
-performed during browser inspection.
+Final `make check`: Ruff lint/format PASS; **1124 passed, 2 optional OCR tests
+skipped in 396.23 seconds**. Existing integration/gate coverage remains in place;
+added a case-navigation/tab regression proving navigation does not mutate cases.
+Two focused edit/approve/submit and action-rendering tests also passed.
+`git diff --check` passes.
 
-Three image-only concepts were generated with the built-in Image Gen tool, each
-receiving all three accepted screenshots. Display order is authoritative:
+Browser walkthrough used `runs/ui-polish-review.db`: revised the dispute draft,
+approved that exact version, separately submitted it to obtain `MOCK-DISP-0001`,
+and advanced to day 3. The refreshed correction and original receipt were both
+visible. The delivered preview uses a separate fresh `runs/ui-polish-preview.db`
+with H/C/N at day 0, so the user can inspect an untouched review flow.
 
-| Displayed option | Direction | Local generated image |
-| --- | --- | --- |
-| 1 | Review Desk: case summary, deduction table, action column | `/Users/charlieherbst/.codex/generated_images/01a1c458-1d0d-7c83-a372-848a9c0f6abe/exec-8f296ab8-e173-4ba5-8d75-976ffbadc0b1.png` |
-| 2 | Case Navigator: readable case list beside focused draft review | `/Users/charlieherbst/.codex/generated_images/01a1c458-1d0d-7c83-a372-848a9c0f6abe/exec-f8e7bd75-4604-4ee0-b174-a28cbc18cf93.png` |
-| 3 | Evidence Review: deduction and supporting document side by side | `/Users/charlieherbst/.codex/generated_images/01a1c458-1d0d-7c83-a372-848a9c0f6abe/exec-cfd12714-a5fc-45fa-b645-7c2a3b460fae.png` |
-
-All are design references, not functioning builds. At implementation, read
-amounts, target labels, recipients, and action state from existing contract
-models. In particular, option 1's dispute recipient is misrendered as MOCK ERP;
-use the actual buyer portal target. In option 2, label unsent line responses
-“Proposed dispute” instead of implying they have been submitted. No generated
-source content or state should replace the stored case data.
-
-The ideation skill explicitly requires selection before build work. Await the
-user's choice, then use that displayed image as the visual target, preserve the
-existing Streamlit/application architecture, and follow the proposed file scope
-above. No frontend code, dependencies, or backend files changed in this step.
+Preview: http://localhost:8502. Existing original demo data was left unchanged.
+Runtime databases and screenshots remain outside tracked source. Original
+untracked `arhcive/` and `recoup-006-charles-bundle-r10.md` inputs are untouched.
+Stop after this implementation step; no merge or deployment is part of it.
