@@ -1,68 +1,59 @@
-# recoup
+# Recoup
 
-Recoup is a single-user AR case workbench. Data is **SYNTHETIC**, actions are
-**MOCK**, and the default LLM mode is **fake**. No real sends or cash collection
-are implemented.
+Recoup helps a finance specialist review unpaid and short-paid invoices. Open a
+case, inspect the supporting documents, and review proposed disputes, credits,
+information requests, and follow-ups in one workbench.
 
-This branch includes Charles's SQLite World, approval-bound mock transactions,
-evidence history, fixtures, app and CLI, together with Sonny's actual engine,
-financial gates, scheduler, counteroffers and offline FakeLLM. Multi-invoice
-historical remittances load through the shared World/app/CLI. The default runtime
-uses those installed providers; it requires no model key.
+The current app runs locally with Streamlit and SQLite. Demo data is
+**SYNTHETIC**, actions are **MOCK**, and the default **LLM: fake** mode works
+without an API key. No real messages are sent or cash collected.
 
-006-1 / F0 was accepted by the owner on 2026-11-08. The owner-acceptance
-record is preserved in [006-1 acceptance](progress/charles/006-1-ACCEPTANCE.md);
-independent Reviewer/Verifier reviews were not performed. The integrated
-implementation is merged into `main` at the owner's request; see the
-[merge record](progress/charles/006-MAIN-MERGE-ACCEPTANCE.md).
+## Run the app
 
-The final branch integration checks and remaining limitations are recorded in
-[Charles's final acceptance](progress/charles/006-FINAL-INTEGRATION-ACCEPTANCE.md).
-Test verification does not imply independent review or a `contract-v1` tag.
-Carter's UI and benchmark implementation are separate work.
-See [docs/INDEX.md](docs/INDEX.md), [design/02](docs/design/02-technical-design.md),
-and [progress/charles/PROGRESS.md](progress/charles/PROGRESS.md).
-
-Use Python 3.11:
+Use Python 3.11. From the repository root:
 
 ```sh
 python3.11 -m venv .venv
 .venv/bin/python -m pip install -e '.[dev]'
-make check
+RECOUP_LLM=fake .venv/bin/python -m streamlit run recoup/ui/streamlit_app.py
 ```
 
-Dependencies are pinned in `pyproject.toml`; no API key is needed for offline
-checks. The optional `.[ocr]` extra is declared; `doctor` reports availability,
-and an available dependency alone does not prove ingestion works.
+Open the local URL printed by Streamlit. For a fresh walkthrough, set
+**Database path** in the sidebar to an unused path such as `runs/ui-demo.db`,
+then click **Load demo cases H, C and N**.
+
+1. Open **H** to review Northwind Grocers' shortage and promotion deductions.
+2. Inspect a proposed action. Use **Edit proposal** to revise its draft, then
+   **Approve** and **Submit** separately to create a MOCK receipt.
+3. Click **Advance to next due** to move the simulated clock and see new
+   documents, revised proposals, and updated checklists.
+
+## What is implemented
+
+- A case queue with balances, deadlines, and a separate list of rejected imports.
+- Case details with document versions, cited deduction decisions, action review,
+  insurance document checklists, and an activity history.
+- Simulated events and follow-ups, plus a CLI for case intake and review.
+- CLI examples for multi-invoice payment allocation and counteroffers in
+  [financial examples](cases/ambition/README.md).
+
+This is a single-user prototype. Real system integrations, authentication, and
+multi-user workflows are not implemented. Live-model and real OCR acceptance
+remain separate from offline verification; `doctor` reports local capabilities.
+
+## Development
 
 ```sh
+make check
 .venv/bin/recoup doctor
-.venv/bin/recoup --db runs/demo.db init
-.venv/bin/recoup --db runs/demo.db load cases/demo/H cases/demo/C cases/demo/N
-.venv/bin/recoup --db runs/demo.db status H
-.venv/bin/recoup --db runs/demo.db advance --to-next-due
-.venv/bin/recoup --db runs/demo.db history H
 .venv/bin/recoup --db :memory: check-regression
-.venv/bin/recoup --db runs/remittance-demo.db load-remittance cases/ambition/multi-invoice/remittance.json
-.venv/bin/recoup --db runs/offer-demo.db load cases/ambition/counteroffer
+.venv/bin/recoup --help
 ```
 
-The default database is `runs/recoup.db`; set `RECOUP_DB` to use another path.
-`check-regression` evaluates each case in an isolated in-memory database, leaving
-that working database unchanged, and exits nonzero on a mismatch. All eight
-published cases pass with the actual offline engine, including EUR quarantine.
-Use a fresh demo database when starting a demonstration from day zero.
+The CLI defaults to `runs/recoup.db`; override it with `--db` or `RECOUP_DB`.
+The UI uses its sidebar database path, initially `runs/demo.db`.
 
-Inspect generated proposal IDs and versions with `status CASE`. Use `edit`,
-`approve` and `submit` to review and execute a mock action; approval applies only
-to that exact version. See `recoup COMMAND --help` and design/02 §7. The app never
-automatically approves proposals. Counteroffer and remittance examples are
-documented in [cases/ambition](cases/ambition/README.md).
-
-When Sonny's engine package is installed, `build` selects its documented factory
-inside the composition root. Provider import/initialization errors propagate.
-A supplied controller replaces the harness and prevents harness LLM construction.
-Real OCR and live-model proof are separate from the offline tests. Missing
-optional capabilities appear in `doctor`; a detected prerequisite alone does
-not establish extraction accuracy. Legacy uncited fact revisions require an
-explicit migration rather than silently repairing historical evidence.
+See [UI instructions](recoup/ui/README.md) for demo controls and
+[the documentation index](docs/INDEX.md) for designs, ownership, and verification
+records. The technical specification is [design/02](docs/design/02-technical-design.md)
+(§6 UI; §7 CLI).
