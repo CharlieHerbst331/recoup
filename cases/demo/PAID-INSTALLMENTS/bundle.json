@@ -1,0 +1,60 @@
+{
+  "case_id": "PAID-INSTALLMENTS",
+  "title": "SYNTHETIC \u2014 Paid through two installments",
+  "seller": "Synthetic Demo Seller",
+  "buyer": "BUYER-PAID-INSTALLMENTS",
+  "currency": "USD",
+  "invoice_ref": "INV-PAID-INSTALLMENTS",
+  "start_date": "2026-10-20",
+  "static_day": 0,
+  "policy_ref": null,
+  "allowed_recipients": {
+    "mock_email": [
+      "paid-installments@buyer.invalid"
+    ]
+  },
+  "docs": [
+    {
+      "doc_ref": "INV-PAID-INSTALLMENTS",
+      "kind": "invoice",
+      "title": "SYNTHETIC \u2014 Invoice INV-PAID-INSTALLMENTS",
+      "text": "SYNTHETIC demo invoice INV-PAID-INSTALLMENTS for BUYER-PAID-INSTALLMENTS; USD 240000 cents, issued 2026-09-01, due 2026-09-30.",
+      "fields": {
+        "invoice_no": "INV-PAID-INSTALLMENTS",
+        "invoice_date": "2026-09-01",
+        "due_date": "2026-09-30",
+        "buyer_id": "BUYER-PAID-INSTALLMENTS",
+        "total_cents": 240000,
+        "line.1.sku": "SKU-PAID-INSTALLMENTS",
+        "line.1.qty": 1,
+        "line.1.unit_price_cents": 240000
+      }
+    },
+    {
+      "doc_ref": "PAY-PAID-INSTALLMENTS-1",
+      "kind": "payment",
+      "title": "SYNTHETIC \u2014 Historical payment PAY-PAID-INSTALLMENTS-1",
+      "text": "SYNTHETIC historical payment PAY-PAID-INSTALLMENTS-1 from BUYER-PAID-INSTALLMENTS, applied to INV-PAID-INSTALLMENTS on 2026-09-10; USD 90000 cents.",
+      "fields": {
+        "invoice_no": "INV-PAID-INSTALLMENTS",
+        "paid_cents": 90000,
+        "paid_date": "2026-09-10",
+        "payment_ref": "PAY-PAID-INSTALLMENTS-1"
+      }
+    },
+    {
+      "doc_ref": "PAY-PAID-INSTALLMENTS-2",
+      "kind": "payment",
+      "title": "SYNTHETIC \u2014 Historical payment PAY-PAID-INSTALLMENTS-2",
+      "text": "SYNTHETIC historical payment PAY-PAID-INSTALLMENTS-2 from BUYER-PAID-INSTALLMENTS, applied to INV-PAID-INSTALLMENTS on 2026-09-25; USD 150000 cents.",
+      "fields": {
+        "invoice_no": "INV-PAID-INSTALLMENTS",
+        "paid_cents": 150000,
+        "paid_date": "2026-09-25",
+        "payment_ref": "PAY-PAID-INSTALLMENTS-2"
+      }
+    }
+  ],
+  "events": [],
+  "provenance": "synthetic"
+}

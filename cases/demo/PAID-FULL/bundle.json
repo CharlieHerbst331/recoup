@@ -1,0 +1,48 @@
+{
+  "case_id": "PAID-FULL",
+  "title": "SYNTHETIC \u2014 Paid in full",
+  "seller": "Synthetic Demo Seller",
+  "buyer": "BUYER-PAID-FULL",
+  "currency": "USD",
+  "invoice_ref": "INV-PAID-FULL",
+  "start_date": "2026-10-20",
+  "static_day": 0,
+  "policy_ref": null,
+  "allowed_recipients": {
+    "mock_email": [
+      "paid-full@buyer.invalid"
+    ]
+  },
+  "docs": [
+    {
+      "doc_ref": "INV-PAID-FULL",
+      "kind": "invoice",
+      "title": "SYNTHETIC \u2014 Invoice INV-PAID-FULL",
+      "text": "SYNTHETIC demo invoice INV-PAID-FULL for BUYER-PAID-FULL; USD 125000 cents, issued 2026-09-01, due 2026-09-30.",
+      "fields": {
+        "invoice_no": "INV-PAID-FULL",
+        "invoice_date": "2026-09-01",
+        "due_date": "2026-09-30",
+        "buyer_id": "BUYER-PAID-FULL",
+        "total_cents": 125000,
+        "line.1.sku": "SKU-PAID-FULL",
+        "line.1.qty": 1,
+        "line.1.unit_price_cents": 125000
+      }
+    },
+    {
+      "doc_ref": "PAY-PAID-FULL-1",
+      "kind": "payment",
+      "title": "SYNTHETIC \u2014 Historical payment PAY-PAID-FULL-1",
+      "text": "SYNTHETIC historical payment PAY-PAID-FULL-1 from BUYER-PAID-FULL, applied to INV-PAID-FULL on 2026-09-18; USD 125000 cents.",
+      "fields": {
+        "invoice_no": "INV-PAID-FULL",
+        "paid_cents": 125000,
+        "paid_date": "2026-09-18",
+        "payment_ref": "PAY-PAID-FULL-1"
+      }
+    }
+  ],
+  "events": [],
+  "provenance": "synthetic"
+}

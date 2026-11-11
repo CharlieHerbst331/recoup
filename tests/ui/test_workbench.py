@@ -240,3 +240,20 @@ def test_sensitive_startup_error_is_not_rendered_or_logged(browser, monkeypatch,
     assert len(browser.error) == 1
     assert API_KEY not in str(browser) + caplog.text
     assert not browser.exception
+
+
+def test_demo_button_loads_paid_and_flagged_cases_through_app(browser, monkeypatch):
+    configs = []
+    memory_builder(monkeypatch, configs, persist=True)
+    login(browser)
+    button(browser, "Load SYNTHETIC demo cases (runs agent)").click().run(timeout=30)
+    assert not browser.error and not browser.exception
+    selector = next(item for item in browser.selectbox if item.label == "Case")
+    assert set(selector.options) == {"H", "C", "N", "PAID-FULL", "PAID-INSTALLMENTS"}
+    for case_id in ("PAID-FULL", "PAID-INSTALLMENTS"):
+        selector.set_value(case_id).run()
+        assert not browser.error and not browser.exception
+        view = json.loads(browser.json[0].value)
+        assert view["open_balance"]["cents"] == 0
+        assert view["lines"] == view["decision"]["lines"] == []
+        assert view["proposals"] == view["receipts"] == []

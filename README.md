@@ -38,7 +38,7 @@ and an available dependency alone does not prove ingestion works.
 ```sh
 .venv/bin/recoup doctor
 .venv/bin/recoup --db runs/demo.db init
-.venv/bin/recoup --db runs/demo.db load cases/demo/H cases/demo/C cases/demo/N
+.venv/bin/recoup --db runs/demo.db load cases/demo
 .venv/bin/recoup --db runs/demo.db status H
 .venv/bin/recoup --db runs/demo.db advance --to-next-due
 .venv/bin/recoup --db runs/demo.db history H

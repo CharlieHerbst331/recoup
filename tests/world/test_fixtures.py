@@ -252,7 +252,13 @@ def test_regression_oracle_schema_refs_and_money(path):
 
 def test_fixture_inventory_and_all_nine_reason_coverage():
     assert {path.parent.name for path in REGRESSIONS} == {f"r{i:02}" for i in range(1, 9)}
-    assert {path.parent.name for path in BUNDLES if "demo" in path.parts} == {"H", "C", "N"}
+    assert {path.parent.name for path in BUNDLES if "demo" in path.parts} == {
+        "H",
+        "C",
+        "N",
+        "PAID-FULL",
+        "PAID-INSTALLMENTS",
+    }
     reasons = {
         value
         for path in REGRESSIONS
@@ -407,7 +413,7 @@ def test_real_loader_preserves_fixture_balances_lines_and_quarantine(path, fixtu
         return
     assert result.status == "loaded"
     view = fixture_world.view(bundle.case_id)
-    invoice = by_ref(bundle, "INV")
+    invoice = next(doc for doc in bundle.docs if doc.kind == DocKind.invoice)
     assert view.invoice_total.cents == invoice.fields["total_cents"]
     paid = sum(doc.fields["paid_cents"] for doc in bundle.docs if doc.kind == DocKind.payment)
     assert view.open_balance.cents == view.invoice_total.cents - paid
@@ -424,7 +430,13 @@ def test_real_loader_preserves_fixture_balances_lines_and_quarantine(path, fixtu
         oracle = read_oracle(path)
         assert {line.line_id for line in lines} == {line.line_id for line in oracle.lines}
     else:
-        expected = {"H": {"D1": 312000, "D2": 312000}, "C": {"D1": 50000}, "N": {"U1": 215000}}
+        expected = {
+            "H": {"D1": 312000, "D2": 312000},
+            "C": {"D1": 50000},
+            "N": {"U1": 215000},
+            "PAID-FULL": {},
+            "PAID-INSTALLMENTS": {},
+        }
         assert {line.line_id: line.claimed.cents for line in lines} == expected[bundle.case_id]
     basis = fixture_world.fact_set(bundle.case_id)
     assert basis.basis_hash == fixture_world.evidence_set_hash(bundle.case_id)

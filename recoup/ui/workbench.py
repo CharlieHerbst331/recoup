@@ -69,7 +69,7 @@ def authenticated(gate):
 def workbench(service):
     st.caption(f"SYNTHETIC DATA · MOCK actions · LLM: {service.llm.mode}")
     if st.button("Load SYNTHETIC demo cases (runs agent)"):
-        service.load(["cases/demo/H", "cases/demo/C", "cases/demo/N"])
+        service.load(["cases/demo"])
     cases = service.world.list_cases()
     if not cases:
         st.info("Load the demo cases to start.")
