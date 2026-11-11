@@ -72,7 +72,7 @@ export function caseStatus(label) {
   return (
     {
       "Credit ready for review": "Credit to approve",
-      "Review the proposed response": "Deduction to dispute",
+      "Review the proposed response": "Review case",
       "Valid deduction credited": "Credit posted",
       "Buyer repaid the deduction": "Repaid in full",
       "MOCK claim submitted": "Claim submitted · awaiting insurer",
@@ -204,7 +204,7 @@ export function readLocation() {
   const raw = window.location.hash.slice(1);
   const [path, query] = raw.split("?");
   if (!path?.startsWith("case/"))
-    return { caseId: null, focus: { tab: "review" } };
+    return { page: path === "sources" ? "sources" : "cases" };
   const p = new URLSearchParams(query || "");
   return {
     caseId: decodeURIComponent(path.slice(5)),
@@ -217,11 +217,11 @@ export function readLocation() {
     },
   };
 }
-export function writeLocation(caseId, focus) {
+export function writeLocation(caseId, focus, page = "cases") {
   const p = new URLSearchParams(Object.entries(focus).filter(([k, v]) => v));
   const target = caseId
     ? `#case/${encodeURIComponent(caseId)}?${p}`
-    : "#dashboard";
+    : page === "sources" ? "#sources" : "#dashboard";
   if (window.location.hash !== target)
     window.history.pushState(null, "", target);
 }

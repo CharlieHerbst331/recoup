@@ -50,14 +50,24 @@ def test_react_dashboard_edit_approve_submit_and_day_three(api_service):
     mutate(service, "edit", {**payload, "draft_text": proposal["draft_text"] + "\nPlease review."})
     payload["version"] += 1
     mutate(service, "approve", payload)
-    assert dashboard_data(service)["counts"]["Approved cases"] == 1
+    approved = dashboard_data(service)
+    assert approved["counts"]["Approved cases"] == 1
+    assert next(c["action"] for c in approved["cases"] if c["case_id"] == "H") == {
+        "kind": "dispute",
+        "status": "approved",
+    }
     mutate(service, "submit", payload)
     after = case_data(service, "H")
     receipt = after["view"]["receipts"][0]
     assert receipt["receipt_id"].startswith("MOCK-")
     assert dashboard_data(service)["counts"]["MOCK submitted"] == 1
     mutate(service, "advance", {"to_next_due": True})
-    assert dashboard_data(service)["clock"]["day"] == 3
+    refreshed = dashboard_data(service)
+    assert refreshed["clock"]["day"] == 3
+    assert next(c["action"] for c in refreshed["cases"] if c["case_id"] == "H") == {
+        "kind": "correction",
+        "status": "proposed",
+    }
     after = case_data(service, "H")
     assert any(row["current"]["kind"] == "correction" for row in after["proposals"])
     assert any(

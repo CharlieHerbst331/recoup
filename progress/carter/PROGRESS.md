@@ -19,3 +19,6 @@ question: None; no remaining app blockers. The commit manifest is in REVIEWER_DE
 done: Integrated the supplied Recoup and Ramp scroll lockup and added the server-key-gated Real LLM switch for the same synthetic simulation; browser verified the header and setup state, and scripted UI tests verified mode changes, event progress, and preserved MOCK receipts (design/02 §5.9, §6).
 next: Stop after verification; keep the saved day-5 demo available and the offline agent selected. The setup and file manifest are in BRAND_LIVE_ACCEPTANCE.md.
 question: No app blockers in the offline flow. Trying the real provider requires OPENAI_API_KEY and RECOUP_MODEL on the server.
+done: Added fictional buyer marks, color-coded action types, and a 12-source Company Data catalog using “Connected” for every source (design/02 §6). Verified desktop/mobile navigation and both LLM modes; production build and make check passed (1156 passed, 2 skipped).
+next: Stop this UI step; the day-zero preview is open at http://127.0.0.1:8503/#sources. The changed-file list is in REVIEWER_DEMO_HANDOFF.md.
+question: None. The source catalog is static, the prior saved run is preserved, and switching modes during verification made no model request.

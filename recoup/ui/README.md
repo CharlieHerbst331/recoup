@@ -14,6 +14,11 @@ RECOUP_LLM=fake .venv/bin/python -m recoup.ui.server --port 8501 --db runs/your-
 Open `http://127.0.0.1:8501`. The server binds to localhost only. Use the case
 list to review work and **Toggle navigation → Demo controls** to run the simulation.
 
+**Company Data** shows the workspace's mock source catalog, including shared
+documents, conversations, finance systems, databases, and external portals.
+It describes the records each source could contribute and stays available in
+both LLM modes. The displayed connections do not link accounts or fetch data.
+
 ## Use a real model with the demo
 
 The demo starts with the offline agent. To enable **Real LLM** in **Demo controls**,
@@ -33,8 +38,10 @@ the current server session; start in `RECOUP_LLM=fake` for the recorded walkthro
 
 ## Two-minute demo
 
-The main view is one case list with a **Continue review** action. Each case shows
-one recommendation and the current approval/submission button. The single **Demo**
+The main view is one case list with a **Continue review** action. Fictional
+customer marks identify the demo buyers, and color and text distinguish the
+recommended action types. Each case shows one recommendation and the current
+approval/submission button. The single **Demo**
 label in the header identifies the synthetic data, MOCK actions, and LLM mode via
 its tooltip; the stored documents, drafts, approvals, and receipts retain provenance.
 
