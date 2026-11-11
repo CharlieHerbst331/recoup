@@ -1,0 +1,26 @@
+.scroll-brand {
+  display: block;
+  position: relative;
+  height: 42px;
+  color: var(--foreground);
+  flex-shrink: 0;
+  overflow: hidden;
+  border-radius: 2px;
+  transition: width 280ms cubic-bezier(.22, 1, .36, 1);
+}
+.scroll-brand:focus-visible { outline: 2px solid var(--foreground); outline-offset: 4px; }
+.brand-word {
+  display: block;
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 42px;
+  overflow: hidden;
+  white-space: nowrap;
+  transition: width 280ms cubic-bezier(.22, 1, .36, 1), transform 280ms cubic-bezier(.22, 1, .36, 1), opacity 280ms ease;
+}
+.brand-symbol { position: absolute; left: 0; top: 0; transition: transform 280ms cubic-bezier(.22, 1, .36, 1); }
+.recoup-word { font: 500 36px/41px Arial, Helvetica, sans-serif; letter-spacing: -1.9px; }
+@media (prefers-reduced-motion: reduce) {
+  .scroll-brand, .brand-word, .brand-symbol { transition: none !important; }
+}

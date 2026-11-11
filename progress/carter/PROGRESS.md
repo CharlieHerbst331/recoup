@@ -16,3 +16,6 @@ question: None; no remaining short-path blockers. Existing scenarios, stored pro
 done: Applied the earlier Ramp-inspired lime/charcoal/warm-neutral palette through theme tokens while preserving the simplified layout and current run; production build and make check passed (1153 passed, 2 skipped); visually verified the claim screen and prepared the complete 64-file UI/demo commit.
 next: Publish the validated commit to origin/codex/enterprise-ui as authorized, then stop this step; exclude unrelated archives and generated runtime artifacts.
 question: None; no remaining app blockers. The commit manifest is in REVIEWER_DEMO_ACCEPTANCE.md.
+done: Integrated the supplied Recoup and Ramp scroll lockup and added the server-key-gated Real LLM switch for the same synthetic simulation; browser verified the header and setup state, and scripted UI tests verified mode changes, event progress, and preserved MOCK receipts (design/02 §5.9, §6).
+next: Stop after verification; keep the saved day-5 demo available and the offline agent selected. The setup and file manifest are in BRAND_LIVE_ACCEPTANCE.md.
+question: No app blockers in the offline flow. Trying the real provider requires OPENAI_API_KEY and RECOUP_MODEL on the server.

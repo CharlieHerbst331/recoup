@@ -20,6 +20,7 @@ from recoup.ui.dashboard import (
     needs_attention,
 )
 from recoup.ui.evidence import evidence_fields, evidence_versions, inject_document
+from recoup.ui.provider import provider_status
 from recoup.ui.queue import display_title, format_clock, next_due_at, sort_cases
 from recoup.ui.reviewer import (
     agent_runs,
@@ -61,6 +62,7 @@ def dashboard_data(service: Recoup) -> dict:
             "next_due_day": service.next_due_day(),
         },
         "llm": service.config.llm,
+        "provider": provider_status(service.config),
         "database": service.config.db,
         "counts": dashboard_counts(cases),
         "next_step": demo_next_step(cases),

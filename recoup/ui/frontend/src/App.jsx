@@ -14,6 +14,7 @@ import { request, readLocation, writeLocation } from "@/lib/ui";
 import WorkbenchSidebar from "@/components/workbench-sidebar";
 import Dashboard from "@/components/dashboard";
 import CasePage from "@/components/case-page";
+import { ScrollBrand } from "@/components/brand/scroll-brand";
 
 export default function App() {
   const [data, setData] = useState(null),
@@ -83,7 +84,9 @@ export default function App() {
         ? "Advancing time and reviewing cases…"
         : action === "fresh"
           ? "Starting a fresh simulation…"
-          : "Updating case…",
+          : action === "provider"
+            ? "Switching model mode…"
+            : "Updating case…",
     );
     setError("");
     try {
@@ -138,22 +141,19 @@ export default function App() {
         error={error}
       />
       <SidebarInset className="min-w-0 bg-background">
-        <header className="flex h-16 shrink-0 items-center gap-3 border-b bg-white px-4 md:px-8">
+        <header className="sticky top-0 z-20 flex h-16 shrink-0 items-center gap-3 border-b bg-white px-4 md:px-8">
           <SidebarTrigger aria-label="Toggle navigation" />
           <Separator orientation="vertical" className="h-4" />
-          <button
-            className="font-semibold tracking-tight"
+          <ScrollBrand
             onClick={() => home()}
             disabled={!!busy}
-          >
-            Recoup
-          </button>
+          />
           <div className="ml-auto">
             <Badge
               variant="outline"
-              title={`Synthetic data · MOCK actions · LLM ${data?.llm || "fake"}. Nothing is sent externally.`}
+              title={`SYNTHETIC data · MOCK actions · LLM ${data?.llm || "fake"}.${data?.llm === "live" ? " Synthetic case context is sent to the model provider." : " Offline agent; no model requests."}`}
             >
-              Demo
+              {data?.llm === "live" ? "Demo · Live LLM" : "Demo"}
             </Badge>
           </div>
         </header>

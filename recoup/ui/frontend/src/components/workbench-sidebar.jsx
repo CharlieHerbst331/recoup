@@ -1,7 +1,6 @@
 import { useState } from "react";
 import {
   LayoutDashboard,
-  PackageOpen,
   Settings2,
   LoaderCircle,
   X,
@@ -16,6 +15,8 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
+import { ScrollBrand } from "@/components/brand/scroll-brand";
 import {
   Sidebar,
   SidebarContent,
@@ -43,8 +44,7 @@ export default function WorkbenchSidebar({
     <Sidebar>
       <SidebarHeader className="px-6 py-7">
         <div className="flex items-center gap-2 text-xl font-semibold">
-          <PackageOpen size={22} />
-          Recoup
+          <ScrollBrand forceState="expanded" disabled={busy} onClick={() => { home(); if (isMobile) setOpenMobile(false); }} />
           {isMobile && (
             <Button
               variant="ghost"
@@ -102,6 +102,32 @@ export default function WorkbenchSidebar({
                 external messages or payments.
               </DialogDescription>
             </DialogHeader>
+            <div className="space-y-2 rounded-lg border p-4">
+              <div className="flex items-center justify-between gap-4">
+                <label htmlFor="live-model" className="text-sm font-medium">Real LLM</label>
+                <Switch
+                  id="live-model"
+                  checked={data?.llm === "live"}
+                  disabled={busy || (!data?.provider?.available && data?.llm !== "live")}
+                  aria-describedby="live-model-help"
+                  onCheckedChange={(live) => act("provider", { mode: live ? "live" : "fake" })}
+                />
+              </div>
+              <p id="live-model-help" className="text-sm text-muted-foreground">
+                {data?.llm === "live"
+                  ? `Future agent runs use ${data?.provider?.model || "the configured model"}. Synthetic case context is sent to the provider; usage may be billed. All business actions remain MOCK.`
+                  : "Off uses the offline demo agent. Turn on to use a real model with the same synthetic cases and simulation clock."}
+              </p>
+              {!data?.provider?.available ? (
+                <p className="text-xs text-muted-foreground">
+                  To enable, set <code>{data?.provider?.missing?.join(" and ") || "OPENAI_API_KEY and RECOUP_MODEL"}</code> on the Python server and restart it. Keep keys out of the browser.
+                </p>
+              ) : (
+                <p className="text-xs text-muted-foreground">
+                  Model: {data.provider.model} · Server key configured, not verified. Switching preserves your progress and makes no model request.
+                </p>
+              )}
+            </div>
             {busy && (
               <p role="status" className="flex items-center gap-2 text-sm">
                 <LoaderCircle className="size-4 animate-spin" />

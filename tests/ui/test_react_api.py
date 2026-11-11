@@ -1,13 +1,15 @@
 """React adapter tests stay offline and use app-built memory Worlds (§6)."""
 
 import json
+from itertools import repeat
 from pathlib import Path
 
 import pytest
 
 from recoup.app import RecoupConfig, build
-from recoup.contracts.interfaces import GateError
+from recoup.contracts.interfaces import GateError, LLMResponse
 from recoup.contracts.money import Money
+from recoup.contracts.testing import ScriptedLLM
 from recoup.ui.api import case_data, dashboard_data, mutate, wire
 
 
@@ -133,7 +135,9 @@ def protocol_handler(database, monkeypatch):
     state = {"snapshots": {":memory:": database}, "built": 0, "closed": 0}
 
     def factory(config):
-        instance = build(RecoupConfig(db=":memory:", llm="fake"))
+        instance = build(config.model_copy(update={"db": ":memory:"}))
+        if config.llm == "live":
+            monkeypatch.setattr(instance.llm, "next", state["live_next"])
         if config.db in state["snapshots"]:
             instance.world.db.deserialize(state["snapshots"][config.db])
         instance.config = instance.config.model_copy(update={"db": config.db})
@@ -174,6 +178,94 @@ def test_http_dispatch_closes_world_and_preserves_prior_simulation(protocol_hand
     handler._api("/api/dashboard")
     assert state["data"]["clock"]["day"] == 2
     assert state["closed"] == state["built"] == 3
+
+
+@pytest.mark.parametrize("missing", ["OPENAI_API_KEY", "RECOUP_MODEL"])
+def test_live_mode_requires_server_configuration(protocol_handler, monkeypatch, missing):
+    handler, state = protocol_handler
+    monkeypatch.setenv("OPENAI_API_KEY", "test-only-key")
+    monkeypatch.setenv("RECOUP_MODEL", "test-model")
+    monkeypatch.delenv(missing)
+
+    handler._api("/api/provider")
+    assert state["data"]["missing"] == [missing]
+    assert not state["data"]["available"]
+    assert "test-only-key" not in json.dumps(state["data"])
+
+    handler._api("/api/provider", {"mode": "live"})
+    assert state["status"] == 400
+    assert missing in state["data"]["error"]
+    assert handler.server.config.llm == "fake"
+    assert state["built"] == 0
+
+    handler._api("/api/provider", {"mode": "live", "api_key": "browser-key"})
+    assert state["status"] == 400
+    assert "browser-key" not in json.dumps(state["data"])
+    assert state["built"] == 0
+
+
+def test_switch_preserves_run_and_uses_selected_model_for_simulation(protocol_handler, monkeypatch):
+    handler, state = protocol_handler
+    monkeypatch.setenv("OPENAI_API_KEY", "test-only-key")
+    monkeypatch.setenv("RECOUP_MODEL", "test-model")
+    monkeypatch.setenv("OPENAI_BASE_URL", "https://example.invalid/v1")
+    calls = []
+    scripted = ScriptedLLM(repeat(LLMResponse(tool_calls=[], model_id="test-model", mode="live")))
+
+    def live_next(system, messages, tools):
+        calls.append(True)
+        return scripted.next(system, messages, tools)
+
+    state["live_next"] = live_next
+    handler._api("/api/cases/H")
+    proposal = next(
+        row["current"] for row in state["data"]["proposals"] if row["current"]["kind"] == "dispute"
+    )
+    payload = {
+        "case_id": "H",
+        "proposal_id": proposal["proposal_id"],
+        "version": proposal["version"],
+    }
+    handler._api("/api/approve", payload)
+    assert state["status"] == 200
+    handler._api("/api/submit", payload)
+    assert state["status"] == 200
+    before = state["data"]
+
+    handler._api("/api/provider", {"mode": "live", "case_id": "H"})
+    assert state["status"] == 200
+    assert state["data"]["dashboard"]["provider"]["mode"] == "live"
+    assert state["data"]["dashboard"]["clock"] == before["dashboard"]["clock"]
+    assert state["data"]["case"]["view"] == before["case"]["view"]
+    assert not calls
+    assert "test-only-key" not in json.dumps(state["data"])
+
+    handler._api("/api/run", {"case_id": "H"})
+    assert state["status"] == 200
+    assert calls
+    assert state["data"]["case"]["agent_runs"][0]["mode"] == "live"
+    calls.clear()
+    handler._api("/api/advance", {"to_next_due": True, "case_id": "H"})
+    assert state["status"] == 200
+    assert state["data"]["dashboard"]["clock"]["day"] == 3
+    assert calls
+    assert any(
+        row["evidence"]["doc_ref"] == "POD" and row["evidence"]["version"] == 2
+        for row in state["data"]["case"]["documents"]
+    )
+    after = state["data"]["case"]["view"]
+    assert after["provenance"] == "synthetic"
+    assert after["receipts"][0]["receipt_id"].startswith("MOCK-")
+
+    calls.clear()
+    handler._api("/api/provider", {"mode": "fake", "case_id": "H"})
+    assert state["status"] == 200
+    assert state["data"]["dashboard"]["provider"]["mode"] == "fake"
+    assert state["data"]["dashboard"]["clock"]["day"] == 3
+    assert state["data"]["case"]["view"] == after
+    assert handler.server.config.db == ":memory:"
+    assert not calls
+    assert state["closed"] == state["built"]
 
 
 def test_http_service_gate_is_structured_and_connection_is_closed(protocol_handler):

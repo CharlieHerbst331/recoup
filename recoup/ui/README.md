@@ -11,11 +11,25 @@ npm --prefix recoup/ui/frontend run build
 RECOUP_LLM=fake .venv/bin/python -m recoup.ui.server --port 8501 --db runs/your-demo.db
 ```
 
-Open `http://127.0.0.1:8501`. The server binds to localhost only. Dashboard shows
-all loaded cases with searchable filters, current approval tags, MOCK submission
-tags, and checklist or review gaps. Counts are case counts, while case tags show
-the number of drafts or receipts. On a narrow screen, use **Toggle navigation**
-to open the case list and **Simulation lab**.
+Open `http://127.0.0.1:8501`. The server binds to localhost only. Use the case
+list to review work and **Toggle navigation → Demo controls** to run the simulation.
+
+## Use a real model with the demo
+
+The demo starts with the offline agent. To enable **Real LLM** in **Demo controls**,
+set `OPENAI_API_KEY` and `RECOUP_MODEL` in the Python server's environment, then
+restart it with the command above. To resume a saved run, pass the database path
+shown in **Run settings** to `--db`. Use a model your key can access that supports
+tool calls. Keep the key on the server
+([OpenAI authentication docs](https://developers.openai.com/api/reference/overview)).
+
+Switching modes keeps your database, simulation day, approvals, and receipts and
+makes no model request. The next agent run uses the selected mode, including runs
+triggered by loading cases or advancing time. Live mode sends synthetic case
+context to the configured model provider and may incur usage charges. Business
+actions are still MOCK and require the existing approvals. Without server
+configuration, the switch is disabled and shows what to set. The switch is for
+the current server session; start in `RECOUP_LLM=fake` for the recorded walkthrough.
 
 ## Two-minute demo
 
@@ -37,15 +51,16 @@ The navigation menu holds **Demo controls** for manual time, agent runs, and sav
 runs; **Run settings → Start fresh demo** preserves earlier databases.
 
 [DEMO_SCRIPT.md](DEMO_SCRIPT.md) is the two-minute recording path. Existing policy,
-readiness, approval, and financial behavior follows design/02 §4–§6. This UI step
-changes presentation only; source data and the offline agent behavior are unchanged.
+readiness, approval, and financial behavior follows design/02 §4–§6.
 
 ## Components and development
 
 `frontend/src/components/ui` contains the actual components installed from the
 [official shadcn registry](https://ui.shadcn.com/docs/installation/vite), plus its
 MIT license and shared styles. Product screens compose these primitives; theme
-tokens live in `frontend/src/index.css`. Ramp is not included.
+tokens live in `frontend/src/index.css`. The supplied Recoup lockup and Ramp
+symbol are used in the header, with a scroll reveal that respects reduced motion.
+The [reference artwork](frontend/public/brand/README.md) is retained with its provenance.
 
 Contract models, gates, money calculations, and action execution remain in the
 Python service. `api.py` supplies presentation data, formats USD in Python, and

@@ -12,9 +12,12 @@ from pathlib import Path
 from urllib.parse import unquote, urlparse
 from uuid import uuid4
 
+from openai import OpenAIError
+
 from recoup.app import RecoupConfig, build
 from recoup.contracts.interfaces import GateError, TransientError
 from recoup.ui.api import case_data, dashboard_data, mutate
+from recoup.ui.provider import provider_status, select_provider
 from recoup.ui.reviewer import update_summary
 
 DIST = Path(__file__).resolve().parent / "frontend/dist"
@@ -43,7 +46,12 @@ class UIHandler(BaseHTTPRequestHandler):
         config = self.server.config
         try:
             action = path.removeprefix("/api/")
-            if payload is not None and action == "fresh":
+            if action == "provider":
+                if payload is None:
+                    self._json(provider_status(config))
+                    return
+                config = select_provider(config, payload)
+            elif payload is not None and action == "fresh":
                 config = config.model_copy(
                     update={"db": str(ROOT / f"runs/simulation-{uuid4().hex}.db")}
                 )
@@ -54,11 +62,15 @@ class UIHandler(BaseHTTPRequestHandler):
                 config = config.model_copy(update={"db": path_value})
             service = build(config)
             try:
+                if config.llm == "live" and any(
+                    case.provenance != "synthetic" for case in service.world.list_cases()
+                ):
+                    raise ValueError("Live UI mode requires a synthetic simulation database.")
                 if payload is not None:
                     before = service.world.list_cases()
                     if action == "fresh":
                         mutate(service, "load", {})
-                    elif action != "open_database":
+                    elif action not in {"open_database", "provider"}:
                         mutate(service, action, payload)
                     result = {
                         "dashboard": dashboard_data(service),
@@ -89,7 +101,23 @@ class UIHandler(BaseHTTPRequestHandler):
         except (ValueError, KeyError, LookupError, TypeError) as exc:
             self._json({"error": str(exc)}, 400)
         except (TransientError, OSError, sqlite3.Error) as exc:
-            self._json({"error": str(exc)}, 503)
+            self._json(
+                {
+                    "error": "Live run failed; check the server configuration."
+                    if config.llm == "live"
+                    else str(exc)
+                },
+                503,
+            )
+        except OpenAIError:
+            # Provider exceptions can contain credentials or response/request details.
+            self._json(
+                {
+                    "error": "The model request failed. Check the server key, model, and provider. "
+                    "Review case activity before retrying, or switch back to offline mode."
+                },
+                502,
+            )
 
     def do_GET(self) -> None:
         path = urlparse(self.path).path
