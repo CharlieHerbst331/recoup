@@ -1426,3 +1426,70 @@ ahead and none behind its remote. Publication uses the existing
 DONE: Updated the session handoff and prepared all 18 owned files for the user-requested commit/push; fresh make check and regression 8/8 pass.
 NEXT: Push this publication commit, verify remote equality and a clean working tree, then stop for reviewer/verifier review.
 QUESTION: None for this publication; real OCR and live-model acceptance remain unclaimed.
+
+## Queued investigation diagnosis — 2026-11-10 (America/Los_Angeles)
+
+User-authorized one-step engine handoff: `recoup/engine/scheduler.py`,
+`tests/engine/test_scheduler_reinvestigation.py`, and this log. Read root/engine
+AGENTS, specs/007, design/01, design/02 §2, §4.4–4.5, §5.1–5.2, §5.6–5.10,
+Sonny's session handoff, and Carter's shared-backend handoff/progress. Existing
+uncommitted adapter/harness/UI/deployment work is preserved.
+
+Read-only production inspection via the Vercel Sandbox skill: launcher deployment
+`dpl_3JJcHMemRNsS1Pe72qcLk3KY15Sb` is READY; current named Sandbox session
+`sbx_RlF65jLsUboRjifZEd2mbhyqOSae` is running and backend health returns 200.
+All 101 model-call traces match their exact request-keyed recording JSON, with
+zero missing/mismatched files; all report live `claude-haiku-5-5`. Zero approvals
+and receipts. Production fixture/recorder SHA-256 values match local sources.
+No provider requests, secret reads, production case writes, or deployment edits.
+
+Actual stops: H/N report recording unavailable/conflicting, unmet=[]; C reports
+loop, unmet=[]. H's current first request hashes to
+`e625f16cb694077a01640755e66177e36e40db62045305810ddd97061048376d`, N's to
+`3b78c491684f1a21081fbb7cda7e2210bd6a840c5d3ad52849efb3361474363f`;
+both recording files exist. Reconstructed requests used only an app-built
+in-memory backup of the read-only production DB, without agent execution.
+The recorder compares entire serialized responses including latency. Rejected
+responses were not retained, so metadata-only versus substantive differences
+cannot be determined from the saved artifacts. C's final model turn 3 repeats
+`readiness(kind=dispute,line_id=D1)` after propose_decision; tool steps 8 and 10
+have identical args/results. Its missing dispute finding is consistent with a
+valid credit-only line, not missing case information. Repeated scheduler events
+continued after earlier accepted ends: H=12 events/6 accepted ends/34 model calls;
+C=10/2/44; N=6/4/23. These counts substantiate redundant investigation, not a
+provider outage or a need for invented human-input files.
+
+Evidence-backed product recommendation (unchanged rules; design/02 §5.3–5.6):
+H disputes D1 312000 cents: EV-H-BOL-v1 fields.shipped.SKU-1=400,
+EV-H-POD-v1 fields.signed=true and fields.received.SKU-1=400;
+EV-H-REM-v1 fields.ded.1.qty=40/claimed_cents=312000, and EV-H-TERMS-v1
+fields.price.SKU-1_cents=7800. H credits D2 180000/disputes 132000 cents:
+EV-H-TERMS-v1 fields.promo.FALL26.earned=true/cap_cents=180000 versus
+EV-H-REM-v1 fields.ded.2.claimed_cents=312000. C credits 50000 cents:
+EV-C-PRICE%2DAMENDMENT-v1 fields.authority_role="VP Sales",
+fields.effective_date="2026-08-15", fields.price.SKU-7_cents=1000;
+EV-C-COMPANY-v1 fields.allowed_authority_roles="VP Sales,Finance Director";
+EV-C-INV-v1 fields.invoice_date="2026-09-01", fields.line.1.qty=1000 and
+fields.line.1.unit_price_cents=1050. N's 215000-cent difference is unexplained:
+EV-N-INV-v1 fields.total_cents=2000000 versus EV-N-PAY-v1 fields.paid_cents=1785000.
+Request a remittance/debit memo specifying the deduction reason and supporting
+line-level evidence; do not assert either a valid concession or a dispute.
+All outward drafts/book changes retain explicit approval-bound MOCK submission.
+
+Decision: reuse an accepted investigation only within the same chronological
+scheduler drain when the entire CaseView, FactSet, ledger and recipient lists
+match. Trace every reused event with its source event id, acknowledge it in its
+own transaction, and retain scheduling/buyer-reply handling. Failed/budget/loop
+runs are never cached; due work and explicit investigations execute normally.
+No recording comparison, loop guard, contract, fixture, model fallback, money
+calculation, approval requirement or dependency was changed. Existing production
+needs_human records are preserved; this local patch is not deployed and no new
+live-model completion or complete live replay is claimed.
+
+DONE: 2026-11-10 one-step scheduler reuse of accepted investigations for unchanged queued case state (design/02 §4.5, §5.2, §5.7–5.9); production causes/recording fidelity and evidence-backed H/C/N recommendations inspected above. make check PYTHON=/tmp/recoup-007-check/bin/python PASS: Ruff lint/format, 1154 passed, 2 existing optional OCR skips in 160.54s; focused scheduler suite 35 passed. Changed only recoup/engine/scheduler.py, tests/engine/test_scheduler_reinvestigation.py and progress/sonny/PROGRESS.md; prior uncommitted work preserved.
+NEXT: Stop after this implementation step. Local patch is ready for review; production still runs its existing source and retains its original needs_human records. A future rollout/live run must verify model completion without rewriting historical traces, recordings or statuses.
+QUESTION: None; no credential, protected-file change, dependency or irreversible action was required.
+
+DONE: Prepared the user-requested Git publication of the queued-investigation fix and its regression tests; previous make check passed (1154 passed, 2 optional OCR skips).
+NEXT: Push the focused commit to origin/sonny/live-model, verify remote equality, and stop; leave other uncommitted work untouched.
+QUESTION: None.
