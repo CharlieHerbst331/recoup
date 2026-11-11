@@ -12,6 +12,18 @@ ROOT = Path(__file__).resolve().parents[2]
 SCRIPT = ROOT / "recoup" / "ui" / "streamlit_app.py"
 
 
+@pytest.fixture(scope="module")
+def loaded_h_database():
+    # Navigation tests exercise rendering/reruns, not agent fixture construction
+    # inside Streamlit's script deadline. Demo loading is tested separately below.
+    service = app.build(app.RecoupConfig(db=":memory:", llm="fake"))
+    try:
+        service.load([str(ROOT / "cases" / "demo" / "H")])
+        return service.world.db.serialize()
+    finally:
+        service.world.close()
+
+
 @pytest.fixture
 def tracked_app(monkeypatch):
     monkeypatch.setenv("RECOUP_LLM", "fake")
@@ -43,7 +55,7 @@ def test_empty_queue_banners_db_override_and_service_per_rerun(tracked_app):
     assert configs[0].db == "runs/demo.db"
     assert configs[0].llm == "fake"
     assert [element.value for element in page.info] == [
-        "No cases loaded. Use the sidebar to load the SYNTHETIC demo cases.",
+        "No cases loaded. Load demo cases in the Simulation lab or start a fresh simulation above.",
     ]
     banner = " ".join(item.proto.body for item in page.get("html"))
     for label in (
@@ -51,7 +63,7 @@ def test_empty_queue_banners_db_override_and_service_per_rerun(tracked_app):
         "LLM: fake",
         "SYNTHETIC DATA",
         "MOCK actions",
-        "Not sent to any real system",
+        "MOCK ACKNOWLEDGMENT — not sent to any real system",
     ):
         assert label in banner
     assert closed == services
@@ -103,13 +115,13 @@ def test_render_failure_still_closes_world(tracked_app, monkeypatch):
     assert closed == services
 
 
-def test_quarantine_has_its_own_table(tracked_app, monkeypatch):
+def test_quarantine_has_its_own_table(tracked_app, loaded_h_database, monkeypatch):
     page, _, services, closed = tracked_app
     tracked_build = app.build
 
     def build(config):
         service = tracked_build(config)
-        service.load([str(ROOT / "cases" / "demo" / "H")])
+        service.world.db.deserialize(loaded_h_database)
         service.load([str(ROOT / "cases" / "regression" / "r08")])
         return service
 
@@ -127,14 +139,16 @@ def test_quarantine_has_its_own_table(tracked_app, monkeypatch):
     assert closed == services
 
 
-def test_pick_case_opens_details_and_back_returns_to_queue(tracked_app, monkeypatch):
+def test_pick_case_opens_details_and_back_returns_to_queue(
+    tracked_app, loaded_h_database, monkeypatch
+):
     page, _, services, closed = tracked_app
     tracked_build = app.build
     histories, views = [], []
 
     def build(config):
         service = tracked_build(config)
-        service.load([str(ROOT / "cases" / "demo" / "H")])
+        service.world.db.deserialize(loaded_h_database)
         real_history = service.history
 
         def history(case_id):
@@ -148,7 +162,7 @@ def test_pick_case_opens_details_and_back_returns_to_queue(tracked_app, monkeypa
 
     monkeypatch.setattr(app, "build", build)
     page.run()
-    assert page.title[0].value == "Cases"
+    assert page.title[0].value == "Case dashboard"
     page.radio(key="selected_case").set_value("H").run()
     assert not page.exception
     assert not page.error
@@ -174,8 +188,8 @@ def test_pick_case_opens_details_and_back_returns_to_queue(tracked_app, monkeypa
         )
     assert any("SYNTHETIC DATA" in item.proto.body for item in page.get("html"))
     assert closed == services
-    next(button for button in page.button if button.label == "Back to queue").click().run()
+    page.sidebar.button(key="dashboard_home").click().run()
     assert not page.exception
-    assert page.title[0].value == "Cases"
+    assert page.title[0].value == "Case dashboard"
     assert page.radio(key="selected_case").value is None
     assert closed == services

@@ -1,0 +1,197 @@
+{
+  "case_id": "H",
+  "title": "SYNTHETIC — Invalid shortage deduction: buyer repays $3,120",
+  "seller": "Acme Foods Co.",
+  "buyer": "Northwind Grocers",
+  "currency": "USD",
+  "invoice_ref": "INV-1042",
+  "start_date": "2026-10-20",
+  "static_day": 0,
+  "policy_ref": null,
+  "allowed_recipients": {
+    "mock_buyer_portal": [
+      "buyer-portal.invalid"
+    ],
+    "mock_erp": [
+      "erp.invalid"
+    ],
+    "mock_email": [
+      "ar@example.invalid",
+      "shipping@example.invalid",
+      "buyer@example.invalid"
+    ],
+    "mock_insurer": [
+      "insurer@example.invalid"
+    ]
+  },
+  "docs": [
+    {
+      "doc_ref": "INV",
+      "version": 1,
+      "kind": "invoice",
+      "title": "SYNTHETIC — INV-1042",
+      "file": null,
+      "text": "SYNTHETIC document for the reviewer demo. Acme Foods Co. invoice INV-1042, issued to Northwind Grocers on 2026-08-03; payment due 2026-09-02. 400 cases of Tomato sauce, 12-jar cases (SKU-1). 200 cases of Roasted pepper sauce, 12-jar cases (SKU-2). Amounts and unit prices are recorded in the structured invoice fields below.",
+      "fields": {
+        "invoice_no": "INV-1042",
+        "invoice_date": "2026-08-03",
+        "due_date": "2026-09-02",
+        "buyer_id": "NORTHWIND",
+        "total_cents": 4800000,
+        "line.1.sku": "SKU-1",
+        "line.1.qty": 400,
+        "line.1.unit_price_cents": 7800,
+        "line.2.sku": "SKU-2",
+        "line.2.qty": 200,
+        "line.2.unit_price_cents": 8400,
+        "line.1.description": "Tomato sauce, 12-jar cases",
+        "line.2.description": "Roasted pepper sauce, 12-jar cases"
+      },
+      "available_at_day": 0,
+      "held_by": null
+    },
+    {
+      "doc_ref": "PAY",
+      "version": 1,
+      "kind": "payment",
+      "title": "SYNTHETIC — Payment against INV-1042",
+      "file": null,
+      "text": "SYNTHETIC — Northwind paid $44,880 of invoice INV-1042 and withheld $3,120 for 40 allegedly missing cases of SKU-1. The delivery record will be checked before any credit is authorized.",
+      "fields": {
+        "invoice_no": "INV-1042",
+        "paid_cents": 4488000,
+        "paid_date": "2026-09-02",
+        "payment_ref": "PAY-INV-1042"
+      },
+      "available_at_day": 0,
+      "held_by": null
+    },
+    {
+      "doc_ref": "REM",
+      "version": 1,
+      "kind": "remittance",
+      "title": "SYNTHETIC — Remittance against INV-1042",
+      "file": null,
+      "text": "SYNTHETIC — Northwind withheld $3,120 on INV-1042 for 40 allegedly missing cases of SKU-1. This is the only deduction. Its signed receiving record reports all 400 cases received.",
+      "fields": {
+        "invoice_no": "INV-1042",
+        "paid_cents": 4488000,
+        "ded.1.line_id": "D1",
+        "ded.1.reason": "shortage",
+        "ded.1.claimed_cents": 312000,
+        "ded.1.sku": "SKU-1",
+        "ded.1.qty": 40
+      },
+      "available_at_day": 0,
+      "held_by": null
+    },
+    {
+      "doc_ref": "TERMS",
+      "version": 1,
+      "kind": "contract",
+      "title": "SYNTHETIC — Sales terms",
+      "file": null,
+      "text": "SYNTHETIC document for the reviewer demo. Signed Acme sales terms. Prices are fixed by SKU; an amendment from an authorized sales officer can change the applicable terms. The FALL26 rebate is earned but is capped at $1,800 in this copy of the agreement.",
+      "fields": {
+        "contract_id": "ACME-TERMS",
+        "effective_date": "2026-01-01",
+        "price.SKU-1_cents": 7800,
+        "price.SKU-2_cents": 8400,
+        "promo.FALL26.cap_cents": 180000,
+        "promo.FALL26.earned": true,
+        "damage_window_days": 7
+      },
+      "available_at_day": 0,
+      "held_by": null
+    },
+    {
+      "doc_ref": "BOL",
+      "version": 1,
+      "kind": "bol",
+      "title": "SYNTHETIC — Bill of lading",
+      "file": null,
+      "text": "SYNTHETIC document for the reviewer demo. Acme shipping records show 400 cases of SKU-1 and 200 cases of SKU-2 dispatched for Northwind on August 3. Compare this record with the receiving record before resolving a shortage.",
+      "fields": {
+        "bol_no": "BOL-1042",
+        "ship_date": "2026-08-03",
+        "shipped.SKU-1": 400,
+        "shipped.SKU-2": 200
+      },
+      "available_at_day": 0,
+      "held_by": null
+    },
+    {
+      "doc_ref": "POD",
+      "version": 1,
+      "kind": "pod",
+      "title": "SYNTHETIC — Proof of delivery v1",
+      "file": null,
+      "text": "SYNTHETIC document for the reviewer demo. The first receiving record says the Northwind delivery was signed for, with 400 cases of SKU-1 and 200 cases of SKU-2 received. No refused cases are recorded in this version.",
+      "fields": {
+        "pod_no": "POD-SYNTHETIC",
+        "delivered_date": "2026-08-05",
+        "signed": true,
+        "received.SKU-1": 400,
+        "received.SKU-2": 200
+      },
+      "available_at_day": 0,
+      "held_by": null
+    },
+    {
+      "doc_ref": "COMPANY",
+      "version": 1,
+      "kind": "company_policy",
+      "title": "SYNTHETIC — Acme collection and authority policy",
+      "file": null,
+      "text": "SYNTHETIC document for the reviewer demo. Acme AR reviews each deduction against source records. Only VP Sales or Finance Director may amend commercial terms. Follow up 14 days after outgoing correspondence when no buyer reply has arrived. Human approval is required for MOCK external actions.",
+      "fields": {
+        "tolerance_cents": 0,
+        "follow_up_days": 14,
+        "authority_cents": 100000,
+        "allowed_authority_roles": "VP Sales,Finance Director",
+        "amendment_precedence": "latest_effective",
+        "demo_scenario": "reviewer-v2",
+        "demo_outcome": "Invalid buyer deduction"
+      },
+      "available_at_day": 0,
+      "held_by": null
+    }
+  ],
+  "events": [
+    {
+      "at_day": 3,
+      "type": "add_doc",
+      "doc": {
+        "doc_ref": "BUYER-ACK",
+        "version": 1,
+        "kind": "email",
+        "title": "SYNTHETIC — Northwind accepts the delivery evidence",
+        "text": "SYNTHETIC — To Acme AR: we matched your signed POD to our receiving log. All 400 cases of SKU-1 were received. The $3,120 shortage deduction was an AP matching error. We have released the withheld amount; bank reference NW-1042-REP is supplied separately.",
+        "fields": {
+          "from": "buyer@example.invalid",
+          "to": "ar@example.invalid",
+          "sent_date": "2026-10-23",
+          "invoice_no": "INV-1042"
+        }
+      }
+    },
+    {
+      "at_day": 3,
+      "type": "add_doc",
+      "doc": {
+        "doc_ref": "REPAYMENT",
+        "version": 1,
+        "kind": "payment",
+        "title": "SYNTHETIC — Northwind repayment — bank confirmation",
+        "text": "SYNTHETIC — Simulated bank confirmation NW-1042-REP: $3,120 received from Northwind against INV-1042 on October 23. This payment clears the previously withheld deduction. It is scheduled synthetic bank evidence, not a payment caused by clicking Submit.",
+        "fields": {
+          "invoice_no": "INV-1042",
+          "paid_cents": 312000,
+          "paid_date": "2026-10-23",
+          "payment_ref": "NW-1042-REP"
+        }
+      }
+    }
+  ],
+  "provenance": "synthetic"
+}

@@ -3,6 +3,7 @@
 import sqlite3
 from html import escape
 from pathlib import Path
+from uuid import uuid4
 
 import streamlit as st
 
@@ -10,10 +11,9 @@ from recoup.app import Recoup, RecoupConfig, build
 from recoup.contracts.interfaces import GateError, TransientError
 from recoup.contracts.money import fmt
 from recoup.ui.case_page import render_case
+from recoup.ui.dashboard import approval_count, approved_count, render_dashboard
 from recoup.ui.queue import (
     case_label,
-    display_title,
-    format_case,
     format_clock,
     format_quarantine,
     sort_cases,
@@ -22,29 +22,62 @@ from recoup.ui.queue import (
 DEMO_ROOT = Path(__file__).resolve().parents[2] / "cases" / "demo"
 
 
-def _sidebar_controls(service: Recoup, selected: str | None) -> None:
-    with st.sidebar.expander("Simulation controls"):
-        st.divider()
-        st.caption("Simulation")
-        days = st.number_input("Days", min_value=1, value=1, step=1, key="advance_days")
-        if st.button("Advance N days", key="advance_n_days"):
-            with st.spinner(f"Advancing {days} days…"):
-                service.advance(days=days)
-            st.rerun()
-
+def _sidebar_controls(service: Recoup, selected: str | None, lab) -> None:
+    with lab:
+        st.write(
+            f"**Day {service.world.clock.day()} · {service.world.clock.now().date():%b %d, %Y}**"
+        )
         due_day = service.next_due_day()
         st.caption(
             f"Next due: day {due_day}" if due_day is not None else "Next due: none scheduled."
         )
-        if st.button("Advance to next due", key="advance_next_due", disabled=due_day is None):
+        if st.button(
+            "Advance to next due",
+            key="advance_next_due",
+            disabled=due_day is None,
+            type="primary",
+            width="stretch",
+            help="Move all cases to the next scheduled event or due task, then run the agent.",
+        ):
             with st.spinner("Advancing to next due…"):
                 service.advance(to_next_due=True)
-            st.rerun()
-
-        if st.button("Run agent", key="run_agent", disabled=selected is None):
+            _refresh(
+                "Simulation advanced to the next due item. Check updated drafts and checklists."
+            )
+        st.caption(
+            "Advancing time releases scheduled evidence and runs the agent "
+            "automatically for all cases."
+        )
+        with st.expander("Advance a specific number of days"):
+            days = st.number_input("Days", min_value=1, value=1, step=1, key="advance_days")
+            if st.button("Advance N days", key="advance_n_days", width="stretch"):
+                with st.spinner(f"Advancing {days} days…"):
+                    service.advance(days=days)
+                _refresh(f"Advanced {days} days. All loaded cases have been refreshed.")
+        if st.button("Run agent", key="run_agent", disabled=selected is None, width="stretch"):
             with st.spinner(f"Running agent for case {selected}…"):
                 service.run(selected)
-            st.rerun()
+            _refresh(f"Agent finished reviewing case {selected}.")
+        st.caption(
+            f"Run agent reviews case {selected}." if selected else "Open a case to run its agent."
+        )
+
+
+def _refresh(message: str) -> None:
+    st.session_state.simulation_notice = message
+    st.rerun()
+
+
+def _open_case(case_id: str) -> None:
+    st.session_state.selected_case = case_id
+
+
+def _start_simulation() -> None:
+    st.session_state.db_path = f"runs/simulation-{uuid4().hex}.db"
+    st.session_state.selected_case = None
+    st.session_state.case_search = ""
+    st.session_state.case_filter = "All cases"
+    st.session_state.start_demo = True
 
 
 def _style() -> None:
@@ -103,6 +136,13 @@ def _style() -> None:
         font-size: .8rem; color: #60605a; padding-bottom: 1.2rem;
         border-bottom: 1px solid #e4e4df; margin-bottom: .5rem;
     }
+    .st-key-hub-metrics [data-testid="stMetric"] {
+        background: #f5f5f2; border: 1px solid #e4e4df;
+        border-radius: 8px; padding: .75rem 1rem;
+    }
+    .st-key-simulation-guide { background: #f9faed; }
+    [class*="st-key-hub-case-"] h3 { margin-bottom: 0; }
+    .st-key-simulation-lab { background: #f2f4df; }
     .recoup-provenance strong { color: #191919; background: #f1f4c3; padding: .25rem .5rem; }
     .recoup-provenance span { white-space: normal; }
     .recoup-state { display: inline-block; padding: .3rem .65rem; border-radius: 16px;
@@ -116,6 +156,13 @@ def _style() -> None:
         [data-testid="stMainBlockContainer"] { padding: 4rem 1rem 3rem; }
         h1 { font-size: 1.5rem !important; }
         .recoup-provenance { gap: .4rem .7rem; margin-bottom: 1rem; }
+        .st-key-hub-metrics [data-testid="stHorizontalBlock"] {
+            flex-direction: row; flex-wrap: wrap; gap: .5rem;
+        }
+        .st-key-hub-metrics [data-testid="stColumn"] {
+            flex: 1 1 calc(50% - .5rem); min-width: calc(50% - .5rem);
+            width: calc(50% - .5rem);
+        }
     }
     </style>""")
 
@@ -126,37 +173,48 @@ def _provenance(service: Recoup, config: RecoupConfig) -> None:
         '<div class="recoup-provenance" role="note" aria-label="Demo provenance">'
         "<strong>SYNTHETIC DATA</strong><span>MOCK actions</span>"
         f"<span>LLM: {escape(config.llm)}</span><span>{clock}</span>"
-        "<span>Not sent to any real system · Cash collected: $0.00</span></div>"
+        "<span>MOCK ACKNOWLEDGMENT — not sent to any real system</span>"
+        "<span>Cash collected: $0.00</span></div>"
     )
 
 
 def main() -> None:
-    st.set_page_config(page_title="Recoup · Cases", layout="wide", initial_sidebar_state="expanded")
+    st.set_page_config(
+        page_title="Recoup · Dashboard", layout="wide", initial_sidebar_state="expanded"
+    )
     _style()
     st.sidebar.title("Recoup")
+    st.sidebar.caption("Case workbench")
+    st.sidebar.button("Dashboard", key="dashboard_home", on_click=_clear_case, width="stretch")
     navigation = st.sidebar.container()
-    with st.sidebar.expander("Demo controls"):
+    lab = st.sidebar.container(border=True, key="simulation-lab")
+    with lab:
+        st.subheader("Simulation lab")
+        st.caption("Test with SYNTHETIC cases and MOCK actions. Nothing is sent externally.")
+        load_demo = st.button("Load demo cases H, C and N", key="load_demo", width="stretch")
+    with st.sidebar.expander("Database settings"):
         db = st.text_input(
             "Database path", value="runs/demo.db", key="db_path", on_change=_clear_case
         )
-        load_demo = st.button("Load demo cases H, C and N", key="load_demo")
 
     try:
         config = RecoupConfig.from_env().model_copy(update={"db": db})
         service = build(config)
         try:
-            if load_demo:
+            if load_demo or st.session_state.pop("start_demo", False):
                 with st.spinner("Loading SYNTHETIC demo cases…"):
                     results = service.load(
                         [str(DEMO_ROOT / case_id) for case_id in ("H", "C", "N")]
                     )
                 for result in results:
-                    st.sidebar.info(
+                    lab.info(
                         f"{result.case_id}: {result.status}"
                         + (f" — {result.reason}" if result.reason else "")
                     )
 
             _provenance(service, config)
+            if notice := st.session_state.pop("simulation_notice", None):
+                st.success(notice)
             cases = sort_cases(service.world.list_cases())
             by_id = {case.case_id: case for case in cases}
             with navigation:
@@ -166,37 +224,26 @@ def main() -> None:
                     options=list(by_id),
                     index=None,
                     format_func=lambda case_id: case_label(by_id[case_id]),
-                    captions=[f"{fmt(case.open_balance)} · Case {case.case_id}" for case in cases],
+                    captions=[
+                        f"{fmt(case.open_balance)} · Case {case.case_id}"
+                        + (
+                            f" · Needs approval ({approval_count(case)})"
+                            if approval_count(case)
+                            else ""
+                        )
+                        + (f" · Approved ({approved_count(case)})" if approved_count(case) else "")
+                        for case in cases
+                    ],
                     key="selected_case",
                     label_visibility="collapsed",
                     width="stretch",
                 )
-            _sidebar_controls(service, selected)
+            _sidebar_controls(service, selected, lab)
             if selected is not None:
-                navigation.button("Back to queue", on_click=_clear_case, type="tertiary")
                 render_case(service.world.view(selected), service.history(selected), service)
                 return
 
-            st.title("Cases")
-            st.caption("Sorted by earliest pending due date, then highest open balance.")
-            if cases:
-                rows = [format_case(case) for case in cases]
-                st.dataframe(
-                    [
-                        {
-                            "Case": row["Case"],
-                            "Customer": row["Buyer"],
-                            "Issue": display_title(row["Title"]),
-                            "Open balance (USD)": row["Open balance (USD)"],
-                            "Next due": row["Next due (UTC)"],
-                        }
-                        for row in rows
-                    ],
-                    hide_index=True,
-                    width="stretch",
-                )
-            else:
-                st.info("No cases loaded. Use the sidebar to load the SYNTHETIC demo cases.")
+            render_dashboard(cases, _open_case, _start_simulation)
 
             st.subheader("Imports needing attention")
             quarantined = service.world.list_quarantined()

@@ -673,7 +673,7 @@ class ToolSession:
             if not any(
                 old.business_key == p.business_key
                 and old.evidence_set_hash == facts.basis_hash
-                and old.status in {"proposed", "approved"}
+                and old.status in {"proposed", "approved", "submitted_mock"}
                 for old in view.proposals
             ):
                 unmet.append(p.business_key)

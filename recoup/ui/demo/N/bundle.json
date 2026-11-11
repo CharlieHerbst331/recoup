@@ -1,0 +1,197 @@
+{
+  "case_id": "N",
+  "title": "SYNTHETIC — Valid pricing credit plus overdue debt: insurance response",
+  "seller": "Acme Foods Co.",
+  "buyer": "Juniper Provisions",
+  "currency": "USD",
+  "invoice_ref": "INV-3157",
+  "start_date": "2026-10-20",
+  "static_day": 0,
+  "policy_ref": "P-JUNIPER",
+  "allowed_recipients": {
+    "mock_buyer_portal": [
+      "buyer-portal.invalid"
+    ],
+    "mock_erp": [
+      "erp.invalid"
+    ],
+    "mock_email": [
+      "ar@example.invalid",
+      "shipping@example.invalid",
+      "buyer@example.invalid"
+    ],
+    "mock_insurer": [
+      "insurer@example.invalid"
+    ]
+  },
+  "docs": [
+    {
+      "doc_ref": "INV",
+      "version": 1,
+      "kind": "invoice",
+      "title": "SYNTHETIC — INV-3157",
+      "file": null,
+      "text": "SYNTHETIC document for the reviewer demo. Acme Foods Co. invoice INV-3157, issued to Juniper Provisions on 2026-09-01; payment due 2026-09-30. 200 cases of Specialty pantry assortment (SKU-N). Amounts and unit prices are recorded in the structured invoice fields below.",
+      "fields": {
+        "invoice_no": "INV-3157",
+        "invoice_date": "2026-09-01",
+        "due_date": "2026-09-30",
+        "buyer_id": "JUNIPER-PROVISIONS",
+        "total_cents": 2000000,
+        "line.1.sku": "SKU-N",
+        "line.1.qty": 200,
+        "line.1.unit_price_cents": 10000,
+        "line.1.description": "Specialty pantry assortment"
+      },
+      "available_at_day": 0,
+      "held_by": null
+    },
+    {
+      "doc_ref": "PAY",
+      "version": 1,
+      "kind": "payment",
+      "title": "SYNTHETIC — Payment against INV-3157",
+      "file": null,
+      "text": "SYNTHETIC — Juniper paid $12,850 of INV-3157. The $7,150 difference consists of a $2,150 agreed pricing deduction and $5,000 still owed. The remaining $5,000 is delayed for cash-flow reasons, not a further deduction.",
+      "fields": {
+        "invoice_no": "INV-3157",
+        "paid_cents": 1285000,
+        "paid_date": "2026-09-10",
+        "payment_ref": "PAY-INV-3157"
+      },
+      "available_at_day": 0,
+      "held_by": null
+    },
+    {
+      "doc_ref": "COMPANY",
+      "version": 1,
+      "kind": "company_policy",
+      "title": "SYNTHETIC — Acme collection and authority policy",
+      "file": null,
+      "text": "SYNTHETIC document for the reviewer demo. Acme AR reviews each deduction against source records. Only VP Sales or Finance Director may amend commercial terms. Follow up 14 days after outgoing correspondence when no buyer reply has arrived. Human approval is required for MOCK external actions.",
+      "fields": {
+        "tolerance_cents": 0,
+        "follow_up_days": 14,
+        "authority_cents": 100000,
+        "allowed_authority_roles": "VP Sales,Finance Director",
+        "amendment_precedence": "latest_effective",
+        "demo_scenario": "reviewer-v2",
+        "demo_outcome": "Valid credit + overdue debt"
+      },
+      "available_at_day": 0,
+      "held_by": null
+    },
+    {
+      "doc_ref": "TERMS",
+      "version": 1,
+      "kind": "contract",
+      "title": "SYNTHETIC — Pantry assortment supply agreement",
+      "file": null,
+      "text": "SYNTHETIC — The original supply agreement lists the pantry assortment at $100.00 per case. Any change must be documented by an authorized officer.",
+      "fields": {
+        "contract_id": "ACME-TERMS",
+        "effective_date": "2026-01-01",
+        "price.SKU-N_cents": 10000
+      },
+      "available_at_day": 0,
+      "held_by": null
+    },
+    {
+      "doc_ref": "PRICE-AMENDMENT",
+      "version": 1,
+      "kind": "amendment",
+      "title": "SYNTHETIC — Juniper signed price amendment",
+      "file": null,
+      "text": "SYNTHETIC — Finance Director Elena Ruiz approved the pantry assortment at $89.25 per case effective August 20, before INV-3157. The approved amendment applies to the 200-case shipment.",
+      "fields": {
+        "amends": "ACME-TERMS",
+        "effective_date": "2026-08-20",
+        "authorized_by": "Elena Ruiz",
+        "authority_role": "Finance Director",
+        "price.SKU-N_cents": 8925
+      },
+      "available_at_day": 0,
+      "held_by": null
+    },
+    {
+      "doc_ref": "REM",
+      "version": 1,
+      "kind": "remittance",
+      "title": "SYNTHETIC — Juniper deduction and unpaid balance",
+      "text": "SYNTHETIC — The buyer applied the signed $89.25 case price, creating a valid $2,150 pricing deduction. A separate $5,000 remains unpaid. The unpaid balance is not another pricing concession.",
+      "fields": {
+        "invoice_no": "INV-3157",
+        "paid_cents": 1285000,
+        "ded.1.line_id": "D1",
+        "ded.1.reason": "pricing",
+        "ded.1.claimed_cents": 215000,
+        "ded.1.sku": "SKU-N",
+        "ded.2.line_id": "NP",
+        "ded.2.reason": "nonpayment",
+        "ded.2.claimed_cents": 500000
+      }
+    },
+    {
+      "doc_ref": "POD",
+      "version": 1,
+      "kind": "pod",
+      "title": "SYNTHETIC — Juniper signed receiving record",
+      "text": "SYNTHETIC — Juniper signed for all 200 cases of SKU-N on September 3. No receiving exception is recorded.",
+      "fields": {
+        "delivered_date": "2026-09-03",
+        "signed": true,
+        "received.SKU-N": 200
+      }
+    },
+    {
+      "doc_ref": "COLLECTION",
+      "version": 1,
+      "kind": "collection_note",
+      "title": "SYNTHETIC — Collections log — Juniper liquidity delay",
+      "text": "SYNTHETIC — Acme AR contacted Juniper on October 6 and October 16. AP acknowledged the separate $5,000 payable and reported a liquidity delay. No date for payment has been confirmed. The valid $2,150 pricing adjustment must be excluded from any remaining receivable balance.",
+      "fields": {}
+    },
+    {
+      "doc_ref": "POLICY",
+      "version": 1,
+      "kind": "insurance_policy",
+      "title": "SYNTHETIC — P-JUNIPER trade credit policy",
+      "text": "SYNTHETIC — Synthetic demonstration policy P-JUNIPER lists Juniper and the 2026 invoice period. Report overdue balances within the stated notice window. The claim-document review opens three simulated days after the notice receipt. Supply the invoice, signed POD, account statement, and collection history. This teaching policy uses a three-day wait to make the sequence visible; it is not a real insurance policy.",
+      "fields": {
+        "policy_id": "P-JUNIPER",
+        "covered_buyer.1": "JUNIPER-PROVISIONS",
+        "credit_limit_cents": 1000000,
+        "period_start": "2026-01-01",
+        "period_end": "2026-12-31",
+        "mep_days_after_due": 7,
+        "notice_days_after_mep": 30,
+        "waiting_days_after_notice": 3,
+        "claim_doc.1": "invoice",
+        "claim_doc.2": "pod",
+        "claim_doc.3": "statement",
+        "disputed_debt_clause": "notice_still_required",
+        "clause.notice_still_required": "Notify the insurer of overdue debt even while deductions are reviewed. List disputed and credited items separately. Submission is for insurer review only.",
+        "exclusion.1": "valid_credits",
+        "clause.valid_credits": "Agreed pricing credits are not unpaid trade debt. Deduct such credits from the outstanding receivable before submitting documents.",
+        "stop_shipment_after_mep": true
+      }
+    }
+  ],
+  "events": [
+    {
+      "at_day": 5,
+      "type": "add_doc",
+      "doc": {
+        "doc_ref": "STATEMENT",
+        "version": 1,
+        "kind": "statement",
+        "title": "SYNTHETIC — Juniper account statement — net $5,000 overdue",
+        "text": "SYNTHETIC — Account statement for INV-3157: invoice $20,000; buyer payment $12,850; separately approved pricing credit $2,150; remaining unpaid balance $5,000. No additional payment is recorded. This statement supports document review and records no insurer decision.",
+        "fields": {
+          "invoice_no": "INV-3157"
+        }
+      }
+    }
+  ],
+  "provenance": "synthetic"
+}

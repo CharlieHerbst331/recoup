@@ -1,0 +1,140 @@
+{
+  "case_id": "C",
+  "title": "SYNTHETIC — Valid pricing deduction: honor the agreed price",
+  "seller": "Acme Foods Co.",
+  "buyer": "Harbor Market",
+  "currency": "USD",
+  "invoice_ref": "INV-2086",
+  "start_date": "2026-10-20",
+  "static_day": 0,
+  "policy_ref": null,
+  "allowed_recipients": {
+    "mock_buyer_portal": [
+      "buyer-portal.invalid"
+    ],
+    "mock_erp": [
+      "erp.invalid"
+    ],
+    "mock_email": [
+      "ar@example.invalid",
+      "shipping@example.invalid",
+      "buyer@example.invalid"
+    ],
+    "mock_insurer": [
+      "insurer@example.invalid"
+    ]
+  },
+  "docs": [
+    {
+      "doc_ref": "INV",
+      "version": 1,
+      "kind": "invoice",
+      "title": "SYNTHETIC — INV-2086",
+      "file": null,
+      "text": "SYNTHETIC document for the reviewer demo. Acme Foods Co. invoice INV-2086, issued to Harbor Market on 2026-09-01; payment due 2026-09-30. 1000 cases of Cold-brew concentrate, 6-bottle cases (SKU-7). Amounts and unit prices are recorded in the structured invoice fields below.",
+      "fields": {
+        "invoice_no": "INV-2086",
+        "invoice_date": "2026-09-01",
+        "due_date": "2026-09-30",
+        "buyer_id": "HARBOR-MARKET",
+        "total_cents": 1050000,
+        "line.1.sku": "SKU-7",
+        "line.1.qty": 1000,
+        "line.1.unit_price_cents": 1050,
+        "line.1.description": "Cold-brew concentrate, 6-bottle cases"
+      },
+      "available_at_day": 0,
+      "held_by": null
+    },
+    {
+      "doc_ref": "PAY",
+      "version": 1,
+      "kind": "payment",
+      "title": "SYNTHETIC — Payment against INV-2086",
+      "file": null,
+      "text": "SYNTHETIC document for the reviewer demo. Harbor Market remitted payment against INV-2086 on 2026-09-10. The payment reference is PAY-INV-2086. The difference from the invoice remains open for deduction review; this fixture does not represent newly collected cash.",
+      "fields": {
+        "invoice_no": "INV-2086",
+        "paid_cents": 1000000,
+        "paid_date": "2026-09-10",
+        "payment_ref": "PAY-INV-2086"
+      },
+      "available_at_day": 0,
+      "held_by": null
+    },
+    {
+      "doc_ref": "REM",
+      "version": 1,
+      "kind": "remittance",
+      "title": "SYNTHETIC — Remittance against INV-2086",
+      "file": null,
+      "text": "SYNTHETIC document for the reviewer demo. Harbor Market paid at the agreed $10.00 per case rather than the invoiced $10.50. The resulting $500 pricing deduction refers to INV-2086.",
+      "fields": {
+        "invoice_no": "INV-2086",
+        "paid_cents": 1000000,
+        "ded.1.line_id": "D1",
+        "ded.1.reason": "pricing",
+        "ded.1.claimed_cents": 50000,
+        "ded.1.sku": "SKU-7"
+      },
+      "available_at_day": 0,
+      "held_by": null
+    },
+    {
+      "doc_ref": "TERMS",
+      "version": 1,
+      "kind": "contract",
+      "title": "SYNTHETIC — Sales terms",
+      "file": null,
+      "text": "SYNTHETIC document for the reviewer demo. Signed Acme sales terms. Prices are fixed by SKU; an amendment from an authorized sales officer can change the applicable terms. The original listed price for the cold-brew shipment is $10.50 per case.",
+      "fields": {
+        "contract_id": "ACME-TERMS",
+        "effective_date": "2026-01-01",
+        "price.SKU-7_cents": 1050
+      },
+      "available_at_day": 0,
+      "held_by": null
+    },
+    {
+      "doc_ref": "PRICE-AMENDMENT",
+      "version": 1,
+      "kind": "email",
+      "title": "SYNTHETIC — Authorized VP Sales price amendment",
+      "file": null,
+      "text": "SYNTHETIC document for the reviewer demo. Maya Chen, VP Sales, authorizes the cold-brew case price at $10.00, effective August 15, before invoice INV-2086. Please apply this amendment to the 1,000-case shipment. Acme AR was copied on this approval.",
+      "fields": {
+        "from": "vp-sales@example.invalid",
+        "to": "ar@example.invalid",
+        "sent_date": "2026-08-15",
+        "amends": "ACME-TERMS",
+        "effective_date": "2026-08-15",
+        "authorized_by": "Maya Chen",
+        "authority_role": "VP Sales",
+        "price.SKU-7_cents": 1000
+      },
+      "available_at_day": 0,
+      "held_by": null
+    },
+    {
+      "doc_ref": "COMPANY",
+      "version": 1,
+      "kind": "company_policy",
+      "title": "SYNTHETIC — Acme collection and authority policy",
+      "file": null,
+      "text": "SYNTHETIC document for the reviewer demo. Acme AR reviews each deduction against source records. Only VP Sales or Finance Director may amend commercial terms. Follow up 14 days after outgoing correspondence when no buyer reply has arrived. Human approval is required for MOCK external actions.",
+      "fields": {
+        "tolerance_cents": 0,
+        "follow_up_days": 14,
+        "authority_cents": 100000,
+        "allowed_authority_roles": "VP Sales,Finance Director",
+        "amendment_precedence": "latest_effective",
+        "demo_scenario": "reviewer-v2",
+        "demo_outcome": "Valid buyer deduction"
+      },
+      "available_at_day": 0,
+      "held_by": null
+    }
+  ],
+  "events": [],
+  "provenance": "synthetic"
+}

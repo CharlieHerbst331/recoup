@@ -17,13 +17,13 @@ SCRIPT = Path(__file__).resolve().parents[2] / "recoup" / "ui" / "streamlit_app.
 def demo_page(monkeypatch):
     monkeypatch.setenv("RECOUP_LLM", "fake")
     real_build = app.build
-    state = {"database": None, "calls": [], "closed": 0, "built": 0, "fail": {}}
+    state = {"database": None, "calls": [], "closed": 0, "built": 0, "fail": {}, "databases": {}}
 
     def build(config):
         service = real_build(config.model_copy(update={"db": ":memory:"}))
         state["built"] += 1
-        if state["database"] is not None:
-            service.world.db.deserialize(state["database"])
+        if config.db in state["databases"]:
+            service.world.db.deserialize(state["databases"][config.db])
         for name in ("advance", "run"):
             operation = getattr(service, name)
 
@@ -38,6 +38,8 @@ def demo_page(monkeypatch):
 
         def capture_and_close():
             state["database"] = service.world.db.serialize()
+            state["databases"][config.db] = state["database"]
+            state["db_path"] = config.db
             state["day"] = service.world.clock.day()
             state["due"] = service.next_due_day()
             if service.world.list_cases():
@@ -176,4 +178,54 @@ def test_case_navigation_and_tabs_do_not_mutate_the_case(demo_page):
     assert not page.exception and not page.error
     assert state["history"].model_dump_json() == before
     assert state["calls"] == []
+    assert state["built"] == state["closed"]
+
+
+def test_dashboard_filters_open_case_and_approval_updates(demo_page):
+    page, state = demo_page
+    load_demo(page)
+    assert {row.label: row.value for row in page.metric} == {
+        "Cases": "3",
+        "Need approval": "3",
+        "Approved cases": "0",
+        "MOCK submitted": "0",
+    }
+    before = state["history"].model_dump_json()
+    page.text_input(key="case_search").set_value("northwind").run()
+    assert list(page.dataframe[0].value["Case"]) == ["H"]
+    assert "Needs approval · 3" in page.dataframe[0].value.iloc[0]["Tags"]
+    assert state["history"].model_dump_json() == before
+    page.button(key="open-case:H").click().run()
+    assert page.radio(key="selected_case").value == "H"
+    proposal = next(row for row in state["view"].proposals if row.kind == "dispute")
+    page.button(key=f"approve:{key(proposal)}").click().run()
+    page.sidebar.button(key="dashboard_home").click().run()
+    assert not page.exception and not page.error
+    assert {row.label: row.value for row in page.metric}["Approved cases"] == "1"
+    page.get("button_group")[0].set_value("Approved").run()
+    assert list(page.dataframe[0].value["Case"]) == ["H"]
+    assert "Approved · 1" in page.dataframe[0].value.iloc[0]["Tags"]
+    page.get("button_group")[0].set_value("MOCK submitted").run()
+    assert any("No cases match" in row.value for row in page.info)
+    assert state["built"] == state["closed"]
+
+
+def test_fresh_simulation_starts_day_zero_and_preserves_previous_run(demo_page):
+    page, state = demo_page
+    load_demo(page)
+    original_db = state["db_path"]
+    page.sidebar.number_input(key="advance_days").set_value(2)
+    page.sidebar.button(key="advance_n_days").click().run()
+    assert state["day"] == 2
+    page.button(key="start_simulation").click().run()
+    assert not page.exception and not page.error
+    assert state["db_path"] != original_db
+    assert state["db_path"].startswith("runs/simulation-")
+    assert state["day"] == 0
+    assert set(page.dataframe[0].value["Case"]) == {"H", "C", "N"}
+    assert page.radio(key="selected_case").value is None
+    assert not state["history"].receipts
+    page.sidebar.text_input(key="db_path").set_value(original_db).run()
+    assert not page.exception and not page.error
+    assert state["day"] == 2
     assert state["built"] == state["closed"]

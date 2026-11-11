@@ -7,9 +7,10 @@ from pathlib import Path
 from time import monotonic
 
 from recoup.contracts.interfaces import GateError
-from recoup.contracts.models import Target, TraceEvent
+from recoup.contracts.models import Citation, Target, TraceEvent
 from recoup.engine import policy
 from recoup.engine.config import PROMPT_VERSION, HarnessConfig
+from recoup.engine.demo_copy import invoice_reference, proposal_text
 from recoup.engine.derive import derive, static_output
 from recoup.engine.rules import NeedsHumanError, run_rules
 from recoup.engine.tools import ToolSessionFactory
@@ -23,14 +24,54 @@ def _json(value):
 
 def _draft_args(world, proposal, mode):
     recipients = world.allowed_recipients(proposal.case_id, proposal.target)
+    view = world.view(proposal.case_id)
+    selected = {row.line_id for row in proposal.allocations}
+    citations = list(proposal.citations)
+    if view.decision:
+        for line in view.decision.lines:
+            if line.line_id in selected:
+                citations.extend(c for c in line.citations if c not in citations)
+    if not citations:
+        for doc in view.evidence:
+            if doc.active and doc.readable and doc.kind in {"invoice", "payment"}:
+                key = "invoice_no"
+                if key in doc.fields and doc.field_trust.get(key, "source") in {
+                    "source",
+                    "human_confirmed",
+                }:
+                    citations.append(
+                        Citation(
+                            evidence_id=doc.evidence_id,
+                            locator="fields.invoice_no",
+                            quote=str(doc.fields[key]),
+                        )
+                    )
+    bound = proposal.model_copy(update={"citations": citations})
+    # Wording uses the effective values the rules saw, including confirmed revisions.
+    facts = world.fact_set(proposal.case_id).facts
+    copy_view = view.model_copy(
+        update={
+            "evidence": [
+                doc.model_copy(
+                    update={
+                        "fields": {
+                            f.key: f.value for f in facts if f.evidence_id == doc.evidence_id
+                        },
+                        "field_trust": {
+                            f.key: f.trust for f in facts if f.evidence_id == doc.evidence_id
+                        },
+                    }
+                )
+                for doc in view.evidence
+            ]
+        }
+    )
     return dict(
         kind=proposal.kind.value,
         line_ids=[a.line_id for a in proposal.allocations],
         recipient=recipients[0] if recipients else "",
-        draft_text=f"SYNTHETIC data. MOCK action. LLM {mode}. Conditional offer for review."
-        if proposal.kind == "counteroffer"
-        else f"SYNTHETIC data. MOCK action. LLM {mode}. Please review the cited evidence.",
-        citations=[c.model_dump(mode="json") for c in proposal.citations],
+        draft_text=proposal_text(copy_view, bound, mode),
+        citations=[c.model_dump(mode="json") for c in citations],
         corrects_receipt_id=proposal.corrects_receipt_id,
         offer_ref=proposal.offer_ref,
     )
@@ -73,6 +114,8 @@ class HarnessEngine:
         ]
         return dict(
             unmet=self._unmet(world, case_id),
+            invoice_reference=invoice_reference(view),
+            buyer_senders=world.fact_set(case_id).buyer_senders,
             claim_open=any(
                 a.computed_date and a.computed_date <= world.clock.now().date() for a in windows
             ),

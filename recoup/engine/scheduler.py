@@ -7,6 +7,7 @@ from uuid import uuid4
 from recoup.contracts.interfaces import GateError
 from recoup.contracts.models import DueWork, Proposal, Target, TraceEvent
 from recoup.engine import policy
+from recoup.engine.demo_copy import followup_text
 from recoup.engine.derive import receipt_kind
 
 OUTBOUND = {"dispute", "correction", "follow_up"}
@@ -96,7 +97,7 @@ def followup_proposal(world, case_id, mode="fake"):
         or decision.evidence_set_hash != world.evidence_set_hash(case_id)
     ):
         return None
-    text = f"SYNTHETIC data. MOCK action. LLM {mode}. Please respond to the prior correspondence."
+    text = followup_text(view, receipt, mode)
     return Proposal(
         proposal_id=str(uuid4()),
         case_id=case_id,
