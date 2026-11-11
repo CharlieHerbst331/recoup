@@ -1,0 +1,1 @@
+{"tool_calls":[{"id":"toolu_019fuMvyiP4qaZ8UhadqBp6E","name":"run_rules","arguments":{}}],"text":"The remittance, invoice, BOL, corrected POD, contract, payment, and email are all read. Before I propose any verdicts, I'll run the rules on the three deduction lines.","model_id":"claude-haiku-5-5","mode":"live","input_tokens":24082,"output_tokens":1031,"latency_ms":4985}

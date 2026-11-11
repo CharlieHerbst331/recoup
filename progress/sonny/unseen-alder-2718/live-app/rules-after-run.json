@@ -1,0 +1,153 @@
+[
+  {
+    "line_id": "AM-DAMAGE",
+    "rule_id": "damage",
+    "verdict": "needs_info",
+    "basis": "missing_evidence",
+    "valid": null,
+    "disputed": null,
+    "missing": [
+      "refused.BROTH-CASE"
+    ],
+    "contradictions": [],
+    "citations": [
+      {
+        "evidence_id": "EV-ALDER%2D2718-JP%2DCOLLECTION%2DPOLICY-v1",
+        "locator": "fields.tolerance_cents",
+        "quote": "0"
+      },
+      {
+        "evidence_id": "EV-ALDER%2D2718-JP%2DINVOICE%2D2718-v1",
+        "locator": "fields.line.1.sku",
+        "quote": "OAT-CASE"
+      },
+      {
+        "evidence_id": "EV-ALDER%2D2718-JP%2DINVOICE%2D2718-v1",
+        "locator": "fields.line.2.qty",
+        "quote": "80"
+      },
+      {
+        "evidence_id": "EV-ALDER%2D2718-JP%2DINVOICE%2D2718-v1",
+        "locator": "fields.line.2.sku",
+        "quote": "BROTH-CASE"
+      },
+      {
+        "evidence_id": "EV-ALDER%2D2718-JP%2DINVOICE%2D2718-v1",
+        "locator": "fields.line.2.unit_price_cents",
+        "quote": "6000"
+      }
+    ],
+    "note": "SYNTHETIC unresolved rule; design/02 \u00a75.3",
+    "flags": []
+  },
+  {
+    "line_id": "AM-DISC",
+    "rule_id": "early_pay_discount",
+    "verdict": "invalid",
+    "basis": "proven",
+    "valid": {
+      "cents": 0,
+      "currency": "USD"
+    },
+    "disputed": {
+      "cents": 25200,
+      "currency": "USD"
+    },
+    "missing": [],
+    "contradictions": [],
+    "citations": [
+      {
+        "evidence_id": "EV-ALDER%2D2718-JP%2DCOLLECTION%2DPOLICY-v1",
+        "locator": "fields.tolerance_cents",
+        "quote": "0"
+      },
+      {
+        "evidence_id": "EV-ALDER%2D2718-JP%2DINVOICE%2D2718-v1",
+        "locator": "fields.invoice_date",
+        "quote": "2026-09-18"
+      },
+      {
+        "evidence_id": "EV-ALDER%2D2718-JP%2DINVOICE%2D2718-v1",
+        "locator": "fields.total_cents",
+        "quote": "1260000"
+      },
+      {
+        "evidence_id": "EV-ALDER%2D2718-JP%2DPAY%2D2718-v1",
+        "locator": "fields.paid_date",
+        "quote": "2026-10-18"
+      },
+      {
+        "evidence_id": "EV-ALDER%2D2718-JP%2DTERMS%2D2026-v1",
+        "locator": "fields.early_pay_bp",
+        "quote": "200"
+      },
+      {
+        "evidence_id": "EV-ALDER%2D2718-JP%2DTERMS%2D2026-v1",
+        "locator": "fields.early_pay_days",
+        "quote": "10"
+      }
+    ],
+    "note": "SYNTHETIC rule result; design/02 \u00a75.3",
+    "flags": []
+  },
+  {
+    "line_id": "AM-SHORT",
+    "rule_id": "shortage",
+    "verdict": "valid",
+    "basis": "proven",
+    "valid": {
+      "cents": 52000,
+      "currency": "USD"
+    },
+    "disputed": {
+      "cents": 0,
+      "currency": "USD"
+    },
+    "missing": [],
+    "contradictions": [],
+    "citations": [
+      {
+        "evidence_id": "EV-ALDER%2D2718-ALDER%2DPOD%2D2718-v2",
+        "locator": "fields.received.OAT-CASE",
+        "quote": "112"
+      },
+      {
+        "evidence_id": "EV-ALDER%2D2718-ALDER%2DPOD%2D2718-v2",
+        "locator": "fields.signed",
+        "quote": "true"
+      },
+      {
+        "evidence_id": "EV-ALDER%2D2718-JP%2DBOL%2D2718-v1",
+        "locator": "fields.shipped.OAT-CASE",
+        "quote": "120"
+      },
+      {
+        "evidence_id": "EV-ALDER%2D2718-JP%2DCOLLECTION%2DPOLICY-v1",
+        "locator": "fields.tolerance_cents",
+        "quote": "0"
+      },
+      {
+        "evidence_id": "EV-ALDER%2D2718-JP%2DINVOICE%2D2718-v1",
+        "locator": "fields.line.1.qty",
+        "quote": "120"
+      },
+      {
+        "evidence_id": "EV-ALDER%2D2718-JP%2DINVOICE%2D2718-v1",
+        "locator": "fields.line.1.sku",
+        "quote": "OAT-CASE"
+      },
+      {
+        "evidence_id": "EV-ALDER%2D2718-JP%2DINVOICE%2D2718-v1",
+        "locator": "fields.line.1.unit_price_cents",
+        "quote": "6500"
+      },
+      {
+        "evidence_id": "EV-ALDER%2D2718-JP%2DINVOICE%2D2718-v1",
+        "locator": "fields.line.2.sku",
+        "quote": "BROTH-CASE"
+      }
+    ],
+    "note": "SYNTHETIC rule result; design/02 \u00a75.3",
+    "flags": []
+  }
+]

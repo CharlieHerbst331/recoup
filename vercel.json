@@ -1,0 +1,17 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "functions": {
+    "api/workbench.mjs": { "maxDuration": 120 }
+  },
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        { "key": "Cache-Control", "value": "no-store" },
+        { "key": "Referrer-Policy", "value": "same-origin" },
+        { "key": "X-Content-Type-Options", "value": "nosniff" },
+        { "key": "Content-Security-Policy", "value": "default-src 'none'; style-src 'unsafe-inline'; form-action 'self' https://*.vercel.run; frame-ancestors 'none'; base-uri 'none'" }
+      ]
+    }
+  ]
+}

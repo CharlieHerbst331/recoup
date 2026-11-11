@@ -11,6 +11,7 @@ from recoup.contracts.models import Target, TraceEvent
 from recoup.engine import policy
 from recoup.engine.config import PROMPT_VERSION, HarnessConfig
 from recoup.engine.derive import derive, static_output
+from recoup.engine.llm.errors import InvalidResponse, ProviderUnavailable
 from recoup.engine.rules import NeedsHumanError, run_rules
 from recoup.engine.tools import ToolSessionFactory
 
@@ -89,8 +90,15 @@ class HarnessEngine:
 
     def investigate(self, world, case_id, llm, run_id):
         session = self.tools.open(world, case_id, run_id, "harness")
+        if hasattr(session, "factory"):
+            session.factory = ToolSessionFactory(
+                model_id=getattr(llm, "model_id", ""),
+                llm_mode=getattr(llm, "mode", "fake"),
+                prompt_version=PROMPT_VERSION,
+            )
         messages = []
         seen = set()
+        call_ids = set()
         errors = 0
         started = self.timer()
         reason = "steps"
@@ -106,10 +114,27 @@ class HarnessEngine:
             messages.append({"role": "user", "content": _json(observation)})
             request = dict(system=SYSTEM, messages=deepcopy(messages), tools=session.schemas())
             try:
-                response = llm.next(**request)
+                bounded = getattr(llm, "next_with_timeout", None)
+                if bounded is not None:
+                    remaining = self.config.max_wall_s - (self.timer() - started)
+                    if remaining <= 0:
+                        reason = "wall time"
+                        break
+                    response = bounded(**request, timeout=remaining)
+                else:
+                    response = llm.next(**request)
             except (StopIteration, FileNotFoundError) as exc:
                 reason = f"LLM unavailable: {type(exc).__name__}"
                 break
+            except ProviderUnavailable as exc:
+                reason = f"LLM unavailable: {exc}"
+                break
+            except InvalidResponse as exc:
+                errors += 1
+                messages.append({"role": "user", "content": str(exc) + "; call a tool."})
+                if errors >= self.config.max_tool_errors:
+                    return self._stop(world, case_id, run_id, step, session, "tool errors")
+                continue
             # Metadata is session-local; sharing a factory must not leak between runs.
             if hasattr(session, "factory"):
                 session.factory = ToolSessionFactory(
@@ -136,6 +161,33 @@ class HarnessEngine:
                     observation_sha256=sha256(_json(request).encode()).hexdigest(),
                 )
             )
+            # Reject the whole batch before executing or serializing any of it.
+            # Keep the original response in the model trace (§5.2).
+            ids = [c.get("id") for c in response.tool_calls]
+            malformed = any(
+                not isinstance(c.get("id"), str)
+                or not c["id"].strip()
+                or not isinstance(c.get("name"), str)
+                or not c["name"].strip()
+                or not isinstance(c.get("arguments"), dict)
+                or c.get("type", "function") != "function"
+                for c in response.tool_calls
+            )
+            if not malformed:
+                malformed = len(ids) != len(set(ids)) or bool(call_ids.intersection(ids))
+            if malformed:
+                errors += 1
+                messages.append(
+                    {
+                        "role": "user",
+                        "content": "Malformed tool batch rejected without execution. "
+                        "Call tools with unique nonempty IDs, names, and JSON object arguments.",
+                    }
+                )
+                if errors >= self.config.max_tool_errors:
+                    return self._stop(world, case_id, run_id, step, session, "tool errors")
+                continue
+            call_ids.update(ids)
             messages.append(
                 {
                     "role": "assistant",
@@ -145,6 +197,7 @@ class HarnessEngine:
             )
             if not response.tool_calls:
                 errors += 1
+                messages.append({"role": "user", "content": "Call a tool to continue or end."})
                 if errors >= self.config.max_tool_errors:
                     return self._stop(world, case_id, run_id, step, session, "tool errors")
             for call in response.tool_calls:
