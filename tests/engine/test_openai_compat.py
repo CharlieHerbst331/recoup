@@ -9,6 +9,7 @@ from openai.types.chat import ChatCompletion
 from recoup.contracts.interfaces import LLMClient
 from recoup.contracts.tools import tool_json_schemas
 from recoup.engine.factory import get_llm
+from recoup.engine.llm.errors import ProviderUnavailable
 from recoup.engine.llm.openai_compat import OpenAICompatLLM
 from recoup.engine.llm.replay import ReplayLLM
 
@@ -120,11 +121,11 @@ def test_text_without_usage_and_empty_tools(tmp_path):
 
 
 @pytest.mark.parametrize("arguments", ["{", "[]", "null", '"string"', '{"x":NaN}'])
-def test_bad_arguments_never_recorded(tmp_path, arguments):
+def test_bad_arguments_preserved_for_harness_rejection(tmp_path, arguments):
     client = StubClient(completion(calls=[call(arguments=arguments)]))
-    with pytest.raises(ValueError):
-        OpenAICompatLLM("m", client=client, directory=tmp_path).next("s", [], [])
-    assert not list(tmp_path.glob("*.json"))
+    result = OpenAICompatLLM("m", client=client, directory=tmp_path).next("s", [], [])
+    assert not isinstance(result.tool_calls[0]["arguments"], dict)
+    assert ReplayLLM("m", tmp_path).next("s", [], []).tool_calls == result.tool_calls
 
 
 @pytest.mark.parametrize("finish", ["length", "content_filter", "function_call"])
@@ -136,12 +137,12 @@ def test_partial_responses_never_recorded(tmp_path, finish):
 
 
 @pytest.mark.parametrize("calls", [[call(id="")], [call(), call()], [call(name="")]])
-def test_invalid_call_identity(tmp_path, calls):
-    with pytest.raises(ValueError):
-        OpenAICompatLLM("m", client=StubClient(completion(calls=calls)), directory=tmp_path).next(
-            "s", [], []
-        )
-    assert not list(tmp_path.glob("*.json"))
+def test_invalid_call_identity_preserved_for_rejection(tmp_path, calls):
+    result = OpenAICompatLLM(
+        "m", client=StubClient(completion(calls=calls)), directory=tmp_path
+    ).next("s", [], [])
+    assert len(result.tool_calls) == len(calls)
+    assert ReplayLLM("m", tmp_path).next("s", [], []).tool_calls == result.tool_calls
 
 
 def test_multiple_calls_preserved(tmp_path):
@@ -153,7 +154,7 @@ def test_multiple_calls_preserved(tmp_path):
 
 def test_client_error_propagates_without_record_or_fallback(tmp_path):
     client = StubClient(TimeoutError("synthetic timeout"))
-    with pytest.raises(TimeoutError):
+    with pytest.raises(ProviderUnavailable, match="timeout; no retry"):
         OpenAICompatLLM("m", client=client, directory=tmp_path).next("s", [], [])
     assert len(client.requests) == 1
     assert not list(tmp_path.glob("*.json"))

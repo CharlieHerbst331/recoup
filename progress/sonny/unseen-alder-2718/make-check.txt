@@ -1,0 +1,76 @@
+/tmp/recoup-007-check/bin/python -m ruff check recoup tests
+All checks passed!
+/tmp/recoup-007-check/bin/python -m ruff format --check recoup tests
+108 files already formatted
+RECOUP_LLM=fake /tmp/recoup-007-check/bin/python -m pytest
+============================= test session starts ==============================
+platform darwin -- Python 3.11.18, pytest-9.2.0, pluggy-1.7.0
+rootdir: /Users/sonnybettertongage/Desktop/recoup-project
+configfile: pyproject.toml
+testpaths: tests
+plugins: anyio-4.16.0
+collected 1158 items
+
+tests/app/test_build_integration.py ...                                  [  0%]
+tests/app/test_config_unit.py ........                                   [  0%]
+tests/app/test_engine_acceptance.py ...                                  [  1%]
+tests/app/test_facade_unit.py ............................               [  3%]
+tests/app/test_factory_unit.py ........                                  [  4%]
+tests/app/test_final_integration.py .....                                [  4%]
+tests/app/test_financial_intake.py ..                                    [  4%]
+tests/app/test_human_escalation_acceptance.py ...                        [  5%]
+tests/app/test_mutations_integration.py .....                            [  5%]
+tests/app/test_regression_unit.py ...................................... [  8%]
+.......................                                                  [ 10%]
+tests/app/test_scoped_controller.py .....                                [ 11%]
+tests/cli/test_engine_workflows.py .                                     [ 11%]
+tests/cli/test_financial_intake.py ...                                   [ 11%]
+tests/cli/test_routing.py ...................................            [ 14%]
+tests/cli/test_sqlite_workflows.py ....                                  [ 15%]
+tests/contracts/test_bootstrap.py ..                                     [ 15%]
+tests/contracts/test_capabilities.py ......                              [ 15%]
+tests/contracts/test_design_contract.py .                                [ 15%]
+tests/contracts/test_financial_extensions.py .................           [ 17%]
+tests/contracts/test_import_dag.py ...................................   [ 20%]
+tests/contracts/test_models.py ......................................... [ 23%]
+........................................................                 [ 28%]
+tests/contracts/test_money.py .................................          [ 31%]
+tests/contracts/test_resolve.py .........................                [ 33%]
+tests/contracts/test_stubs.py ........                                   [ 34%]
+tests/contracts/test_tools.py ....                                       [ 34%]
+tests/engine/test_007_3_integration.py .............                     [ 35%]
+tests/engine/test_007_4_integration.py .......                           [ 36%]
+tests/engine/test_007_5_integration.py ............                      [ 37%]
+tests/engine/test_007_8_integration.py ................................. [ 40%]
+...............                                                          [ 41%]
+tests/engine/test_counteroffer_harness.py .....                          [ 42%]
+tests/engine/test_doubles.py ...                                         [ 42%]
+tests/engine/test_harness_factory_ingest.py ..........................   [ 44%]
+tests/engine/test_live_failures.py ......................                [ 46%]
+tests/engine/test_offer_ref_acceptance.py .........                      [ 47%]
+tests/engine/test_openai_compat.py ...................                   [ 48%]
+tests/engine/test_policy_readiness.py ................................   [ 51%]
+tests/engine/test_rules.py ............................................. [ 55%]
+........................................................................ [ 61%]
+.........................                                                [ 63%]
+tests/engine/test_scan_ingest.py .............ss.......                  [ 65%]
+tests/engine/test_scheduler.py ..............                            [ 67%]
+tests/engine/test_scheduler_reinvestigation.py .........                 [ 67%]
+tests/engine/test_tools_gates_derive.py ................................ [ 70%]
+.........................                                                [ 72%]
+tests/engine/test_unseen_alder_fixture.py ..                             [ 72%]
+tests/engine/test_vectors.py ........................................... [ 76%]
+........................................................................ [ 82%]
+...........................................                              [ 86%]
+tests/ui/test_start_server.py ...                                        [ 86%]
+tests/ui/test_workbench.py ........                                      [ 87%]
+tests/world/test_actions.py .................                            [ 88%]
+tests/world/test_core.py ................                                [ 90%]
+tests/world/test_counteroffer_boundary.py ........................       [ 92%]
+tests/world/test_engine_boundary.py ...........                          [ 93%]
+tests/world/test_fixtures.py ........................................... [ 97%]
+.....                                                                    [ 97%]
+tests/world/test_identity.py .....                                       [ 97%]
+tests/world/test_remittance.py ........................                  [100%]
+
+================= 1156 passed, 2 skipped in 162.12s (0:02:42) ==================

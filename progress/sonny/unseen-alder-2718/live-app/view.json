@@ -1,0 +1,341 @@
+{
+  "case_id": "ALDER-2718",
+  "title": "SYNTHETIC \u2014 Alder Market dock variance and deductions",
+  "buyer": "Alder Market Cooperative",
+  "status": "investigating",
+  "status_reason": "evidence changed",
+  "insurance": "none",
+  "sim_day": 0,
+  "sim_now": "2026-10-20T00:00:00Z",
+  "invoice_total": {
+    "cents": 1260000,
+    "currency": "USD"
+  },
+  "open_balance": {
+    "cents": 107200,
+    "currency": "USD"
+  },
+  "lines": [
+    {
+      "line_id": "AM-SHORT",
+      "reason": "shortage",
+      "claimed": {
+        "cents": 52000,
+        "currency": "USD"
+      },
+      "sku": "OAT-CASE",
+      "qty": 8,
+      "buyer_ref": "DOCK-2718-OAT",
+      "source_evidence_id": "EV-ALDER%2D2718-ALDER%2DREM%2D2718-v1",
+      "reason_trust": "source"
+    },
+    {
+      "line_id": "AM-DISC",
+      "reason": "early_pay_discount",
+      "claimed": {
+        "cents": 25200,
+        "currency": "USD"
+      },
+      "sku": null,
+      "qty": null,
+      "buyer_ref": "2PCT-TERMS",
+      "source_evidence_id": "EV-ALDER%2D2718-ALDER%2DREM%2D2718-v1",
+      "reason_trust": "source"
+    },
+    {
+      "line_id": "AM-DAMAGE",
+      "reason": "damage",
+      "claimed": {
+        "cents": 30000,
+        "currency": "USD"
+      },
+      "sku": "BROTH-CASE",
+      "qty": null,
+      "buyer_ref": "QA-2718-BROTH",
+      "source_evidence_id": "EV-ALDER%2D2718-ALDER%2DREM%2D2718-v1",
+      "reason_trust": "source"
+    }
+  ],
+  "decision": null,
+  "proposals": [],
+  "receipts": [],
+  "readiness": [],
+  "due": [],
+  "evidence": [
+    {
+      "evidence_id": "EV-ALDER%2D2718-JP%2DINVOICE%2D2718-v1",
+      "case_id": "ALDER-2718",
+      "doc_ref": "JP-INVOICE-2718",
+      "version": 1,
+      "kind": "invoice",
+      "title": "SYNTHETIC \u2014 JP-INV-2718 issued September 18",
+      "available_from": "2026-10-20T00:00:00Z",
+      "content_sha256": "12f96bc2cba15529a03814ac175e9c2d96eecdb9a6db76c5ac1fb0acc4c0e98c",
+      "readable": true,
+      "method": "structured",
+      "failure": null,
+      "text": "SYNTHETIC transaction evidence. 120 cases oat beverage and 80 cases vegetable broth, billed in USD integer cents.",
+      "fields": {
+        "invoice_no": "JP-INV-2718",
+        "invoice_date": "2026-09-18",
+        "due_date": "2026-10-18",
+        "buyer_id": "ALDER-MARKET-COOP",
+        "total_cents": 1260000,
+        "line.1.sku": "OAT-CASE",
+        "line.1.qty": 120,
+        "line.1.unit_price_cents": 6500,
+        "line.2.sku": "BROTH-CASE",
+        "line.2.qty": 80,
+        "line.2.unit_price_cents": 6000
+      },
+      "field_trust": {
+        "invoice_no": "source",
+        "invoice_date": "source",
+        "due_date": "source",
+        "buyer_id": "source",
+        "total_cents": "source",
+        "line.1.sku": "source",
+        "line.1.qty": "source",
+        "line.1.unit_price_cents": "source",
+        "line.2.sku": "source",
+        "line.2.qty": "source",
+        "line.2.unit_price_cents": "source"
+      },
+      "active": true,
+      "superseded_by": null
+    },
+    {
+      "evidence_id": "EV-ALDER%2D2718-JP%2DPAY%2D2718-v1",
+      "case_id": "ALDER-2718",
+      "doc_ref": "JP-PAY-2718",
+      "version": 1,
+      "kind": "payment",
+      "title": "SYNTHETIC \u2014 Bank posting October 18",
+      "available_from": "2026-10-20T00:00:00Z",
+      "content_sha256": "d4d4195016696f18696f1e387aef742ac609e86997efadfe655b3bca964d815f",
+      "readable": true,
+      "method": "structured",
+      "failure": null,
+      "text": "SYNTHETIC transaction evidence. ",
+      "fields": {
+        "invoice_no": "JP-INV-2718",
+        "paid_cents": 1152800,
+        "paid_date": "2026-10-18",
+        "payment_ref": "ACH-ALDER-1018-2718"
+      },
+      "field_trust": {
+        "invoice_no": "source",
+        "paid_cents": "source",
+        "paid_date": "source",
+        "payment_ref": "source"
+      },
+      "active": true,
+      "superseded_by": null
+    },
+    {
+      "evidence_id": "EV-ALDER%2D2718-ALDER%2DREM%2D2718-v1",
+      "case_id": "ALDER-2718",
+      "doc_ref": "ALDER-REM-2718",
+      "version": 1,
+      "kind": "remittance",
+      "title": "SYNTHETIC \u2014 Alder remittance detail",
+      "available_from": "2026-10-20T00:00:00Z",
+      "content_sha256": "4710a4c73afb06095ce6ea68381dafcb5ee28b0c59546a6568be4b0487b0dee4",
+      "readable": true,
+      "method": "structured",
+      "failure": null,
+      "text": "SYNTHETIC transaction evidence. Buyer deducted for an oat-case count variance, a two-percent discount, and broth damage. Damage amount is a buyer claim; the inspection attachment was not included.",
+      "fields": {
+        "invoice_no": "JP-INV-2718",
+        "paid_cents": 1152800,
+        "ded.1.line_id": "AM-SHORT",
+        "ded.1.reason": "shortage",
+        "ded.1.claimed_cents": 52000,
+        "ded.1.sku": "OAT-CASE",
+        "ded.1.qty": 8,
+        "ded.1.ref": "DOCK-2718-OAT",
+        "ded.2.line_id": "AM-DISC",
+        "ded.2.reason": "early_pay_discount",
+        "ded.2.claimed_cents": 25200,
+        "ded.2.ref": "2PCT-TERMS",
+        "ded.3.line_id": "AM-DAMAGE",
+        "ded.3.reason": "damage",
+        "ded.3.claimed_cents": 30000,
+        "ded.3.sku": "BROTH-CASE",
+        "ded.3.reported_date": "2026-09-24",
+        "ded.3.ref": "QA-2718-BROTH"
+      },
+      "field_trust": {
+        "invoice_no": "source",
+        "paid_cents": "source",
+        "ded.1.line_id": "source",
+        "ded.1.reason": "source",
+        "ded.1.claimed_cents": "source",
+        "ded.1.sku": "source",
+        "ded.1.qty": "source",
+        "ded.1.ref": "source",
+        "ded.2.line_id": "source",
+        "ded.2.reason": "source",
+        "ded.2.claimed_cents": "source",
+        "ded.2.ref": "source",
+        "ded.3.line_id": "source",
+        "ded.3.reason": "source",
+        "ded.3.claimed_cents": "source",
+        "ded.3.sku": "source",
+        "ded.3.reported_date": "source",
+        "ded.3.ref": "source"
+      },
+      "active": true,
+      "superseded_by": null
+    },
+    {
+      "evidence_id": "EV-ALDER%2D2718-JP%2DTERMS%2D2026-v1",
+      "case_id": "ALDER-2718",
+      "doc_ref": "JP-TERMS-2026",
+      "version": 1,
+      "kind": "contract",
+      "title": "SYNTHETIC \u2014 Signed supply terms",
+      "available_from": "2026-10-20T00:00:00Z",
+      "content_sha256": "5d682e152838d227aae621e448d8c6d1bdc061c0d22eb0c6479c891e124984b9",
+      "readable": true,
+      "method": "structured",
+      "failure": null,
+      "text": "SYNTHETIC transaction evidence. Signed by both parties. Payment discount requires receipt within ten days of invoice date. Damage reports require supporting receiving records.",
+      "fields": {
+        "contract_id": "JP-ALDER-2026",
+        "effective_date": "2026-01-01",
+        "price.OAT-CASE_cents": 6500,
+        "price.BROTH-CASE_cents": 6000,
+        "early_pay_bp": 200,
+        "early_pay_days": 10,
+        "damage_window_days": 7
+      },
+      "field_trust": {
+        "contract_id": "source",
+        "effective_date": "source",
+        "price.OAT-CASE_cents": "source",
+        "price.BROTH-CASE_cents": "source",
+        "early_pay_bp": "source",
+        "early_pay_days": "source",
+        "damage_window_days": "source"
+      },
+      "active": true,
+      "superseded_by": null
+    },
+    {
+      "evidence_id": "EV-ALDER%2D2718-JP%2DBOL%2D2718-v1",
+      "case_id": "ALDER-2718",
+      "doc_ref": "JP-BOL-2718",
+      "version": 1,
+      "kind": "bol",
+      "title": "SYNTHETIC \u2014 Carrier dispatch record",
+      "available_from": "2026-10-20T00:00:00Z",
+      "content_sha256": "c8903baf1939cd64468e753ef686212ee68c0b730a8245eb87764df94b2865ea",
+      "readable": true,
+      "method": "structured",
+      "failure": null,
+      "text": "SYNTHETIC transaction evidence. ",
+      "fields": {
+        "bol_no": "JP-BOL-2718",
+        "ship_date": "2026-09-20",
+        "shipped.OAT-CASE": 120,
+        "shipped.BROTH-CASE": 80
+      },
+      "field_trust": {
+        "bol_no": "source",
+        "ship_date": "source",
+        "shipped.OAT-CASE": "source",
+        "shipped.BROTH-CASE": "source"
+      },
+      "active": true,
+      "superseded_by": null
+    },
+    {
+      "evidence_id": "EV-ALDER%2D2718-ALDER%2DPOD%2D2718-v2",
+      "case_id": "ALDER-2718",
+      "doc_ref": "ALDER-POD-2718",
+      "version": 2,
+      "kind": "pod",
+      "title": "SYNTHETIC \u2014 Corrected signed receiving record September 22",
+      "available_from": "2026-10-20T00:00:00Z",
+      "content_sha256": "9f705984484c671b09d76e1c3652799d610eba60ec0557c9367d28e47de6f9ea",
+      "readable": true,
+      "method": "structured",
+      "failure": null,
+      "text": "SYNTHETIC transaction evidence. Receiving supervisor Ellis Reed signed this corrected record on September 23 after recount and gate-log review. This replaces the September 21 entry: actual delivery was September 22; 112 oat cases and 80 broth cases were accepted. No broth inspection or refused-quantity record is attached.",
+      "fields": {
+        "pod_no": "AD-POD-2718",
+        "delivered_date": "2026-09-22",
+        "signed": true,
+        "received.OAT-CASE": 112,
+        "received.BROTH-CASE": 80
+      },
+      "field_trust": {
+        "pod_no": "source",
+        "delivered_date": "source",
+        "signed": "source",
+        "received.OAT-CASE": "source",
+        "received.BROTH-CASE": "source"
+      },
+      "active": true,
+      "superseded_by": null
+    },
+    {
+      "evidence_id": "EV-ALDER%2D2718-ALDER%2DQA%2DEMAIL%2D2718-v1",
+      "case_id": "ALDER-2718",
+      "doc_ref": "ALDER-QA-EMAIL-2718",
+      "version": 1,
+      "kind": "email",
+      "title": "SYNTHETIC \u2014 Buyer attachment omission",
+      "available_from": "2026-10-20T00:00:00Z",
+      "content_sha256": "3e6d6ece2d305f4955d51ae28e9032c1b15c877831ec31023f2888e7e12ecbc0",
+      "readable": true,
+      "method": "structured",
+      "failure": null,
+      "text": "SYNTHETIC transaction evidence. Our remittance includes the broth damage debit reported September 24. The warehouse inspection attachment was omitted. We cannot confirm the inspected damaged quantity from the remittance alone; the dock team still needs to supply its inspection record. The corrected signed receiving record is our authoritative count.",
+      "fields": {
+        "from": "ap@alder.example.invalid",
+        "to": "ar@juniper.example.invalid",
+        "sent_date": "2026-10-19"
+      },
+      "field_trust": {
+        "from": "source",
+        "to": "source",
+        "sent_date": "source"
+      },
+      "active": true,
+      "superseded_by": null
+    },
+    {
+      "evidence_id": "EV-ALDER%2D2718-JP%2DCOLLECTION%2DPOLICY-v1",
+      "case_id": "ALDER-2718",
+      "doc_ref": "JP-COLLECTION-POLICY",
+      "version": 1,
+      "kind": "company_policy",
+      "title": "SYNTHETIC \u2014 Juniper collection authority",
+      "available_from": "2026-10-20T00:00:00Z",
+      "content_sha256": "c4f315390e73af3889efc3fb55dbd92830db0363aac4d0084ab51dc909cebd2f",
+      "readable": true,
+      "method": "structured",
+      "failure": null,
+      "text": "SYNTHETIC transaction evidence. ",
+      "fields": {
+        "tolerance_cents": 0,
+        "follow_up_days": 12,
+        "authority_cents": 75000,
+        "allowed_authority_roles": "Finance Director,VP Sales",
+        "amendment_precedence": "latest_effective"
+      },
+      "field_trust": {
+        "tolerance_cents": "source",
+        "follow_up_days": "source",
+        "authority_cents": "source",
+        "allowed_authority_roles": "source",
+        "amendment_precedence": "source"
+      },
+      "active": true,
+      "superseded_by": null
+    }
+  ],
+  "provenance": "synthetic"
+}

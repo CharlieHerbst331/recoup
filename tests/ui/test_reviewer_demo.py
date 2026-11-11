@@ -43,9 +43,12 @@ def test_three_distinct_outcomes_and_claim_document_gate(reviewer):
         if guide["complete"]:
             break
         step = guide["current"]
+        queue_row = next(row for row in dashboard["cases"] if row["case_id"] == step["case_id"])
         seen.append(step["id"])
         before = service.world.list_cases()
         if step["id"] == "statement-5":
+            assert queue_row["action"] == {"kind": "claim_package", "status": "proposed"}
+            assert queue_row["brief"]["label"] == "Claim needs documents"
             case = service.world.view("N")
             package = next(p for p in case.proposals if p.kind == "claim_package")
             assert package.status == "proposed"
@@ -67,6 +70,7 @@ def test_three_distinct_outcomes_and_claim_document_gate(reviewer):
             case = service.world.view(step["case_id"])
             proposal = next(p for p in case.proposals if p.proposal_id == step["proposal_id"])
             assert proposal.status == "proposed"
+            assert queue_row["action"] == {"kind": proposal.kind.value, "status": "proposed"}
             if step["id"] == "claim-n":
                 assert proposal.version > blocked_version
                 assert any(
@@ -111,6 +115,11 @@ def test_three_distinct_outcomes_and_claim_document_gate(reviewer):
     dashboard = dashboard_data(service)
     assert dashboard["new_payments"] == "$3,120.00"
     assert dashboard["claims_submitted_count"] == 1
+    assert {row["case_id"]: row["action"] for row in dashboard["cases"]} == {
+        "C": {"kind": "credit_memo", "status": "submitted_mock"},
+        "H": {"kind": "dispute", "status": "submitted_mock"},
+        "N": {"kind": "claim_package", "status": "submitted_mock"},
+    }
     assert case_data(service, "H")["new_payments"] == "$3,120.00"
     assert case_data(service, "C")["new_payments"] == "$0.00"
     detail = case_data(service, "N")

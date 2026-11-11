@@ -1,6 +1,7 @@
 import { useState } from "react";
 import {
   LayoutDashboard,
+  Database,
   Settings2,
   LoaderCircle,
   X,
@@ -30,8 +31,10 @@ import {
 } from "@/components/ui/sidebar";
 export default function WorkbenchSidebar({
   data,
+  page,
   selected,
   home,
+  sources,
   act,
   busy,
   error,
@@ -63,7 +66,8 @@ export default function WorkbenchSidebar({
           <SidebarMenu>
             <SidebarMenuItem>
               <SidebarMenuButton
-                isActive={!selected}
+                isActive={page === "cases"}
+                aria-current={page === "cases" ? "page" : undefined}
                 disabled={busy}
                 onClick={() => {
                   home();
@@ -72,6 +76,20 @@ export default function WorkbenchSidebar({
               >
                 <LayoutDashboard />
                 <span>Cases</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                isActive={page === "sources"}
+                aria-current={page === "sources" ? "page" : undefined}
+                disabled={busy}
+                onClick={() => {
+                  sources();
+                  if (isMobile) setOpenMobile(false);
+                }}
+              >
+                <Database />
+                <span>Company Data</span>
               </SidebarMenuButton>
             </SidebarMenuItem>
           </SidebarMenu>

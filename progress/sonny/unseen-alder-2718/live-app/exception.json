@@ -1,0 +1,4 @@
+{
+  "type": "ValueError",
+  "reason": "Conflicting replay recording"
+}

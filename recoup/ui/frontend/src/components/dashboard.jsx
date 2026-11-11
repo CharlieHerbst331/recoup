@@ -2,8 +2,16 @@ import { ArrowRight, Search } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-
+import { ActionBadge, CompanyMark } from "@/components/case-labels";
 import { caseStatus } from "@/lib/ui";
+
+function actionContext({ action, brief }) {
+  if (!action || action.status === "submitted_mock" || brief.label === "Human attention needed")
+    return caseStatus(brief.label);
+  if (action.kind === "claim_package" && brief.label === "Claim needs documents")
+    return caseStatus(brief.label);
+  return action.status === "approved" ? "Ready to submit" : "Needs approval";
+}
 
 export default function Dashboard({ data, openCase, act, busy }) {
   const [query, setQuery] = useState("");
@@ -55,17 +63,17 @@ export default function Dashboard({ data, openCase, act, busy }) {
         </div>
       )}
       <div className="overflow-hidden rounded-xl border bg-white">
-        <div className="hidden grid-cols-[1fr_1.4fr_auto] gap-6 border-b px-6 py-3 text-xs text-muted-foreground sm:grid">
+        <div className="hidden grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)_7rem] gap-5 border-b px-6 py-3 text-xs text-muted-foreground sm:grid">
           <span>Customer</span>
           <span>Next action / outcome</span>
-          <span>Open balance</span>
+          <span className="text-right">Open balance</span>
         </div>
         <ul className="divide-y">
           {cases.map((c) => (
             <li key={c.case_id}>
               <Button
                 variant="ghost"
-                className="grid h-auto w-full grid-cols-[1fr_auto] gap-x-5 gap-y-2 rounded-none px-6 py-6 text-left sm:grid-cols-[1fr_1.4fr_auto]"
+                className="grid h-auto w-full grid-cols-[minmax(0,1fr)_auto] gap-x-3 gap-y-3 rounded-none px-4 py-4 text-left sm:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)_7rem] sm:gap-x-5 sm:px-6 sm:py-5"
                 aria-label={`Open ${c.buyer}`}
                 disabled={busy}
                 onClick={() =>
@@ -77,11 +85,15 @@ export default function Dashboard({ data, openCase, act, busy }) {
                   })
                 }
               >
-                <span className="font-medium">{c.buyer}</span>
-                <span className="col-start-1 row-start-2 whitespace-normal text-xs font-normal leading-relaxed text-muted-foreground sm:col-start-2 sm:row-start-1 sm:text-sm">
-                  {caseStatus(c.brief.label)}
+                <span className="flex min-w-0 items-center gap-3 whitespace-normal font-semibold">
+                  <CompanyMark buyer={c.buyer} />
+                  <span className="wrap-anywhere">{c.buyer}</span>
                 </span>
-                <span className="col-start-2 row-start-1 font-medium tabular-nums sm:col-start-3">
+                <span className="col-span-2 row-start-2 flex flex-wrap items-center gap-x-2 gap-y-1 pl-[52px] text-xs font-normal whitespace-normal text-muted-foreground sm:col-span-1 sm:col-start-2 sm:row-start-1 sm:pl-0">
+                  {c.action && <ActionBadge kind={c.action.kind} />}
+                  {actionContext(c)}
+                </span>
+                <span className="col-start-2 row-start-1 text-right font-medium tabular-nums sm:col-start-3">
                   {c.balance}
                 </span>
               </Button>

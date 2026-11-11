@@ -7,6 +7,7 @@ from time import monotonic
 
 from recoup.contracts.interfaces import LLMResponse
 from recoup.engine.config import PROMPT_VERSION
+from recoup.engine.llm.errors import InvalidResponse, ProviderUnavailable
 from recoup.engine.llm.replay import ReplayLLM
 
 
@@ -57,54 +58,90 @@ class OpenAICompatLLM:
         if timeout <= 0:
             raise ValueError("Live timeout must be positive")
         if client is None:
-            from openai import OpenAI
+            from openai import OpenAI, OpenAIError
 
-            client = OpenAI(
-                api_key=api_key,
-                base_url=base_url or os.environ.get("OPENAI_BASE_URL"),
-                timeout=timeout,
-                max_retries=0,
-            )
+            try:
+                client = OpenAI(
+                    api_key=api_key,
+                    base_url=base_url or os.environ.get("OPENAI_BASE_URL"),
+                    timeout=timeout,
+                    max_retries=0,
+                )
+            except OpenAIError:
+                raise ValueError(
+                    "Live client configuration unavailable; check API credentials"
+                ) from None
         self.client = client
+        self.timeout = timeout
         self.recorder = ReplayLLM(self.model_id, directory, prompt_version)
 
     def next(self, system, messages, tools) -> LLMResponse:
+        return self._next(system, messages, tools)
+
+    def next_with_timeout(self, system, messages, tools, timeout) -> LLMResponse:
+        return self._next(system, messages, tools, timeout=min(self.timeout, timeout))
+
+    def _next(self, system, messages, tools, *, timeout=None) -> LLMResponse:
         # Snapshot once so serialization and replay refer to the same request.
         messages, tools = deepcopy(messages), deepcopy(tools)
         request = {"model": self.model_id, "messages": _messages(system, messages)}
+        if timeout is not None:
+            request["timeout"] = timeout
         if tools:
             request["tools"] = [{"type": "function", "function": tool} for tool in tools]
             request["tool_choice"] = "auto"
         started = monotonic()
-        completion = self.client.chat.completions.create(**request)
+        from openai import APIConnectionError, APIResponseValidationError, APIStatusError
+
+        try:
+            completion = self.client.chat.completions.create(**request)
+        except APIStatusError as exc:
+            # Never expose provider bodies/headers (which can echo credentials).
+            raise ProviderUnavailable(f"HTTP {exc.status_code}; no retry") from None
+        except (APIConnectionError, TimeoutError, ConnectionError):
+            raise ProviderUnavailable("connection or timeout; no retry") from None
+        except (APIResponseValidationError, ValueError):
+            raise InvalidResponse("Invalid provider response") from None
         latency_ms = max(0, int((monotonic() - started) * 1000))
-        if len(completion.choices) != 1:
-            raise ValueError("Expected one completion choice")
-        choice = completion.choices[0]
+        choices = getattr(completion, "choices", None)
+        if not isinstance(choices, list) or len(choices) != 1:
+            raise InvalidResponse("Expected one completion choice")
+        choice = choices[0]
         if choice.finish_reason not in {"stop", "tool_calls"}:
-            raise ValueError("Incomplete or filtered completion")
+            raise InvalidResponse("Incomplete or filtered completion")
         message = choice.message
+        if message is None:
+            raise InvalidResponse("Missing completion message")
         calls = []
-        ids = set()
         for call in message.tool_calls or []:
-            if call.type != "function" or not call.id or call.id in ids:
-                raise ValueError("Invalid function call identity")
-            ids.add(call.id)
-            if not call.function.name:
-                raise ValueError("Missing function name")
-            arguments = json.loads(call.function.arguments, parse_constant=_reject_constant)
-            if not isinstance(arguments, dict):
-                raise ValueError("Function arguments must be a JSON object")
-            calls.append({"id": call.id, "name": call.function.name, "arguments": arguments})
-        usage = completion.usage
+            function = getattr(call, "function", None)
+            arguments = getattr(function, "arguments", None)
+            try:
+                parsed = json.loads(arguments, parse_constant=_reject_constant)
+                json.dumps(parsed, allow_nan=False)
+                arguments = parsed
+            except (ValueError, TypeError):
+                pass  # Preserve the invalid value for the trace and bounded rejection.
+            item = {
+                "id": getattr(call, "id", None),
+                "name": getattr(function, "name", None),
+                "arguments": arguments,
+            }
+            if getattr(call, "type", None) != "function":
+                item["type"] = getattr(call, "type", None)
+            calls.append(item)
+        usage = getattr(completion, "usage", None)
         response = LLMResponse(
             tool_calls=calls,
             text=message.content or getattr(message, "refusal", None) or "",
             model_id=self.model_id,
             mode=self.mode,
-            input_tokens=usage.prompt_tokens if usage is not None else None,
-            output_tokens=usage.completion_tokens if usage is not None else None,
+            input_tokens=getattr(usage, "prompt_tokens", None),
+            output_tokens=getattr(usage, "completion_tokens", None),
             latency_ms=latency_ms,
         )
-        self.recorder.record(system, messages, tools, response)
+        try:
+            self.recorder.record(system, messages, tools, response)
+        except (OSError, ValueError):
+            raise ProviderUnavailable("recording unavailable or conflicting; no retry") from None
         return response

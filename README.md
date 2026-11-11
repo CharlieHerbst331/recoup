@@ -4,13 +4,15 @@ Recoup helps a finance specialist review unpaid and short-paid invoices. Open a
 case, inspect the supporting documents, and review proposed disputes, credits,
 information requests, and follow-ups in one workbench.
 
-The current app runs locally with Streamlit and SQLite. Demo data is
+Recoup provides a local React workbench and a Streamlit workbench, backed by SQLite. Demo data is
 **SYNTHETIC**, actions are **MOCK**, and the default **LLM: fake** mode works
 without an API key. No real messages are sent or cash collected.
 
 ## Run the app
 
-Use Python 3.11. From the repository root:
+Use Python 3.11. See the [React workbench instructions](recoup/ui/README.md)
+for the case navigator and Company Data page. To run the local Streamlit demo
+from the repository root:
 
 ```sh
 python3.11 -m venv .venv
@@ -37,9 +39,10 @@ then click **Load demo cases H, C and N**.
 - CLI examples for multi-invoice payment allocation and counteroffers in
   [financial examples](cases/ambition/README.md).
 
-This is a single-user prototype. Real system integrations, authentication, and
-multi-user workflows are not implemented. Live-model and real OCR acceptance
-remain separate from offline verification; `doctor` reports local capabilities.
+The [hosted Streamlit workbench](progress/carter/SHARED-BACKEND-HANDOFF.md) uses
+a shared access secret. The React Company Data catalog illustrates potential
+integrations. Live-model and OCR verification are separate from offline tests;
+`doctor` reports local capabilities.
 
 ## Development
 
@@ -49,6 +52,9 @@ make check
 .venv/bin/recoup --db :memory: check-regression
 .venv/bin/recoup --help
 ```
+
+Use `.venv/bin/recoup --db runs/demo.db load cases/demo` to import the core
+demo cases and both fully paid synthetic cases through the CLI.
 
 The CLI defaults to `runs/recoup.db`; override it with `--db` or `RECOUP_DB`.
 The UI uses its sidebar database path, initially `runs/demo.db`.

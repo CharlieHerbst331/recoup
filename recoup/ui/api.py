@@ -7,7 +7,7 @@ from pathlib import Path
 from pydantic import BaseModel
 
 from recoup.app import Recoup
-from recoup.contracts.models import LineAmount
+from recoup.contracts.models import CaseView, LineAmount, Proposal, ProposalKind, ProposalStatus
 from recoup.contracts.money import Money, fmt
 from recoup.ui.actions import proposal_groups
 from recoup.ui.case import money_table, timeline_rows
@@ -29,6 +29,7 @@ from recoup.ui.reviewer import (
     document_facts,
     initial_balance,
     journey,
+    kind_of,
     new_payments,
     policy_review,
     posted,
@@ -36,6 +37,47 @@ from recoup.ui.reviewer import (
 )
 
 DEMO_ROOT = Path(__file__).resolve().parent / "demo"
+PROPOSAL_PRIORITY = {
+    ProposalKind.correction: 0,
+    ProposalKind.dispute: 1,
+    ProposalKind.info_request: 2,
+    ProposalKind.credit_memo: 3,
+}
+REVIEWABLE = {ProposalStatus.proposed, ProposalStatus.approved}
+INSURER_ACTIONS = {ProposalKind.insurer_notice, ProposalKind.claim_package}
+
+
+def proposal_order(proposal: Proposal) -> tuple:
+    return (
+        proposal.status not in REVIEWABLE,
+        PROPOSAL_PRIORITY.get(proposal.kind, 4),
+        proposal.business_key,
+    )
+
+
+def dashboard_action(case: CaseView, review: dict | None) -> dict | None:
+    last_kind = kind_of(case, case.receipts[-1]) if case.receipts else ""
+    recorded = (
+        {"kind": last_kind, "status": ProposalStatus.submitted_mock.value} if last_kind else None
+    )
+    step = review["current"] if review else None
+    case_step = step if step and step["case_id"] == case.case_id else None
+    preferred = case_step["proposal_key"] if case_step else None
+    if recorded and (
+        (review and review["complete"])
+        or (case_step and case_step["action"] == "advance" and not preferred)
+    ):
+        return recorded
+    candidates = [p for p in case.proposals if p.status in REVIEWABLE]
+    if reconciled(case):
+        candidates = [p for p in candidates if p.kind not in INSURER_ACTIONS]
+    if not candidates:
+        return recorded
+    action = min(
+        candidates,
+        key=lambda p: (p.business_key != preferred, p.kind in INSURER_ACTIONS, proposal_order(p)),
+    )
+    return {"kind": action.kind.value, "status": action.status.value}
 
 
 def wire(value):
@@ -54,6 +96,7 @@ def wire(value):
 def dashboard_data(service: Recoup) -> dict:
     cases = sort_cases(service.world.list_cases())
     payments = {case.case_id: new_payments(case, service.history(case.case_id)) for case in cases}
+    review = journey(cases)
     return {
         "clock": {
             "day": service.world.clock.day(),
@@ -66,7 +109,7 @@ def dashboard_data(service: Recoup) -> dict:
         "database": service.config.db,
         "counts": dashboard_counts(cases),
         "next_step": demo_next_step(cases),
-        "journey": journey(cases),
+        "journey": review,
         "resolved_count": sum(reconciled(case) for case in cases),
         "new_payments": fmt(Money(cents=sum(amount.cents for amount in payments.values()))),
         "claims_submitted_count": sum(posted(case, "claim_package") for case in cases),
@@ -95,6 +138,7 @@ def dashboard_data(service: Recoup) -> dict:
                 "title": display_title(case.title),
                 "status": case.status.value,
                 "brief": brief(case),
+                "action": dashboard_action(case, review),
                 "resolved": reconciled(case),
                 "balance": fmt(case.open_balance),
                 "needs_approval": approval_count(case),
@@ -112,14 +156,9 @@ def dashboard_data(service: Recoup) -> dict:
 
 def case_data(service: Recoup, case_id: str) -> dict:
     case, history = service.world.view(case_id), service.history(case_id)
-    priority = {"correction": 0, "dispute": 1, "info_request": 2, "credit_memo": 3}
     groups = sorted(
         proposal_groups(case, history).values(),
-        key=lambda rows: (
-            rows[-1].status not in {"proposed", "approved"},
-            priority.get(rows[-1].kind.value, 4),
-            rows[-1].business_key,
-        ),
+        key=lambda rows: proposal_order(rows[-1]),
     )
     return {
         "brief": brief(case),

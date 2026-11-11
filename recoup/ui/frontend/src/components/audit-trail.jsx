@@ -1,4 +1,4 @@
-import { CheckCheck, History } from "lucide-react";
+import { CheckCheck } from "lucide-react";
 import {
   Card,
   CardHeader,
@@ -12,7 +12,8 @@ import {
   AccordionTrigger,
   AccordionContent,
 } from "@/components/ui/accordion";
-import { names, date, Tag, DataTable, Sources } from "@/lib/ui";
+import { ActionBadge } from "@/components/case-labels";
+import { date, Tag, DataTable, Sources } from "@/lib/ui";
 
 export default function AuditTrail({ detail }) {
   return (
@@ -32,10 +33,8 @@ export default function AuditTrail({ detail }) {
                 <AccordionTrigger className="text-left">
                   <span className="flex flex-wrap items-center gap-2">
                     <CheckCheck className="size-4 text-emerald-700" />
-                    <span>
-                      {names[r.kind] || r.kind}
-                      {r.amount !== "No amount" ? ` · ${r.amount}` : ""}
-                    </span>
+                    <ActionBadge kind={r.kind} />
+                    {r.amount !== "No amount" && <span>{r.amount}</span>}
                     <Tag>{r.receipt_id}</Tag>
                   </span>
                 </AccordionTrigger>

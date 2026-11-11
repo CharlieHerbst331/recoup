@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from "react";
 import { LoaderCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -14,6 +13,7 @@ import { request, readLocation, writeLocation } from "@/lib/ui";
 import WorkbenchSidebar from "@/components/workbench-sidebar";
 import Dashboard from "@/components/dashboard";
 import CasePage from "@/components/case-page";
+import CompanyData from "@/components/company-data";
 import { ScrollBrand } from "@/components/brand/scroll-brand";
 
 export default function App() {
@@ -23,7 +23,9 @@ export default function App() {
   const [busy, setBusy] = useState(""),
     [error, setError] = useState("");
   const [focus, setFocus] = useState({ tab: "review" });
+  const [page, setPage] = useState("cases");
   const navigation = useRef({});
+  const routeVersion = useRef(0);
   const pending = useRef(false);
   useEffect(() => {
     request("dashboard")
@@ -36,7 +38,7 @@ export default function App() {
           ...route.focus,
           history: false,
         });
-      else navigation.current.home({ history: false });
+      else navigation.current.showPage(route.page, { history: false });
     }
     followLocation();
     window.addEventListener("popstate", followLocation);
@@ -61,16 +63,20 @@ export default function App() {
     }
     if (pending.current) return;
     pending.current = true;
+    const version = ++routeVersion.current;
     setBusy("Opening case…");
     setError("");
     try {
-      setDetail(await request(`cases/${encodeURIComponent(id)}`));
+      const result = await request(`cases/${encodeURIComponent(id)}`);
+      if (routeVersion.current !== version) return;
+      setDetail(result);
       setSelected(id);
       setFocus(target);
+      setPage("cases");
       if (options.history !== false) writeLocation(id, target);
       window.scrollTo({ top: 0 });
     } catch (e) {
-      setError(e.message);
+      if (routeVersion.current === version) setError(e.message);
     } finally {
       pending.current = false;
       setBusy("");
@@ -79,6 +85,7 @@ export default function App() {
   async function act(action, payload = {}) {
     if (pending.current) return false;
     pending.current = true;
+    const version = routeVersion.current;
     setBusy(
       action === "advance"
         ? "Advancing time and reviewing cases…"
@@ -95,6 +102,7 @@ export default function App() {
         : { ...payload, ...(selected ? { case_id: selected } : {}) };
       const result = await request(action, withCase);
       setData(result.dashboard);
+      if (routeVersion.current !== version) return true;
       if (result.case) setDetail(result.case);
       const next = result.dashboard.journey?.current;
       if (
@@ -107,10 +115,7 @@ export default function App() {
         writeLocation(selected, target);
       }
       if (["fresh", "open_database"].includes(action)) {
-        setSelected(null);
-        setDetail(null);
-        setFocus({ tab: "review" });
-        writeLocation(null, {});
+        home();
       }
       return true;
     } catch (e) {
@@ -121,34 +126,54 @@ export default function App() {
       setBusy("");
     }
   }
-  function home(options = {}) {
+  function showPage(nextPage, options = {}) {
+    routeVersion.current += 1;
     window.scrollTo({ top: 0 });
     setFocus({ tab: "review" });
-    if (options.history !== false) writeLocation(null, {});
+    if (options.history !== false) writeLocation(null, {}, nextPage);
+    setPage(nextPage);
     setSelected(null);
     setDetail(null);
   }
-  navigation.current = { openCase, home };
+  const home = () => showPage("cases");
+  const sources = () => showPage("sources");
+  navigation.current = { openCase, showPage };
   return (
     <SidebarProvider defaultOpen={false}>
       <WorkbenchSidebar
         data={data}
+        page={page}
         selected={selected}
-        openCase={openCase}
         home={home}
+        sources={sources}
         act={act}
         busy={!!busy}
         error={error}
       />
       <SidebarInset className="min-w-0 bg-background">
-        <header className="sticky top-0 z-20 flex h-16 shrink-0 items-center gap-3 border-b bg-white px-4 md:px-8">
-          <SidebarTrigger aria-label="Toggle navigation" />
-          <Separator orientation="vertical" className="h-4" />
-          <ScrollBrand
-            onClick={() => home()}
-            disabled={!!busy}
-          />
-          <div className="ml-auto">
+        <header className="sticky top-0 z-20 grid shrink-0 grid-cols-[auto_1fr_auto] items-center gap-x-4 border-b bg-white px-4 pt-2 md:px-8 lg:h-16 lg:pt-0">
+          <div className="col-start-1 row-start-1 flex items-center gap-3">
+            <SidebarTrigger aria-label="Toggle navigation" />
+            <span aria-hidden="true" className="h-4 w-px bg-border" />
+            <ScrollBrand onClick={home} disabled={!!busy} />
+          </div>
+          <nav aria-label="Workspace" className="col-span-3 row-start-2 flex gap-5 lg:col-span-1 lg:col-start-2 lg:row-start-1 lg:ml-5 lg:h-full">
+            {[["cases", "Cases", home], ["sources", "Company Data", sources]].map(
+              ([key, label, go]) => (
+                <button
+                  key={key}
+                  type="button"
+                  aria-current={page === key ? "page" : undefined}
+                  disabled={!!busy}
+                  onClick={go}
+                  className="whitespace-nowrap border-b-2 border-transparent px-1 py-2.5 text-sm font-medium text-muted-foreground hover:text-foreground aria-[current=page]:border-foreground aria-[current=page]:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2"
+                >
+                  {label}
+                </button>
+              ),
+            )}
+          </nav>
+          <div className="col-start-3 row-start-1 justify-self-end">
             <Badge
               variant="outline"
               title={`SYNTHETIC data · MOCK actions · LLM ${data?.llm || "fake"}.${data?.llm === "live" ? " Synthetic case context is sent to the model provider." : " Offline agent; no model requests."}`}
@@ -157,7 +182,7 @@ export default function App() {
             </Badge>
           </div>
         </header>
-        <main className="mx-auto w-full max-w-[1100px] space-y-6 p-5 md:p-10">
+        <div className="mx-auto w-full max-w-[1100px] space-y-6 p-5 md:p-10">
           {busy && (
             <Alert role="status" className="border-0 bg-transparent px-0 py-1">
               <LoaderCircle className="animate-spin" />
@@ -180,7 +205,9 @@ export default function App() {
               </Button>
             </Alert>
           )}
-          {!data ? (
+          {page === "sources" ? (
+            <CompanyData />
+          ) : !data ? (
             <div className="space-y-5">
               <Skeleton className="h-16 w-2/3" />
               <Skeleton className="h-40 w-full" />
@@ -206,7 +233,7 @@ export default function App() {
               busy={!!busy}
             />
           )}
-        </main>
+        </div>
       </SidebarInset>
     </SidebarProvider>
   );

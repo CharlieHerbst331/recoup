@@ -1427,6 +1427,10 @@ DONE: Updated the session handoff and prepared all 18 owned files for the user-r
 NEXT: Push this publication commit, verify remote equality and a clean working tree, then stop for reviewer/verifier review.
 QUESTION: None for this publication; real OCR and live-model acceptance remain unclaimed.
 
+DONE: 2026-11-09 live-adapter hardening (design/02 §5.1–5.2, §5.9): malformed batches, text-only responses, optional usage, safe provider/recording failures, zero provider retries and remaining-wall timeout; offline fake-HTTP tests use in-memory SqliteWorld. Official SDK tool-calling documentation read 2026-11-09: https://developers.openai.com/api/docs/guides/function-calling . make check PYTHON=/tmp/recoup-007-check/bin/python PASS (1134 passed, 2 optional OCR skips); changed recoup/engine/harness.py, recoup/engine/llm/{errors,openai_compat}.py, tests/engine/{test_live_failures,test_openai_compat}.py and this progress log.
+NEXT: Stop after this step. Clean H/C/N recoup run attempts all stopped on Groq HTTP 429 without retry or verdicts; genuine H=2/C=1 response prefixes in runs/recordings matched network-blocked CLI replay exactly (calls, arguments, text, tool results), N=0. Full completion, oracle verdict comparison and full replay remain unverified; replay stops at missing failure-response recordings. Evidence: runs/live-hardening-w5b_m_py/verification.json. Earlier H from fake-populated CLI-load state stopped HTTP 413 and is excluded from clean-case verdict evidence; its one genuine response was also replayed exactly.
+QUESTION: No code question; a later authorized live verification needs available Groq quota. Credentials were passed from macOS launch environment directly to child processes without printing or saving them; no dependency, contract, fixture or oracle edits.
+
 ## Queued investigation diagnosis — 2026-11-10 (America/Los_Angeles)
 
 User-authorized one-step engine handoff: `recoup/engine/scheduler.py`,
@@ -1492,4 +1496,18 @@ QUESTION: None; no credential, protected-file change, dependency or irreversible
 
 DONE: Prepared the user-requested Git publication of the queued-investigation fix and its regression tests; previous make check passed (1154 passed, 2 optional OCR skips).
 NEXT: Push the focused commit to origin/sonny/live-model, verify remote equality, and stop; leave other uncommitted work untouched.
+QUESTION: None.
+
+DONE: 2026-11-10 single unseen-case step ALDER-2718: source-only SYNTHETIC fixture, evaluator-only checklist, app-built offline/in-memory validation and make check PASS (1156 passed, 2 optional OCR skips). Actual deployed Haiku claude-haiku-5-5 first load: 18 model calls, 68 tool calls, three proposals, two accepted ends; early loop and stale needs_human status preserved. Separate React-default DB load failed with ValueError: Conflicting replay recording; no fallback or recording edits. Saved original live draft is expanded in React via Open saved run. No approvals, receipts or changes to existing case histories. Every changed file is listed in progress/sonny/unseen-alder-2718/CHANGED-FILES.md.
+NEXT: Stop after this case-generation/evaluation step. Human reviews the three saved proposal versions and obtains the missing broth inspection/quantity; any harness/status or recorder fix requires a separate handoff.
+QUESTION: None blocking this evaluation; stale status after accepted end, dispute-readiness misuse and repeated-request recording conflict remain documented defects, not repaired or concealed.
+
+DONE: 2026-11-10 user-requested publication of all pending changes. make check PYTHON=/tmp/recoup-007-check/bin/python PASS: Ruff lint/format, 1156 passed, 2 optional OCR skips; Node launcher tests 5 passed. Changed files are enumerated by the publication commit manifest.
+NEXT: Push the publication commit to origin/sonny/live-model, verify remote equality and a clean working tree, then stop.
+QUESTION: None.
+DONE: 2026-11-10 added exactly two SYNTHETIC USD demos: PAID-FULL (125000 invoice/payment) and PAID-INSTALLMENTS (240000 invoice; 90000/150000 payments), distinct source references, normal directory demo loading via app.build/intake/rules/FakeLLM. App-built in-memory SQLite and UI acceptance verify zero balances, no U1/NP, empty findings/decisions, no proposals/actions/due work, repeat-load state idempotency and preserved H/C/N behavior; make check PYTHON=/tmp/recoup-007-check/bin/python PASS (Ruff lint/format; 1167 passed, 2 optional OCR skips). Exact changed files: README.md; cases/demo/PAID-FULL/bundle.json; cases/demo/PAID-INSTALLMENTS/bundle.json; recoup/ui/workbench.py; tests/app/test_paid_demo.py; tests/ui/test_workbench.py; tests/world/test_fixtures.py; progress/sonny/PAID-DEMO-HANDOFF.md; progress/sonny/PROGRESS.md. Normative refs: design/02 §3.7, §4.5, §5.3–5.9; no protected files, rules, dependencies, live provider or deployment changed/exercised.
+NEXT: Stop after this implementation step; review the nine allowlisted files. FakeLLM verifies offline tool behavior, not live model judgment.
+QUESTION: None. Repeat loading may add agent/audit traces under existing orchestration; evidence, ledger, saved decisions, proposals, receipts and due state remain idempotent.
+DONE: 2026-11-10 prepared all nine pending paid-demo files for user-requested Git publication; make check PYTHON=/tmp/recoup-007-check/bin/python PASS (Ruff lint/format; 1167 passed, 2 skipped). Files: README.md; cases/demo/PAID-FULL/bundle.json; cases/demo/PAID-INSTALLMENTS/bundle.json; recoup/ui/workbench.py; tests/app/test_paid_demo.py; tests/ui/test_workbench.py; tests/world/test_fixtures.py; progress/sonny/PAID-DEMO-HANDOFF.md; progress/sonny/PROGRESS.md.
+NEXT: Commit and push to origin/sonny/live-model, verify remote equality and clean working tree, then stop.
 QUESTION: None.

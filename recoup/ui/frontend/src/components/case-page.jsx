@@ -10,6 +10,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { DataTable, Sources, EvidenceNavigation } from "@/lib/ui";
+import { ActionBadge, CompanyMark } from "@/components/case-labels";
 import ActionPanel from "@/components/action-panel";
 import Documents from "@/components/documents";
 import AgentActivity from "@/components/agent-activity";
@@ -137,14 +138,17 @@ export default function CasePage({
         <ArrowLeft size={15} />
         Cases
       </button>
-      <div className="flex items-start justify-between gap-6">
-        <div>
-          <h1 className="text-3xl font-semibold tracking-tight">{c.buyer}</h1>
-          <p className="mt-2 text-sm text-muted-foreground">
-            {invoice || `Case ${c.case_id}`}
-          </p>
+      <div className="flex flex-wrap items-start justify-between gap-4 sm:gap-6">
+        <div className="flex min-w-0 items-center gap-3 sm:gap-4">
+          <CompanyMark buyer={c.buyer} large />
+          <div className="min-w-0">
+            <h1 className="wrap-anywhere text-2xl font-semibold tracking-tight sm:text-3xl">{c.buyer}</h1>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {invoice || `Case ${c.case_id}`}
+            </p>
+          </div>
         </div>
-        <div className="text-right">
+        <div className="ml-auto text-right">
           <p className="text-xs text-muted-foreground">Open balance</p>
           <p className="mt-1 text-2xl font-semibold tabular-nums">
             {detail.balance}
@@ -160,6 +164,7 @@ export default function CasePage({
             <div className="flex items-center gap-2 font-medium">
               <Check size={18} />
               {c.open_balance.cents === "0" ? "Resolved" : "Submitted"}
+              {p && <ActionBadge kind={p.kind} />}
             </div>
             <p className="max-w-2xl text-sm leading-relaxed text-muted-foreground">
               {outcome}
@@ -167,6 +172,7 @@ export default function CasePage({
           </div>
         ) : active ? (
           <>
+            <div className="mb-3"><ActionBadge kind={p.kind} /></div>
             <div className="mb-3 flex items-baseline justify-between gap-4">
               <h2 className="text-xl font-semibold">
                 {titles[p.kind] || "Review response"}
@@ -292,10 +298,13 @@ export default function CasePage({
                     key={row.current.business_key}
                     value={row.current.business_key}
                   >
-                    {titles[row.current.kind] || row.current.kind}
-                    {row.current.amount !== null
-                      ? ` · ${row.amount}`
-                      : ""} · {row.current.status.replaceAll("_", " ")}
+                    <span className="flex flex-wrap items-center gap-2">
+                      <ActionBadge kind={row.current.kind} />
+                      <span>
+                        {row.current.amount !== null ? `${row.amount} · ` : ""}
+                        {row.current.status.replaceAll("_", " ")}
+                      </span>
+                    </span>
                   </SelectItem>
                 ))}
               </SelectContent>
