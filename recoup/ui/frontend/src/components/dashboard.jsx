@@ -5,6 +5,8 @@ import { Input } from "@/components/ui/input";
 import { ActionBadge, CompanyMark } from "@/components/case-labels";
 import { caseStatus } from "@/lib/ui";
 
+const demoOrder = ["C", "H", "N"];
+
 function actionContext({ action, brief }) {
   if (!action || action.status === "submitted_mock" || brief.label === "Human attention needed")
     return caseStatus(brief.label);
@@ -19,7 +21,8 @@ export default function Dashboard({ data, openCase, act, busy }) {
   const cases = [...data.cases]
     .sort(
       (a, b) =>
-        ["C", "H", "N"].indexOf(a.case_id) - ["C", "H", "N"].indexOf(b.case_id),
+        Number(a.resolved) - Number(b.resolved) ||
+        demoOrder.indexOf(a.case_id) - demoOrder.indexOf(b.case_id),
     )
     .filter((c) =>
       `${c.buyer} ${c.case_id}`.toLowerCase().includes(query.toLowerCase()),

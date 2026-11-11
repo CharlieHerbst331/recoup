@@ -34,3 +34,9 @@ QUESTION: None for hosting/configuration; Vercel deployment, authentication, rea
 done: 2026-11-10 PT — Merged Sonny's live-model branch at 97513b6 into the local enterprise UI. Kept both workbenches and adapted the React model-switch test to exercise the merged code offline. make check passed (1276 passed, 2 skipped), Node launcher tests passed (5), CLI regressions passed (8), and the React build passed.
 next: Stop after the local merge. The complete changed-file list is in runs/recoup-sonny-merge-files.txt and the final suite log is in runs/recoup-sonny-merge-verified-check.log.
 question: None. Connection capabilities were reviewed against the merged code. No hosted deployment or live-provider run was part of this merge.
+done: Reset the local React demo to day zero with Harbor, Northwind and Juniper. Stopped the separate paid-case preview, moved unresolved cases to the top, and wrote a 2:15 recording script. Browser rehearsal reached the missing-statement gate and final Juniper balance. Production build and make check passed (1276 passed, 2 skipped).
+next: Film from http://127.0.0.1:8501/#dashboard using recoup/ui/DEMO_SCRIPT.md. Changed files are recoup/ui/DEMO_SCRIPT.md, recoup/ui/frontend/src/components/dashboard.jsx and progress/carter/PROGRESS.md.
+question: None. Sonny's paid fixtures remain available in the repository. The recording uses the three guided cases.
+done: 2026-11-11 PT — Reconciled main with the enterprise demo and Sonny's published work, carried over the filmed demo edits, and made React the README entry point. make check: 1,276 passed, 2 skipped; React build, 8 CLI regressions, and 5 launcher tests passed.
+next: Stop after publishing the verified reconciliation to main. The full file list and evidence are in MAIN-RECONCILIATION-HANDOFF.md.
+question: None. The earlier live evaluation remains historical evidence; this step did not run a live model or deploy a service.
