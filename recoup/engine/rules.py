@@ -5,6 +5,7 @@ from datetime import date, timedelta
 
 from recoup.contracts.models import (
     Basis,
+    Citation,
     DeductionLine,
     DeductionReason,
     FactSet,
@@ -48,6 +49,10 @@ class _Undecidable(Exception):
         self.basis = basis
         self.missing = list(missing)
         self.contradictions = list(contradictions)
+
+
+def _citation_key(citation: Citation) -> tuple[str, str, str]:
+    return citation.evidence_id, citation.locator, citation.quote
 
 
 class _Inputs:
@@ -116,7 +121,7 @@ class _Inputs:
                 "authority_role",
                 "effective_date",
             }
-            for key in keys:
+            for key in sorted(keys):
                 self.pick(rows, key)
                 base = [f for f in base if f.key != key] + [f for f in rows if f.key == key]
         return base
@@ -380,7 +385,7 @@ def run_rules(
                 basis=Basis.proven,
                 valid=Money(cents=valid),
                 disputed=Money(cents=disputed),
-                citations=ctx.used,
+                citations=sorted(ctx.used, key=_citation_key),
                 note="SYNTHETIC rule result; design/02 §5.3",
                 flags=sorted(set(flags)),
             )
@@ -395,11 +400,14 @@ def run_rules(
                 basis=exc.basis,
                 valid=None,
                 disputed=None,
-                missing=exc.missing,
-                contradictions=exc.contradictions,
-                citations=citations,
+                missing=sorted(exc.missing),
+                contradictions=sorted(
+                    (tuple(sorted(pair, key=_citation_key)) for pair in exc.contradictions),
+                    key=lambda pair: tuple(_citation_key(c) for c in pair),
+                ),
+                citations=sorted(citations, key=_citation_key),
                 note="SYNTHETIC unresolved rule; design/02 §5.3",
                 flags=sorted(set(flags)),
             )
         findings.append(finding)
-    return findings
+    return sorted(findings, key=lambda finding: (finding.line_id, finding.rule_id))

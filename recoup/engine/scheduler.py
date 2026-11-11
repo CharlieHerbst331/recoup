@@ -1,5 +1,6 @@
 """Event and due-work handlers; design/02 §5.7."""
 
+import json
 from datetime import datetime, time, timedelta
 from hashlib import sha256
 from uuid import uuid4
@@ -182,6 +183,7 @@ def schedule_claim(world, case_id):
 
 def handle(engine, world, llm, run_id):
     handled = []
+    completed = {}
     while True:
         events = [
             e for e in world.pending_events() if not e.processed and e.at <= world.clock.now()
@@ -218,6 +220,7 @@ def handle(engine, world, llm, run_id):
                         world.set_status(case_id, insurance="notice_due")
                 world.mark_due(item.due_id, "done")
             else:
+                reused_from = None
                 if item.type == "receipt_issued":
                     _receipt(world, item)
                 elif item.type != "duplicate_ignored":
@@ -234,9 +237,28 @@ def handle(engine, world, llm, run_id):
                                     and (receipt is None or evidence.available_from > receipt.at)
                                 ):
                                     world.mark_due(due.due_id, "cancelled")
-                    engine.investigate(world, case_id, llm, run_id)
+                    previous = completed.get(case_id)
+                    if previous and previous[0] == _investigation_state(world, case_id):
+                        reused_from = previous[1]
+                    else:
+                        completed.pop(case_id, None)
+                        engine.investigate(world, case_id, llm, run_id)
                     schedule_notice(world, case_id)
                     schedule_claim(world, case_id)
+                    # Reuse only an accepted model end, never a budget/error stop.
+                    # This cache lives only in this chronological drain (§5.7).
+                    last = world.history(case_id).traces[-1:]
+                    if (
+                        not reused_from
+                        and last
+                        and (
+                            last[0].kind == "tool_call"
+                            and last[0].tool == "end"
+                            and (last[0].result or {}).get("ok")
+                            and (last[0].result or {}).get("result", {}).get("accepted") is True
+                        )
+                    ):
+                        completed[case_id] = (_investigation_state(world, case_id), item.event_id)
                 world.trace(
                     TraceEvent(
                         run_id=run_id,
@@ -246,9 +268,23 @@ def handle(engine, world, llm, run_id):
                         kind="event",
                         controller="harness",
                         result_summary=item.type,
-                        result={"event_id": item.event_id},
+                        result={"event_id": item.event_id}
+                        | ({"investigation_reused_from": reused_from} if reused_from else {}),
                     )
                 )
                 world.mark_event(item.event_id)
         if case_id not in handled:
             handled.append(case_id)
+
+
+def _investigation_state(world, case_id):
+    """Compare the full case inputs, without scheduler acknowledgments (§5.7)."""
+    state = {
+        "case": world.view(case_id).model_dump(mode="json"),
+        "facts": world.fact_set(case_id).model_dump(mode="json"),
+        "ledger": [entry.model_dump(mode="json") for entry in world.ledger(case_id)],
+        "recipients": {
+            target.value: world.allowed_recipients(case_id, target) for target in Target
+        },
+    }
+    return sha256(json.dumps(state, sort_keys=True, separators=(",", ":")).encode()).hexdigest()

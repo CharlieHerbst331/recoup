@@ -1,1 +1,1 @@
-"""Streamlit workbench and presentation helpers (design/02 §6)."""
+"""React and Streamlit workbenches and presentation helpers (design/02 §6)."""

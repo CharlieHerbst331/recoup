@@ -147,7 +147,14 @@ def protocol_handler(database, monkeypatch):
     def factory(config):
         instance = build(config.model_copy(update={"db": ":memory:"}))
         if config.llm == "live":
-            monkeypatch.setattr(instance.llm, "next", state["live_next"])
+            live_next = state["live_next"]
+
+            def bounded_next(system, messages, tools, timeout):
+                return live_next(system, messages, tools)
+
+            monkeypatch.setattr(instance.llm, "client", None)
+            monkeypatch.setattr(instance.llm, "next", live_next)
+            monkeypatch.setattr(instance.llm, "next_with_timeout", bounded_next)
         if config.db in state["snapshots"]:
             instance.world.db.deserialize(state["snapshots"][config.db])
         instance.config = instance.config.model_copy(update={"db": config.db})
@@ -218,7 +225,6 @@ def test_switch_preserves_run_and_uses_selected_model_for_simulation(protocol_ha
     handler, state = protocol_handler
     monkeypatch.setenv("OPENAI_API_KEY", "test-only-key")
     monkeypatch.setenv("RECOUP_MODEL", "test-model")
-    monkeypatch.setenv("OPENAI_BASE_URL", "https://example.invalid/v1")
     calls = []
     scripted = ScriptedLLM(repeat(LLMResponse(tool_calls=[], model_id="test-model", mode="live")))
 

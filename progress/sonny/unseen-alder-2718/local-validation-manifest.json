@@ -1,0 +1,12 @@
+{
+  "files_sha256": {
+    "cases/unseen/alder-2718/bundle.json": "d17057092d85bf23c476dda8d88da4e7fdb4e1b314783c32a6e1407ca004edbc",
+    "tests/engine/test_unseen_alder_fixture.py": "85e7a5970745fc971ddc54421c8e836126e347ac597dd8e8f56c5b21657f5ae4",
+    "progress/sonny/unseen-alder-2718/EVALUATOR-CHECKLIST.md": "5c68826c562643121f888426886825b1caa9fa8cbb80fcbfea0dd95de0737a56",
+    "progress/sonny/unseen-alder-2718/manual_live.py": "45cb6d87ebaf7b9dd9c03e74ec119a243951ad3e619973f7399854599b6a696a"
+  },
+  "make_check": "1156 passed, 2 skipped; ruff lint and format passed",
+  "offline_db": ":memory:",
+  "offline_llm": "fake",
+  "manual_live_separate": true
+}

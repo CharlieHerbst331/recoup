@@ -1,0 +1,9 @@
+{
+  "recordings_match_all_model_trace_results": 18,
+  "all_saved_drafts_match_model_tool_arguments": true,
+  "all_saved_citation_evidence_active": true,
+  "no_evaluator_file_in_requests": true,
+  "no_approvals_or_receipts": true,
+  "open_balance_cents": 107200,
+  "source_bundle_sha256": "d17057092d85bf23c476dda8d88da4e7fdb4e1b314783c32a6e1407ca004edbc"
+}

@@ -1,0 +1,17 @@
+{
+  "finished_at_utc": "2026-11-11T03:21:36.073580+00:00",
+  "load_result": null,
+  "exception_type": "ValueError",
+  "status": "investigating",
+  "status_reason": "evidence changed",
+  "existing_histories_unchanged": true,
+  "existing_history_sha256_after": {},
+  "existing_recordings_unchanged": true,
+  "new_recordings_sha256": {},
+  "model_calls": 0,
+  "tool_calls": 0,
+  "accepted_end_count": 0,
+  "approvals": 0,
+  "receipts": 0,
+  "pending_events": 12
+}

@@ -1,0 +1,11 @@
+# Allow only package source and bundled synthetic JSON data into the build context.
+**
+!Dockerfile
+!pyproject.toml
+!README.md
+!recoup/
+!recoup/**/
+!recoup/**/*.py
+!cases/
+!cases/**/
+!cases/**/*.json

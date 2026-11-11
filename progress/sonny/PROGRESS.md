@@ -1426,3 +1426,88 @@ ahead and none behind its remote. Publication uses the existing
 DONE: Updated the session handoff and prepared all 18 owned files for the user-requested commit/push; fresh make check and regression 8/8 pass.
 NEXT: Push this publication commit, verify remote equality and a clean working tree, then stop for reviewer/verifier review.
 QUESTION: None for this publication; real OCR and live-model acceptance remain unclaimed.
+
+DONE: 2026-11-09 live-adapter hardening (design/02 §5.1–5.2, §5.9): malformed batches, text-only responses, optional usage, safe provider/recording failures, zero provider retries and remaining-wall timeout; offline fake-HTTP tests use in-memory SqliteWorld. Official SDK tool-calling documentation read 2026-11-09: https://developers.openai.com/api/docs/guides/function-calling . make check PYTHON=/tmp/recoup-007-check/bin/python PASS (1134 passed, 2 optional OCR skips); changed recoup/engine/harness.py, recoup/engine/llm/{errors,openai_compat}.py, tests/engine/{test_live_failures,test_openai_compat}.py and this progress log.
+NEXT: Stop after this step. Clean H/C/N recoup run attempts all stopped on Groq HTTP 429 without retry or verdicts; genuine H=2/C=1 response prefixes in runs/recordings matched network-blocked CLI replay exactly (calls, arguments, text, tool results), N=0. Full completion, oracle verdict comparison and full replay remain unverified; replay stops at missing failure-response recordings. Evidence: runs/live-hardening-w5b_m_py/verification.json. Earlier H from fake-populated CLI-load state stopped HTTP 413 and is excluded from clean-case verdict evidence; its one genuine response was also replayed exactly.
+QUESTION: No code question; a later authorized live verification needs available Groq quota. Credentials were passed from macOS launch environment directly to child processes without printing or saving them; no dependency, contract, fixture or oracle edits.
+
+## Queued investigation diagnosis — 2026-11-10 (America/Los_Angeles)
+
+User-authorized one-step engine handoff: `recoup/engine/scheduler.py`,
+`tests/engine/test_scheduler_reinvestigation.py`, and this log. Read root/engine
+AGENTS, specs/007, design/01, design/02 §2, §4.4–4.5, §5.1–5.2, §5.6–5.10,
+Sonny's session handoff, and Carter's shared-backend handoff/progress. Existing
+uncommitted adapter/harness/UI/deployment work is preserved.
+
+Read-only production inspection via the Vercel Sandbox skill: launcher deployment
+`dpl_3JJcHMemRNsS1Pe72qcLk3KY15Sb` is READY; current named Sandbox session
+`sbx_RlF65jLsUboRjifZEd2mbhyqOSae` is running and backend health returns 200.
+All 101 model-call traces match their exact request-keyed recording JSON, with
+zero missing/mismatched files; all report live `claude-haiku-5-5`. Zero approvals
+and receipts. Production fixture/recorder SHA-256 values match local sources.
+No provider requests, secret reads, production case writes, or deployment edits.
+
+Actual stops: H/N report recording unavailable/conflicting, unmet=[]; C reports
+loop, unmet=[]. H's current first request hashes to
+`e625f16cb694077a01640755e66177e36e40db62045305810ddd97061048376d`, N's to
+`3b78c491684f1a21081fbb7cda7e2210bd6a840c5d3ad52849efb3361474363f`;
+both recording files exist. Reconstructed requests used only an app-built
+in-memory backup of the read-only production DB, without agent execution.
+The recorder compares entire serialized responses including latency. Rejected
+responses were not retained, so metadata-only versus substantive differences
+cannot be determined from the saved artifacts. C's final model turn 3 repeats
+`readiness(kind=dispute,line_id=D1)` after propose_decision; tool steps 8 and 10
+have identical args/results. Its missing dispute finding is consistent with a
+valid credit-only line, not missing case information. Repeated scheduler events
+continued after earlier accepted ends: H=12 events/6 accepted ends/34 model calls;
+C=10/2/44; N=6/4/23. These counts substantiate redundant investigation, not a
+provider outage or a need for invented human-input files.
+
+Evidence-backed product recommendation (unchanged rules; design/02 §5.3–5.6):
+H disputes D1 312000 cents: EV-H-BOL-v1 fields.shipped.SKU-1=400,
+EV-H-POD-v1 fields.signed=true and fields.received.SKU-1=400;
+EV-H-REM-v1 fields.ded.1.qty=40/claimed_cents=312000, and EV-H-TERMS-v1
+fields.price.SKU-1_cents=7800. H credits D2 180000/disputes 132000 cents:
+EV-H-TERMS-v1 fields.promo.FALL26.earned=true/cap_cents=180000 versus
+EV-H-REM-v1 fields.ded.2.claimed_cents=312000. C credits 50000 cents:
+EV-C-PRICE%2DAMENDMENT-v1 fields.authority_role="VP Sales",
+fields.effective_date="2026-08-15", fields.price.SKU-7_cents=1000;
+EV-C-COMPANY-v1 fields.allowed_authority_roles="VP Sales,Finance Director";
+EV-C-INV-v1 fields.invoice_date="2026-09-01", fields.line.1.qty=1000 and
+fields.line.1.unit_price_cents=1050. N's 215000-cent difference is unexplained:
+EV-N-INV-v1 fields.total_cents=2000000 versus EV-N-PAY-v1 fields.paid_cents=1785000.
+Request a remittance/debit memo specifying the deduction reason and supporting
+line-level evidence; do not assert either a valid concession or a dispute.
+All outward drafts/book changes retain explicit approval-bound MOCK submission.
+
+Decision: reuse an accepted investigation only within the same chronological
+scheduler drain when the entire CaseView, FactSet, ledger and recipient lists
+match. Trace every reused event with its source event id, acknowledge it in its
+own transaction, and retain scheduling/buyer-reply handling. Failed/budget/loop
+runs are never cached; due work and explicit investigations execute normally.
+No recording comparison, loop guard, contract, fixture, model fallback, money
+calculation, approval requirement or dependency was changed. Existing production
+needs_human records are preserved; this local patch is not deployed and no new
+live-model completion or complete live replay is claimed.
+
+DONE: 2026-11-10 one-step scheduler reuse of accepted investigations for unchanged queued case state (design/02 §4.5, §5.2, §5.7–5.9); production causes/recording fidelity and evidence-backed H/C/N recommendations inspected above. make check PYTHON=/tmp/recoup-007-check/bin/python PASS: Ruff lint/format, 1154 passed, 2 existing optional OCR skips in 160.54s; focused scheduler suite 35 passed. Changed only recoup/engine/scheduler.py, tests/engine/test_scheduler_reinvestigation.py and progress/sonny/PROGRESS.md; prior uncommitted work preserved.
+NEXT: Stop after this implementation step. Local patch is ready for review; production still runs its existing source and retains its original needs_human records. A future rollout/live run must verify model completion without rewriting historical traces, recordings or statuses.
+QUESTION: None; no credential, protected-file change, dependency or irreversible action was required.
+
+DONE: Prepared the user-requested Git publication of the queued-investigation fix and its regression tests; previous make check passed (1154 passed, 2 optional OCR skips).
+NEXT: Push the focused commit to origin/sonny/live-model, verify remote equality, and stop; leave other uncommitted work untouched.
+QUESTION: None.
+
+DONE: 2026-11-10 single unseen-case step ALDER-2718: source-only SYNTHETIC fixture, evaluator-only checklist, app-built offline/in-memory validation and make check PASS (1156 passed, 2 optional OCR skips). Actual deployed Haiku claude-haiku-5-5 first load: 18 model calls, 68 tool calls, three proposals, two accepted ends; early loop and stale needs_human status preserved. Separate React-default DB load failed with ValueError: Conflicting replay recording; no fallback or recording edits. Saved original live draft is expanded in React via Open saved run. No approvals, receipts or changes to existing case histories. Every changed file is listed in progress/sonny/unseen-alder-2718/CHANGED-FILES.md.
+NEXT: Stop after this case-generation/evaluation step. Human reviews the three saved proposal versions and obtains the missing broth inspection/quantity; any harness/status or recorder fix requires a separate handoff.
+QUESTION: None blocking this evaluation; stale status after accepted end, dispute-readiness misuse and repeated-request recording conflict remain documented defects, not repaired or concealed.
+
+DONE: 2026-11-10 user-requested publication of all pending changes. make check PYTHON=/tmp/recoup-007-check/bin/python PASS: Ruff lint/format, 1156 passed, 2 optional OCR skips; Node launcher tests 5 passed. Changed files are enumerated by the publication commit manifest.
+NEXT: Push the publication commit to origin/sonny/live-model, verify remote equality and a clean working tree, then stop.
+QUESTION: None.
+DONE: 2026-11-10 added exactly two SYNTHETIC USD demos: PAID-FULL (125000 invoice/payment) and PAID-INSTALLMENTS (240000 invoice; 90000/150000 payments), distinct source references, normal directory demo loading via app.build/intake/rules/FakeLLM. App-built in-memory SQLite and UI acceptance verify zero balances, no U1/NP, empty findings/decisions, no proposals/actions/due work, repeat-load state idempotency and preserved H/C/N behavior; make check PYTHON=/tmp/recoup-007-check/bin/python PASS (Ruff lint/format; 1167 passed, 2 optional OCR skips). Exact changed files: README.md; cases/demo/PAID-FULL/bundle.json; cases/demo/PAID-INSTALLMENTS/bundle.json; recoup/ui/workbench.py; tests/app/test_paid_demo.py; tests/ui/test_workbench.py; tests/world/test_fixtures.py; progress/sonny/PAID-DEMO-HANDOFF.md; progress/sonny/PROGRESS.md. Normative refs: design/02 §3.7, §4.5, §5.3–5.9; no protected files, rules, dependencies, live provider or deployment changed/exercised.
+NEXT: Stop after this implementation step; review the nine allowlisted files. FakeLLM verifies offline tool behavior, not live model judgment.
+QUESTION: None. Repeat loading may add agent/audit traces under existing orchestration; evidence, ledger, saved decisions, proposals, receipts and due state remain idempotent.
+DONE: 2026-11-10 prepared all nine pending paid-demo files for user-requested Git publication; make check PYTHON=/tmp/recoup-007-check/bin/python PASS (Ruff lint/format; 1167 passed, 2 skipped). Files: README.md; cases/demo/PAID-FULL/bundle.json; cases/demo/PAID-INSTALLMENTS/bundle.json; recoup/ui/workbench.py; tests/app/test_paid_demo.py; tests/ui/test_workbench.py; tests/world/test_fixtures.py; progress/sonny/PAID-DEMO-HANDOFF.md; progress/sonny/PROGRESS.md.
+NEXT: Commit and push to origin/sonny/live-model, verify remote equality and clean working tree, then stop.
+QUESTION: None.
